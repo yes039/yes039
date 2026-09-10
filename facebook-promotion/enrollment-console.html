@@ -1,0 +1,499 @@
+<title>AI 店長招生作戰台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
+<style>
+:root{
+  --bg:#EAEFEF; --surface:#FFFFFF; --surface-2:#F4F7F6;
+  --ink:#132029; --ink-2:#3D525C; --muted:#6C838D; --line:#D2DDDC; --line-2:#E3EAE9;
+  --cold:#12697A; --cold-soft:#DCEEF0;
+  --warm:#A96B12; --warm-soft:#F6EBD8;
+  --hot:#B23A2E; --hot-soft:#F7E3DF;
+  --ok:#1E7A4F; --focus:#12697A;
+  --shadow:0 1px 2px rgba(19,32,41,.06), 0 8px 24px -16px rgba(19,32,41,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E171D; --surface:#16232B; --surface-2:#1B2A33;
+    --ink:#E7EEEF; --ink-2:#B7C7CD; --muted:#8399A2; --line:#26383F; --line-2:#1F2F37;
+    --cold:#54B6C6; --cold-soft:#12333B;
+    --warm:#E0A54F; --warm-soft:#33270F;
+    --hot:#E9776A; --hot-soft:#3A211D;
+    --ok:#4FBE87; --focus:#54B6C6;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E171D; --surface:#16232B; --surface-2:#1B2A33;
+  --ink:#E7EEEF; --ink-2:#B7C7CD; --muted:#8399A2; --line:#26383F; --line-2:#1F2F37;
+  --cold:#54B6C6; --cold-soft:#12333B;
+  --warm:#E0A54F; --warm-soft:#33270F;
+  --hot:#E9776A; --hot-soft:#3A211D;
+  --ok:#4FBE87; --focus:#54B6C6;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.75; margin:0;
+  padding-inline:20px; padding-block:32px 64px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:40px}
+
+h1,h2,h3{font-family:"Noto Serif TC",Georgia,serif; font-weight:700; text-wrap:balance; margin:0; line-height:1.35}
+h1{font-size:clamp(26px,5.4vw,38px); letter-spacing:-.01em}
+h2{font-size:20px}
+h3{font-size:16px}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+}
+
+/* ---- header ---- */
+header{display:flex; flex-direction:column; gap:14px}
+.sub{color:var(--ink-2); max-width:62ch}
+.ramp{height:4px; border-radius:2px; background:linear-gradient(90deg,var(--cold) 0%,var(--cold) 28%,var(--warm) 50%,var(--hot) 78%,var(--hot) 100%)}
+.ramp-key{display:flex; justify-content:space-between; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; color:var(--muted)}
+
+/* ---- status strip ---- */
+.status{
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:14px 18px; box-shadow:var(--shadow);
+}
+.status .big{font-family:"IBM Plex Mono",monospace; font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink)}
+.status .lbl{font-size:12px; color:var(--muted); letter-spacing:.06em}
+.bar{flex:1 1 180px; height:6px; background:var(--line-2); border-radius:3px; overflow:hidden; min-width:140px}
+.bar span{display:block; height:100%; width:0%; background:var(--cold); border-radius:3px; transition:width .35s ease}
+#saveState{font-size:12px; color:var(--muted); margin-left:auto}
+
+/* ---- phase ramp ---- */
+.phases{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+@media (max-width:720px){.phases{grid-template-columns:1fr}}
+.phase{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:18px 18px 16px; display:flex; flex-direction:column; gap:12px;
+  border-top:3px solid var(--c);
+}
+.phase .head{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+.phase .temp{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.1em; color:var(--c)}
+.phase .when{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted)}
+.phase h3{color:var(--ink)}
+.phase dl{margin:0; display:flex; flex-direction:column; gap:9px}
+.phase dt{font-size:11px; letter-spacing:.08em; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+.phase dd{margin:0; font-size:13.5px; line-height:1.65; color:var(--ink-2)}
+.phase .gate{color:var(--ink); font-weight:500}
+.phase .no{background:var(--soft); color:var(--c); border-radius:6px; padding:7px 10px; font-size:12.5px; line-height:1.55}
+
+/* ---- checklist ---- */
+section{display:flex; flex-direction:column; gap:16px}
+.sec-head{display:flex; flex-direction:column; gap:4px}
+.sec-head .note{font-size:13px; color:var(--muted)}
+.week{display:flex; flex-direction:column; gap:0}
+.week-title{
+  display:flex; align-items:center; gap:10px; padding:0 0 8px;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; color:var(--muted);
+}
+.week-title b{font-family:"Noto Sans TC",sans-serif; font-size:14px; letter-spacing:0; color:var(--ink-2); font-weight:500}
+.week-title .rule{flex:1; height:1px; background:var(--line)}
+.items{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.item{display:flex; align-items:flex-start; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line-2); cursor:pointer}
+.item:last-child{border-bottom:none}
+.item:hover{background:var(--surface-2)}
+.item input{
+  appearance:none; -webkit-appearance:none; flex:none; margin:4px 0 0;
+  width:17px; height:17px; border:1.5px solid var(--line); border-radius:4px;
+  background:var(--surface); cursor:pointer; display:grid; place-content:center;
+}
+.item input:checked{background:var(--ok); border-color:var(--ok)}
+.item input:checked::after{content:""; width:9px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg) translateY(-1px)}
+.item input:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+.day{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; color:var(--muted);
+  flex:none; min-width:52px; padding-top:3px; font-variant-numeric:tabular-nums;
+}
+.task{flex:1; font-size:14px; line-height:1.6}
+.item.done .task{color:var(--muted); text-decoration:line-through; text-decoration-thickness:1px}
+.dot{flex:none; width:7px; height:7px; border-radius:50%; margin-top:9px; background:var(--c)}
+.p1{--c:var(--cold); --soft:var(--cold-soft)}
+.p2{--c:var(--warm); --soft:var(--warm-soft)}
+.p3{--c:var(--hot); --soft:var(--hot-soft)}
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--muted)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:7px; height:7px; border-radius:50%; background:var(--c); display:inline-block}
+
+/* ---- metrics ---- */
+.tablewrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+table{border-collapse:collapse; width:100%; min-width:620px}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line-2); font-size:13.5px}
+thead th{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; color:var(--muted);
+  font-weight:600; white-space:nowrap; background:var(--surface-2); border-bottom:1px solid var(--line);
+}
+tbody tr:last-child td{border-bottom:none}
+tbody th{font-weight:500; white-space:nowrap; color:var(--ink); font-size:13.5px}
+.star{color:var(--hot); font-size:11px; margin-left:4px}
+tr.north th, tr.north td{background:var(--hot-soft)}
+.target{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+td.cell{padding:5px 6px}
+.cell input{
+  width:100%; min-width:62px; border:1px solid transparent; border-radius:6px;
+  background:transparent; color:var(--ink); padding:6px 8px;
+  font-family:"IBM Plex Mono",monospace; font-size:13px; font-variant-numeric:tabular-nums; text-align:right;
+}
+.cell input:hover{border-color:var(--line)}
+.cell input:focus{outline:none; border-color:var(--focus); background:var(--surface); box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 18%,transparent)}
+.tbl-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+button.act{
+  font-family:"Noto Sans TC",sans-serif; font-size:13px; color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  padding:7px 14px; cursor:pointer;
+}
+button.act:hover{border-color:var(--focus); color:var(--focus)}
+button.act:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+.hint{font-size:12.5px; color:var(--muted)}
+
+/* ---- traps ---- */
+.traps{display:flex; flex-direction:column; gap:2px}
+.trap{display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--line-2)}
+.trap:last-child{border-bottom:none}
+.trap .n{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--hot); flex:none; width:22px; padding-top:2px}
+.trap b{font-weight:500}
+.trap p{font-size:13.5px; color:var(--ink-2); line-height:1.65}
+footer{font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:18px; line-height:1.8}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Facebook 招生作戰</div>
+  <h1>AI 店長招生作戰台</h1>
+  <p class="sub">從冷流量到成交的三部曲。勾選會自動儲存，換裝置打開也還在。</p>
+  <div class="ramp"></div>
+  <div class="ramp-key"><span>冷 · 曝光</span><span>溫 · 導流</span><span>熱 · 招生</span></div>
+</header>
+
+<div class="status">
+  <div><div class="big"><span id="doneN">0</span>/<span id="totalN">0</span></div><div class="lbl">30 天啟動項目</div></div>
+  <div class="bar"><span id="barFill"></span></div>
+  <div id="saveState">—</div>
+</div>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">三部曲</div>
+    <h2>流量的溫度，決定你這階段該做什麼</h2>
+    <p class="note">同一批人，冷的時候只會看；溫的時候才願意留資料；熱的時候才會付錢。跳階段是最常見的失敗原因。</p>
+  </div>
+  <div class="phases">
+    <article class="phase p1">
+      <div class="head"><span class="temp">冷流量</span><span class="when">W1–W4</span></div>
+      <h3>第一部曲 · 曝光</h3>
+      <dl>
+        <div><dt>目標</dt><dd>不是觸及數，是「有幾個老闆在你貼文下留言問怎麼做」。</dd></div>
+        <div><dt>核心動作</dt><dd>內容三支柱輪流發：痛點 30%、實作展示 50%、故事 20%。每週 4–5 篇。</dd></div>
+        <div><dt>過關條件</dt><dd class="gate">平均留言 ≥ 10 · 每週私訊 ≥ 5</dd></div>
+      </dl>
+      <div class="no">禁區：一個字都不要提價格。</div>
+    </article>
+    <article class="phase p2">
+      <div class="head"><span class="temp">溫流量</span><span class="when">W5–W12</span></div>
+      <h3>第二部曲 · 導流</h3>
+      <dl>
+        <div><dt>目標</dt><dd>FB 觸及是租來的。把注意力搬進你能重複、免費觸及的地方。</dd></div>
+        <div><dt>核心動作</dt><dd>誘餌 → 留言關鍵字 → LINE 官方帳號；社團每週三晚上直播 QA。</dd></div>
+        <div><dt>過關條件</dt><dd class="gate">LINE 週增 ≥ 30 · CPL NT$30–80</dd></div>
+      </dl>
+      <div class="no">禁區：內容還沒驗證前不要投廣告。</div>
+    </article>
+    <article class="phase p3">
+      <div class="head"><span class="temp">熱流量</span><span class="when">W9 起</span></div>
+      <h3>第三部曲 · 招生</h3>
+      <dl>
+        <div><dt>目標</dt><dd>用一場說明會成交，不要用貼文成交。貼文只負責把人帶到說明會。</dd></div>
+        <div><dt>核心動作</dt><dd>90 分鐘說明會：教學 70% + 招生 30%，中段讓人當場做出東西；48 小時限時。</dd></div>
+        <div><dt>過關條件</dt><dd class="gate">出席率 ≥ 35% · 成交率 ≥ 8% · ROAS ≥ 3</dd></div>
+      </dl>
+      <div class="no">禁區：見證要在開課第一天就先講好，事後才要很難拿。</div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">執行清單</div>
+    <h2>30 天啟動排程</h2>
+    <p class="note">照順序做，不要跳。顏色是這件事在替哪個階段鋪路。</p>
+  </div>
+  <div class="legend">
+    <span class="p1"><i></i>曝光</span>
+    <span class="p2"><i></i>導流</span>
+    <span class="p3"><i></i>招生</span>
+  </div>
+  <div id="checklist"></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">每週回報</div>
+    <h2>指標追蹤</h2>
+    <p class="note">每週日花 20 分鐘填完。只看一個數字的話，看私訊諮詢數——它同時反映內容準不準、信任夠不夠、動線通不通。</p>
+  </div>
+  <div class="tablewrap"><table id="metrics"><thead></thead><tbody></tbody></table></div>
+  <div class="tbl-actions">
+    <button class="act" id="addWeek" type="button">加一週</button>
+    <span class="hint">目前 <span id="weekCount" class="mono">6</span> 週，最多 16 週</span>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">避雷</div>
+    <h2>最容易犯的六個錯</h2>
+    <p class="note">先看這段，能省你兩個月。</p>
+  </div>
+  <div class="traps">
+    <div class="trap"><span class="n">01</span><p><b>太早賣課。</b>前兩個月一提價格，信任就斷了。第一部曲一個字都不要提。</p></div>
+    <div class="trap"><span class="n">02</span><p><b>只發概念，不發畫面。</b>「AI 能幫你提升效率」沒人有感；一段 30 秒的螢幕錄影勝過十篇長文。</p></div>
+    <div class="trap"><span class="n">03</span><p><b>內容還沒驗證就投廣告。</b>自然表現差的貼文，加預算只是燒得比較快。先讓自然流量告訴你哪篇有用。</p></div>
+    <div class="trap"><span class="n">04</span><p><b>流量沒接住。</b>有人留言問，卻沒有 LINE、沒有社團可以收——所有努力歸零。</p></div>
+    <div class="trap"><span class="n">05</span><p><b>個人帳號一天狂加好友。</b>會被判定異常鎖帳號。改用「開啟追蹤，讓別人加你」，主動加一天不超過 20 人。</p></div>
+    <div class="trap"><span class="n">06</span><p><b>賣完就沒下文。</b>交付品質差 → 沒有見證 → 第二輪更難。第一批學員的成果，是你第二輪最貴的廣告素材。</p></div>
+  </div>
+</section>
+
+<footer>
+  廣告文案避雷：不要出現「保證」「月入 X 萬」「輕鬆賺」，也不要用指涉個人負面特質的句子（違反 Meta 個人屬性政策）。改成描述流程與方法，成果附註「個別成果因人而異」。廣告帳號用企業管理平台並開啟雙重驗證。
+</footer>
+
+</div>
+
+<!--STATE_START--><script id="app-state" type="application/json">{"done":{},"metrics":{},"weeks":6,"ts":0}</script><!--STATE_END-->
+
+<script>
+(function(){
+  var TEMPLATE = "<!doctype html>\n" + document.documentElement.outerHTML;
+  var STATE_RE = /<!--STATE_START-->[\s\S]*?<!--STATE_END-->/;
+  var LS_KEY = "ai-store-console-v1";
+
+  var PLAN = [
+    {week:"第 1 週", label:"打地基", items:[
+      {id:"d1",  day:"D1–D2", p:1, t:"寫定位句、客群輪廓、產品階梯（這關沒過，後面都是白工）"},
+      {id:"d3",  day:"D3–D4", p:1, t:"個人檔案改造：真人大頭貼、封面放定位句、簡介放 LINE、開啟追蹤"},
+      {id:"d4",  day:"D4",    p:1, t:"建立粉專，先備好 5 篇內容再開始邀請按讚，不要開天窗"},
+      {id:"d5",  day:"D5",    p:2, t:"建免費社團「AI 店長實戰社」，入社問三題（行業／幾家店／最想解決什麼）"},
+      {id:"d6",  day:"D6–D7", p:1, t:"一次寫好 8 篇貼文草稿，批次產出之後才不會斷"}
+    ]},
+    {week:"第 2 週", label:"開始發聲", items:[
+      {id:"d8",  day:"D8",     p:1, t:"發第一篇：故事型，交代你是誰、為什麼做這件事"},
+      {id:"d9",  day:"D9",     p:1, t:"發實作展示：螢幕錄影或前後對比，這類殺傷力最強"},
+      {id:"d10", day:"D10–D13",p:1, t:"依節奏發文，每篇發出後 30 分鐘內回完所有留言"},
+      {id:"d14", day:"D14",    p:2, t:"製作誘餌：「AI 店長 30 組現成指令包」或客訴回覆話術模板"}
+    ]},
+    {week:"第 3 週", label:"架好魚池", items:[
+      {id:"d15", day:"D15",    p:2, t:"開 LINE 官方帳號，設定歡迎訊息與自動回覆"},
+      {id:"d16", day:"D16",    p:2, t:"貼文首次加入「留言關鍵字」導流，私訊時附 LINE 連結"},
+      {id:"d17", day:"D17–D20",p:1, t:"持續發文，記錄哪一類內容留言最多"},
+      {id:"d21", day:"D21",    p:2, t:"第一場社團直播 QA（30 分鐘，信任建立最快的形式）"}
+    ]},
+    {week:"第 4 週", label:"點火測試", items:[
+      {id:"d22", day:"D22",    p:2, t:"開企業管理平台、裝 Meta Pixel、設定廣告帳號與雙重驗證"},
+      {id:"d23", day:"D23",    p:2, t:"備 3 組廣告素材，1:1 與 9:16 各一版，全部上字幕"},
+      {id:"d24", day:"D24",    p:2, t:"挑自然表現最好的貼文投第一組廣告，日預算 NT$300"},
+      {id:"d25", day:"D25–D27",p:2, t:"每日看名單成本與留言品質，素材疲乏就換"},
+      {id:"d28", day:"D28–D30",p:3, t:"檢視數據，決定下個月主打方向與第一場說明會日期"}
+    ]}
+  ];
+
+  var ROWS = [
+    {k:"posts",   n:"貼文則數",       g:"4–5"},
+    {k:"comments",n:"平均留言數",     g:"≥ 10"},
+    {k:"follows", n:"新增追蹤",       g:"≥ 50"},
+    {k:"line",    n:"LINE 新好友",    g:"≥ 30"},
+    {k:"group",   n:"社團新成員",     g:"≥ 50"},
+    {k:"dm",      n:"私訊諮詢數",     g:"≥ 10", north:true},
+    {k:"spend",   n:"廣告花費 NT$",   g:"—"},
+    {k:"cpl",     n:"名單成本 CPL",   g:"30–80"},
+    {k:"revenue", n:"成交金額 NT$",   g:"—"}
+  ];
+
+  var state = {done:{}, metrics:{}, weeks:6, ts:0};
+  try{
+    var embedded = JSON.parse(document.getElementById("app-state").textContent || "{}");
+    state = Object.assign(state, embedded);
+  }catch(e){}
+  try{
+    var raw = localStorage.getItem(LS_KEY);
+    if(raw){ var local = JSON.parse(raw); if(local && (local.ts||0) > (state.ts||0)) state = Object.assign(state, local); }
+  }catch(e){}
+  if(!state.done) state.done = {};
+  if(!state.metrics) state.metrics = {};
+  state.weeks = Math.min(16, Math.max(4, state.weeks || 6));
+
+  var saveEl = document.getElementById("saveState");
+  var artifactApi = null, apiResolved = false;
+
+  function setSave(msg){ saveEl.textContent = msg; }
+
+  /* ---------- checklist ---------- */
+  var total = 0;
+  PLAN.forEach(function(g){ total += g.items.length; });
+  document.getElementById("totalN").textContent = total;
+
+  var listEl = document.getElementById("checklist");
+  var listFrag = document.createDocumentFragment();
+  PLAN.forEach(function(g){
+    var block = document.createElement("div");
+    block.className = "week";
+    block.style.marginBottom = "20px";
+
+    var title = document.createElement("div");
+    title.className = "week-title";
+    title.innerHTML = '<span>' + g.week + '</span><b>' + g.label + '</b><span class="rule"></span>';
+    block.appendChild(title);
+
+    var items = document.createElement("div");
+    items.className = "items";
+    g.items.forEach(function(it){
+      var row = document.createElement("label");
+      row.className = "item p" + it.p;
+      row.setAttribute("for", "chk-" + it.id);
+
+      var box = document.createElement("input");
+      box.type = "checkbox"; box.id = "chk-" + it.id;
+      box.checked = !!state.done[it.id];
+
+      var dot = document.createElement("span"); dot.className = "dot";
+      var day = document.createElement("span"); day.className = "day"; day.textContent = it.day;
+      var task = document.createElement("span"); task.className = "task"; task.textContent = it.t;
+
+      row.appendChild(box); row.appendChild(dot); row.appendChild(day); row.appendChild(task);
+      if(box.checked) row.classList.add("done");
+
+      box.addEventListener("change", function(){
+        if(box.checked) state.done[it.id] = true; else delete state.done[it.id];
+        row.classList.toggle("done", box.checked);
+        refreshProgress();
+        queueSave();
+      });
+      items.appendChild(row);
+    });
+    block.appendChild(items);
+    listFrag.appendChild(block);
+  });
+  listEl.appendChild(listFrag);
+
+  function refreshProgress(){
+    var n = 0;
+    PLAN.forEach(function(g){ g.items.forEach(function(it){ if(state.done[it.id]) n++; }); });
+    document.getElementById("doneN").textContent = n;
+    document.getElementById("barFill").style.width = (total ? Math.round(n/total*100) : 0) + "%";
+  }
+
+  /* ---------- metrics ---------- */
+  var thead = document.querySelector("#metrics thead");
+  var tbody = document.querySelector("#metrics tbody");
+
+  function renderTable(){
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    var hr = document.createElement("tr");
+    hr.appendChild(el("th", "指標"));
+    hr.appendChild(el("th", "週目標"));
+    for(var w = 1; w <= state.weeks; w++) hr.appendChild(el("th", "W" + w));
+    thead.appendChild(hr);
+
+    ROWS.forEach(function(r){
+      var tr = document.createElement("tr");
+      if(r.north) tr.className = "north";
+
+      var th = document.createElement("th");
+      th.scope = "row";
+      th.textContent = r.n;
+      if(r.north){ var s = document.createElement("span"); s.className = "star"; s.textContent = "★ 北極星"; th.appendChild(s); }
+      tr.appendChild(th);
+
+      var tg = el("td", r.g); tg.className = "target"; tr.appendChild(tg);
+
+      for(var w = 1; w <= state.weeks; w++){
+        var td = document.createElement("td");
+        td.className = "cell";
+        var key = r.k + "-" + w;
+        var inp = document.createElement("input");
+        inp.type = "text"; inp.inputMode = "decimal";
+        inp.id = "m-" + key;
+        inp.value = state.metrics[key] || "";
+        inp.setAttribute("aria-label", r.n + " 第 " + w + " 週");
+        inp.addEventListener("input", (function(k, node){
+          return function(){
+            var v = node.value.trim();
+            if(v) state.metrics[k] = v; else delete state.metrics[k];
+            queueSave();
+          };
+        })(key, inp));
+        td.appendChild(inp);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+    document.getElementById("weekCount").textContent = state.weeks;
+  }
+
+  function el(tag, text){ var n = document.createElement(tag); n.textContent = text; return n; }
+
+  document.getElementById("addWeek").addEventListener("click", function(){
+    if(state.weeks >= 16) return;
+    state.weeks++;
+    renderTable();
+    queueSave();
+  });
+
+  /* ---------- persistence ---------- */
+  var timer = null;
+  function queueSave(){
+    setSave("儲存中…");
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(save, 1400);
+  }
+
+  function save(){
+    state.ts = Date.now();
+    var json = JSON.stringify(state).replace(/</g, "\\u003c");
+    try{ localStorage.setItem(LS_KEY, json); }catch(e){}
+
+    if(!apiResolved){ setSave("已存在這台裝置"); return; }
+    if(!artifactApi){ setSave("已存在這台裝置"); return; }
+
+    var doc = TEMPLATE.replace(STATE_RE,
+      '<!--STATE_START--><script id="app-state" type="application/json">' + json + '<\/script><!--STATE_END-->');
+
+    artifactApi.publish(doc).then(function(){
+      setSave("已儲存 · " + new Date().toLocaleTimeString("zh-TW", {hour:"2-digit", minute:"2-digit"}));
+    }).catch(function(err){
+      var code = err && err.code;
+      if(code === "conflict") setSave("另一個視窗剛更新，已同步");
+      else setSave("已存在這台裝置");
+    });
+  }
+
+  refreshProgress();
+  renderTable();
+  setSave("—");
+
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("artifact").then(function(api){
+      artifactApi = api; apiResolved = true;
+      setSave(api ? "自動儲存已開啟" : "已存在這台裝置");
+    }).catch(function(){ apiResolved = true; setSave("已存在這台裝置"); });
+  } else {
+    apiResolved = true;
+  }
+})();
+</script>
