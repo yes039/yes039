@@ -1,6 +1,6 @@
 # 夯Bar串燒 宣傳影片（9:16 直式，30 秒）
 
-成品：`out/huobar-promo.mp4`（1080×1920、30fps，背景音為烤台原聲）
+成品：`out/huobar-promo.mp4`（1080×1920、30fps，背景音樂為 `music.py` 合成的原創配樂，無版權問題）
 
 | 秒數 | 畫面 | 文字 |
 |---|---|---|
@@ -20,6 +20,6 @@
 
 ## 重新渲染
 ```bash
-pip install imageio-ffmpeg        # 取得 ffmpeg
+pip install imageio-ffmpeg numpy  # ffmpeg 與配樂合成
 NODE_PATH=$(npm root -g) node promo/render.mjs   # 需要 playwright
 ```

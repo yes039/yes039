@@ -41,13 +41,15 @@ await page.evaluate(async () => {
   await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
 });
 
-// 背景音：烤台原聲（炭火滋滋聲）循環鋪底，結尾淡出
-const sizzle = join(media, 'grill.mp4');
+// 背景音樂：music.py 合成的原創配樂（media/bgm.wav），音量正規化到 -14 LUFS
+const bgm = join(media, 'bgm.wav');
+if (!existsSync(bgm)) execFileSync('python3', [join(here, 'music.py')], { stdio: 'inherit' });
 const ff = spawn(ffmpeg, [
   '-y', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-',
-  '-stream_loop', '-1', '-i', sizzle,
+  '-i', bgm,
   '-map', '0:v', '-map', '1:a',
-  '-af', `volume=2.5,afade=t=in:d=0.3,afade=t=out:st=${DURATION - 2}:d=2`,
+  '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11',
+  '-ar', '44100',
   '-t', String(DURATION),
   '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'medium', '-crf', '20',
   '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', out
