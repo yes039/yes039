@@ -16,44 +16,28 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
   body { font-family: "Noto Sans TC", "WenQuanYi Zen Hei", sans-serif; color: var(--cream); }
-  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+  #media { position: absolute; inset: 0; overflow: hidden; }
+  #media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0;
+    filter: contrast(1.08) saturate(1.3) sepia(.1); transform-origin: 50% 50%; }
+  #shade { position: absolute; inset: 0; }
+  #flash { position: absolute; inset: 0; background: #ffd9a8; opacity: 0; mix-blend-mode: screen; }
   canvas { position: absolute; inset: 0; }
-  #photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; }
-  #shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,9,6,.55), rgba(13,9,6,.25) 40%, rgba(13,9,6,.8)); opacity: 0; }
-  .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .el { will-change: transform, opacity; opacity: 0; }
+  .t { position: absolute; left: 0; right: 0; text-align: center; opacity: 0; white-space: nowrap;
+    text-shadow: 0 6px 24px rgba(0,0,0,.85), 0 0 4px rgba(0,0,0,.9); }
   .serif { font-family: "Noto Serif TC", "WenQuanYi Zen Hei", serif; font-weight: 900; }
   .black { font-weight: 900; }
-  .glow { text-shadow: 0 0 30px rgba(255,106,0,.85), 0 0 80px rgba(255,60,0,.55); }
+  .fire { color: var(--fire); }
+  .gold { color: var(--gold); }
+  .glow { text-shadow: 0 0 30px rgba(255,106,0,.85), 0 0 80px rgba(255,60,0,.55), 0 6px 24px rgba(0,0,0,.8); }
+  .pill { display: inline-block; padding: 14px 44px; border-radius: 80px; background: rgba(13,9,6,.72); border: 3px solid rgba(255,182,39,.6); text-shadow: none; }
 
-  /* S1 */
-  #s1-hang { font-size: 520px; line-height: 1; color: var(--fire); }
-  #s1-bar { font-size: 230px; font-weight: 900; letter-spacing: 8px; color: var(--cream); margin-top: -40px; font-family: "Noto Sans TC", sans-serif; }
-  #s1-kushi { font-size: 170px; letter-spacing: 60px; margin-right: -60px; color: var(--gold); }
-  #s1-tag { font-size: 44px; letter-spacing: 18px; color: var(--cream); margin-top: 50px; opacity: .8; }
-
-  /* S2 */
-  #s2 { justify-content: flex-start; padding-top: 420px; }
-  .s2-line { font-size: 200px; }
-  #s2-a { color: var(--cream); }
-  #s2-b { color: var(--fire); margin-top: 10px; }
-  #s2-c { font-size: 60px; letter-spacing: 12px; color: var(--gold); position: absolute; top: 1560px; left: 0; right: 0; }
-
-  /* S3 */
-  .flash { position: absolute; font-size: 250px; }
-
-  /* S4 */
-  #s4-a { font-size: 150px; color: var(--cream); }
-  #s4-b { font-size: 220px; color: var(--fire); margin-top: 10px; white-space: nowrap; }
-  #s4-bar { width: 0; height: 14px; background: linear-gradient(90deg, var(--red), var(--gold)); margin-top: 60px; border-radius: 7px; }
-
-  /* S5 */
-  #s5 { justify-content: flex-start; padding-top: 250px; }
-  #s5-logo { display: flex; align-items: baseline; gap: 10px; }
-  #s5-logo .h { font-size: 300px; color: var(--fire); }
-  #s5-logo .b { font-size: 170px; font-weight: 900; }
-  #s5-kushi { font-size: 120px; letter-spacing: 40px; margin-right: -40px; color: var(--gold); margin-top: -10px; }
-  .card { width: 900px; margin-top: 50px; border: 3px solid rgba(255,182,39,.55); border-radius: 36px; background: rgba(20,12,8,.72); padding: 50px 56px; text-align: left; }
+  #end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 250px; opacity: 0; }
+  #e-logo { display: flex; align-items: baseline; gap: 10px; }
+  #e-logo .h { font-size: 300px; color: var(--fire); }
+  #e-logo .b { font-size: 170px; font-weight: 900; }
+  #e-kushi { font-size: 120px; letter-spacing: 40px; margin-right: -40px; color: var(--gold); margin-top: -10px; }
+  .card { width: 900px; margin-top: 50px; border: 3px solid rgba(255,182,39,.55); border-radius: 36px; background: rgba(20,12,8,.78); padding: 50px 56px; text-align: left; }
   .row { display: flex; align-items: center; gap: 34px; padding: 22px 0; }
   .row + .row { border-top: 2px dashed rgba(255,243,224,.18); }
   .ico { flex: none; width: 96px; height: 96px; border-radius: 50%; background: var(--fire); display: flex; align-items: center; justify-content: center; }
@@ -61,44 +45,20 @@
   .lbl { font-size: 34px; color: var(--gold); letter-spacing: 6px; }
   .val { font-size: 64px; font-weight: 900; letter-spacing: 2px; line-height: 1.2; }
   .val.addr { font-size: 54px; }
-  #s5-cta { margin-top: 60px; font-size: 76px; letter-spacing: 14px; color: var(--cream); padding: 22px 70px; border-radius: 80px; background: linear-gradient(90deg, var(--red), var(--fire)); }
+  #e-cta { margin-top: 60px; font-size: 76px; letter-spacing: 14px; color: var(--cream); padding: 22px 70px; border-radius: 80px; background: linear-gradient(90deg, var(--red), var(--fire)); }
+  #end > * { will-change: transform, opacity; }
 </style>
 </head>
 <body>
 <div id="stage">
-  <div id="photo"></div>
+  <div id="media"></div>
   <div id="shade"></div>
   <canvas id="fx" width="1080" height="1920"></canvas>
-
-  <div class="layer" id="s1">
-    <div class="el serif glow" id="s1-hang">夯</div>
-    <div class="el" id="s1-bar">Bar</div>
-    <div class="el serif" id="s1-kushi">串燒</div>
-    <div class="el" id="s1-tag">宜蘭市．炭火串燒酒場</div>
-  </div>
-
-  <div class="layer" id="s2">
-    <div class="el serif s2-line" id="s2-a">炭火直烤</div>
-    <div class="el serif s2-line glow" id="s2-b">香到犯規</div>
-    <div class="el black" id="s2-c">一串一串　現點現烤</div>
-  </div>
-
-  <div class="layer" id="s3">
-    <div class="el serif flash" id="s3-a">下班後</div>
-    <div class="el serif flash glow" id="s3-b" style="color:var(--fire)">來一串</div>
-    <div class="el serif flash" id="s3-c" style="color:var(--gold)">配一杯</div>
-  </div>
-
-  <div class="layer" id="s4">
-    <div class="el serif" id="s4-a">今晚，</div>
-    <div class="el serif glow" id="s4-b">夯一下！</div>
-    <div class="el" id="s4-bar"></div>
-  </div>
-
-  <div class="layer" id="s5">
-    <div class="el" id="s5-logo"><span class="h serif glow">夯</span><span class="b">Bar</span></div>
-    <div class="el serif" id="s5-kushi">串燒</div>
-    <div class="el card" id="s5-card">
+  <div id="texts"></div>
+  <div id="end">
+    <div id="e-logo"><span class="h serif glow">夯</span><span class="b">Bar</span></div>
+    <div id="e-kushi" class="serif">串燒</div>
+    <div class="card" id="e-card">
       <div class="row">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div>
         <div><div class="lbl">地址</div><div class="val addr">宜蘭市健康路2段135號</div></div>
@@ -112,67 +72,111 @@
         <div><div class="lbl">手機</div><div class="val">0960-298-898</div></div>
       </div>
     </div>
-    <div class="el black" id="s5-cta">歡迎訂位</div>
+    <div id="e-cta" class="black">歡迎訂位</div>
   </div>
+  <div id="flash"></div>
 </div>
 
 <script>
-// ---------- 時間軸（秒） ----------
-const DURATION = 15;
-const SCENES = { s1: [0, 3.2], s2: [3.2, 6.4], s3: [6.4, 9.6], s4: [9.6, 12.4], s5: [12.4, 15] };
+const DURATION = 30;
+const FPS = 30;
 
-// 照片：由 render.mjs 注入 window.PHOTOS（promo/photos 內的檔案）。沒有照片時只顯示動態字卡。
-const PHOTOS = window.PHOTOS || [];
-// 每張照片出現的時段；照片多於時段時只取前幾張
-const PHOTO_SLOTS = [[3.2, 4.8], [4.8, 6.4], [6.4, 7.47], [7.47, 8.53], [8.53, 9.6], [9.6, 12.4]];
+// ---------- 鏡頭表 ----------
+// video: 使用 render.mjs 從 media/<clip>.mp4 抽出的影格（window.FRAMES[clip] = 影格 URL 陣列），from = 從影片第幾秒開始
+// photo: media/<file>.jpg，zoom/pan 為緩慢推近方向
+const SHOTS = [
+  { t: [0.0, 3.0],   video: 'grill',   from: 0,   dark: 0.55 },
+  { t: [3.0, 5.4],   video: 'closeup', from: 0,   dark: 0.25 },
+  { t: [5.4, 7.6],   photo: 'prep',    pan: [0, -40], zoom: [1.12, 1.0], dark: 0.3 },
+  { t: [7.6, 9.8],   photo: 'tongs',   pan: [40, 0],  zoom: [1.05, 1.18], dark: 0.3 },
+  { t: [9.8, 12.0],  photo: 'chef',    pan: [0, 30],  zoom: [1.15, 1.05], dark: 0.3 },
+  { t: [12.0, 16.5], video: 'banner',  from: 2.0, dark: 0.15 },
+  { t: [16.5, 19.7], video: 'grill',   from: 3.3, dark: 0.45 },
+  { t: [19.7, 23.0], photo: 'storefront', pan: [0, 0], zoom: [1.0, 1.12], dark: 0.35 },
+  { t: [23.0, 30.0], photo: 'street',  pan: [0, 0],  zoom: [1.1, 1.2], dark: 0.72, blur: 10 },
+];
+// 切換鏡頭時的閃光
+const FLASHES = [3.0, 12.0, 16.5, 19.7, 23.0];
+
+// ---------- 文字 ----------
+// anim: slam / left / right / up / pop / punch
+const TEXTS = [
+  // 開場
+  { t: [0.2, 2.8],  y: 520,  html: '夯', cls: 'serif glow fire', size: 480, anim: 'slam' },
+  { t: [0.75, 2.8], y: 1020, html: 'Bar', cls: 'black', size: 220, anim: 'left' },
+  { t: [1.1, 2.8],  y: 1290, html: '串燒', cls: 'serif gold', size: 160, anim: 'up', ls: 50 },
+  { t: [1.6, 2.8],  y: 1530, html: '宜蘭市．炭火串燒酒場', cls: '', size: 46, anim: 'up', ls: 14 },
+  // 炭火
+  { t: [3.1, 5.3],  y: 260,  html: '炭火直烤', cls: 'serif', size: 180, anim: 'left' },
+  { t: [3.5, 5.3],  y: 470,  html: '香到犯規', cls: 'serif glow fire', size: 180, anim: 'right' },
+  // 備料
+  { t: [5.5, 7.5],  y: 230,  html: '新鮮備料', cls: 'serif', size: 170, anim: 'punch' },
+  { t: [5.8, 7.5],  y: 430,  html: '<span class="pill gold">雞肉．香腸．甜不辣．青蔬</span>', cls: 'black', size: 54, anim: 'up' },
+  // 手作
+  { t: [7.7, 11.9], y: 230,  html: '一串一串', cls: 'serif', size: 180, anim: 'left' },
+  { t: [8.1, 11.9], y: 440,  html: '現點現烤', cls: 'serif glow fire', size: 180, anim: 'right' },
+  { t: [9.9, 11.9], y: 1560, html: '<span class="pill">用心顧火　每一串都到位</span>', cls: 'black', size: 56, anim: 'up' },
+  // 招牌
+  { t: [12.6, 16.4], y: 1500, html: '<span class="pill">這裡有酒有菜 🍻</span>', cls: 'black', size: 70, anim: 'pop' },
+  // 節奏字卡
+  { t: [16.6, 17.6], y: 760, html: '下班後', cls: 'serif', size: 250, anim: 'punch' },
+  { t: [17.6, 18.6], y: 760, html: '來一串', cls: 'serif glow fire', size: 250, anim: 'punch' },
+  { t: [18.6, 19.7], y: 760, html: '配一杯', cls: 'serif gold', size: 250, anim: 'punch' },
+  // 標語
+  { t: [20.0, 22.9], y: 300, html: '今晚，', cls: 'serif', size: 150, anim: 'up' },
+  { t: [20.4, 22.9], y: 480, html: '夯一下！', cls: 'serif glow fire', size: 220, anim: 'pop' },
+];
 
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const prog = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
 const easeOut = p => 1 - Math.pow(1 - p, 3);
 const easeIn = p => p * p * p;
+const easeInOut = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 const easeBack = p => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
 const $ = id => document.getElementById(id);
 
-function set(id, opacity, transform = '') {
-  const e = $(id);
-  e.style.opacity = opacity;
-  e.style.transform = transform;
-}
-
-// 進場 + 出場的通用透明度
-function life(t, inA, inB, outA, outB) {
-  return Math.min(easeOut(prog(t, inA, inB)), 1 - prog(t, outA, outB));
-}
-
-function showLayer(id, t) {
-  const [a, b] = SCENES[id];
-  $(id).style.display = (t >= a - 0.01 && t <= b + 0.01) ? 'flex' : 'none';
-}
+// ---------- 建立元素 ----------
+const FRAMES = window.FRAMES || {};
+const mediaEls = SHOTS.map(s => {
+  const img = document.createElement('img');
+  if (s.photo) img.src = `media/${s.photo}.jpg`;
+  if (s.blur) img.style.filter += ` blur(${s.blur}px)`;
+  $('media').appendChild(img);
+  return img;
+});
+const textEls = TEXTS.map(d => {
+  const e = document.createElement('div');
+  e.className = 't ' + d.cls;
+  e.innerHTML = d.html;
+  e.style.top = d.y + 'px';
+  e.style.fontSize = d.size + 'px';
+  e.style.lineHeight = 1.15;
+  if (d.ls) { e.style.letterSpacing = d.ls + 'px'; e.style.textIndent = d.ls + 'px'; }
+  $('texts').appendChild(e);
+  return e;
+});
 
 // ---------- 火星粒子 ----------
 let seed = 7;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-const EMBERS = Array.from({ length: 140 }, () => ({
-  x: rnd() * 1080, y: rnd() * 2200, s: 1.5 + rnd() * 5, v: 90 + rnd() * 260,
+const EMBERS = Array.from({ length: 110 }, () => ({
+  x: rnd() * 1080, y: rnd() * 2200, s: 1.5 + rnd() * 4.5, v: 90 + rnd() * 260,
   w: rnd() * 6.28, a: 30 + rnd() * 60, hue: 18 + rnd() * 30
 }));
 const ctx = $('fx').getContext('2d');
 
-function flicker(t) {
-  return 0.75 + 0.12 * Math.sin(t * 13.1) + 0.08 * Math.sin(t * 29.7 + 1) + 0.05 * Math.sin(t * 7.3 + 2);
-}
-
-function drawFx(t, heat) {
+function drawFx(t, heat, glow) {
   ctx.clearRect(0, 0, 1080, 1920);
-  // 底部炭火光
-  const f = flicker(t) * heat;
-  const g = ctx.createRadialGradient(540, 2050, 50, 540, 2050, 1300);
-  g.addColorStop(0, `rgba(255,110,20,${0.75 * f})`);
-  g.addColorStop(0.35, `rgba(220,50,10,${0.35 * f})`);
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 1080, 1920);
-
+  if (glow > 0) {
+    const f = (0.75 + 0.12 * Math.sin(t * 13.1) + 0.08 * Math.sin(t * 29.7 + 1)) * glow;
+    const g = ctx.createRadialGradient(540, 2050, 50, 540, 2050, 1300);
+    g.addColorStop(0, `rgba(255,110,20,${0.7 * f})`);
+    g.addColorStop(0.35, `rgba(220,50,10,${0.3 * f})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 1080, 1920);
+  }
   ctx.globalCompositeOperation = 'lighter';
   for (const p of EMBERS) {
     const y = ((p.y - p.v * t) % 2200 + 2200) % 2200 - 140;
@@ -189,138 +193,78 @@ function drawFx(t, heat) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-// ---------- 串燒插圖（S2，無照片時） ----------
-function drawSkewer(t, x0, y, alpha) {
-  if (alpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.translate(x0, y);
-  ctx.rotate(-0.08);
-  ctx.fillStyle = '#c89a5b';
-  ctx.fillRect(-470, -9, 940, 18);
-  ctx.beginPath(); ctx.moveTo(470, -9); ctx.lineTo(530, 0); ctx.lineTo(470, 9); ctx.fill();
-  const pieces = ['m', 'g', 'm', 'g', 'm'];
-  pieces.forEach((k, i) => {
-    const cx = -300 + i * 150;
-    if (k === 'm') {
-      const mg = ctx.createLinearGradient(cx, -85, cx, 85);
-      mg.addColorStop(0, '#b0521f'); mg.addColorStop(0.5, '#7a2e10'); mg.addColorStop(1, '#4a1a08');
-      ctx.fillStyle = mg;
-      roundRect(cx - 70, -85, 140, 170, 38); ctx.fill();
-      ctx.fillStyle = 'rgba(255,190,90,.35)';
-      roundRect(cx - 52, -70, 40, 60, 16); ctx.fill();
-      ctx.strokeStyle = 'rgba(20,6,2,.8)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
-      for (let j = -1; j <= 1; j++) { ctx.beginPath(); ctx.moveTo(cx - 45, j * 45 - 18); ctx.lineTo(cx + 45, j * 45 + 18); ctx.stroke(); }
-    } else {
-      const gg = ctx.createLinearGradient(cx, -60, cx, 60);
-      gg.addColorStop(0, '#d8e8a0'); gg.addColorStop(1, '#6f9b2c');
-      ctx.fillStyle = gg;
-      roundRect(cx - 42, -60, 84, 120, 30); ctx.fill();
-      ctx.fillStyle = 'rgba(60,30,10,.6)';
-      roundRect(cx - 30, -12, 60, 24, 10); ctx.fill();
-    }
-  });
-  ctx.restore();
-  // 白煙
-  for (let i = 0; i < 9; i++) {
-    const ph = (t * 0.55 + i / 9) % 1;
-    const sx = x0 - 320 + i * 80 + Math.sin(t * 2 + i) * 30;
-    const sy = y - 110 - ph * 520;
-    const sr = 40 + ph * 120;
-    const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
-    sg.addColorStop(0, `rgba(255,240,225,${0.16 * (1 - ph) * alpha})`);
-    sg.addColorStop(1, 'rgba(255,240,225,0)');
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.29); ctx.fill();
+// ---------- 文字動畫 ----------
+function animText(e, d, t) {
+  const [a, b] = d.t;
+  if (t < a || t > b) { e.style.opacity = 0; return; }
+  const out = prog(t, b - 0.2, b);
+  let op = 1, tf = '';
+  switch (d.anim) {
+    case 'slam': { const p = prog(t, a, a + 0.4); op = Math.min(p * 3, 1); tf = `scale(${3.2 - 2.2 * easeIn(p) + out * 0.3})`; break; }
+    case 'left': { const p = easeOut(prog(t, a, a + 0.3)); op = p; tf = `translateX(${(1 - p) * -700}px)`; break; }
+    case 'right': { const p = easeOut(prog(t, a, a + 0.3)); op = p; tf = `translateX(${(1 - p) * 700}px)`; break; }
+    case 'up': { const p = easeOut(prog(t, a, a + 0.35)); op = p; tf = `translateY(${(1 - p) * 60}px)`; break; }
+    case 'pop': { const p = prog(t, a, a + 0.35); op = Math.min(p * 2.5, 1); tf = `scale(${0.3 + 0.7 * easeBack(p) + 0.03 * Math.sin((t - a) * 6) * prog(t, a + 0.4, a + 0.7)})`; break; }
+    case 'punch': { const p = prog(t, a, a + 0.22); op = Math.min(p * 2, 1); tf = `scale(${1.3 - 0.3 * easeOut(p) + 0.05 * prog(t, a, b)})`; break; }
   }
-}
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
-
-// ---------- 照片（Ken Burns） ----------
-function drawPhoto(t) {
-  const ph = $('photo'), sh = $('shade');
-  let shown = false;
-  PHOTO_SLOTS.forEach(([a, b], i) => {
-    if (shown || i >= PHOTOS.length || t < a || t >= b) return;
-    shown = true;
-    const p = prog(t, a, b);
-    ph.style.backgroundImage = `url("${PHOTOS[i]}")`;
-    ph.style.opacity = Math.min(prog(t, a, a + 0.25), 1);
-    const z = 1.08 + 0.12 * p;
-    const dx = (i % 2 ? -1 : 1) * 30 * (p - 0.5);
-    ph.style.transform = `scale(${z}) translateX(${dx}px)`;
-    sh.style.opacity = 1;
-  });
-  if (!shown) { ph.style.opacity = 0; sh.style.opacity = 0; }
-  return shown;
+  e.style.opacity = op * (1 - out);
+  e.style.transform = tf;
 }
 
 // ---------- 主渲染 ----------
-window.render = function (t) {
-  Object.keys(SCENES).forEach(id => showLayer(id, t));
-  const hasPhoto = drawPhoto(t);
+window.render = async function (t) {
+  let cur = SHOTS.findIndex(s => t >= s.t[0] && t < s.t[1]);
+  if (cur < 0) cur = SHOTS.length - 1;
+  const s = SHOTS[cur];
+  const lt = t - s.t[0];
+  const p = prog(t, s.t[0], s.t[1]);
 
-  // 螢幕震動（「夯」落下時）
-  const shakeP = prog(t, 0.55, 0.95);
-  const shake = shakeP > 0 && shakeP < 1 ? (1 - shakeP) * 18 : 0;
+  mediaEls.forEach((img, i) => { img.style.opacity = i === cur ? 1 : 0; });
+  const img = mediaEls[cur];
+  const punch = 1 + 0.08 * (1 - easeOut(prog(lt, 0, 0.3)));
+  if (s.video) {
+    const list = FRAMES[s.video] || [];
+    const idx = Math.min(list.length - 1, Math.round((s.from + lt) * FPS));
+    if (list.length && img.getAttribute('src') !== list[idx]) img.src = list[idx];
+    img.style.transform = `scale(${(1.02 + 0.04 * p) * punch})`;
+  } else {
+    const z = lerp(s.zoom[0], s.zoom[1], easeInOut(p));
+    img.style.transform = `scale(${z * punch}) translate(${lerp(-s.pan[0], s.pan[0], p)}px, ${lerp(-s.pan[1], s.pan[1], p)}px)`;
+  }
+  $('shade').style.background =
+    `linear-gradient(180deg, rgba(13,9,6,${Math.min(s.dark + 0.35, 0.9)}) 0%, rgba(13,9,6,${s.dark}) 35%, rgba(13,9,6,${s.dark * 0.6}) 60%, rgba(13,9,6,${Math.min(s.dark + 0.3, 0.9)}) 100%)`;
+
+  // 開場「夯」落下時震動
+  const sp = prog(t, 0.55, 0.95);
+  const shake = sp > 0 && sp < 1 ? (1 - sp) * 18 : 0;
   $('stage').style.transform = `translate(${Math.sin(t * 90) * shake}px, ${Math.cos(t * 77) * shake}px)`;
 
-  drawFx(t, hasPhoto ? 0.6 : 1);
+  // 閃光轉場
+  let fl = 0;
+  for (const f of FLASHES) if (t >= f - 0.05 && t < f + 0.25) fl = Math.max(fl, t < f ? 0.6 : 0.6 * (1 - prog(t, f, f + 0.25)));
+  $('flash').style.opacity = fl;
 
-  // S1 開場
-  {
-    const out = prog(t, 2.85, 3.2);
-    const p = prog(t, 0.2, 0.6);
-    set('s1-hang', Math.min(p * 3, 1) * (1 - out), `scale(${3.2 - 2.2 * easeIn(p) + out * 0.3})`);
-    set('s1-bar', life(t, 0.75, 1.05, 2.85, 3.2), `translateX(${(1 - easeOut(prog(t, 0.75, 1.05))) * 500}px)`);
-    set('s1-kushi', life(t, 1.1, 1.45, 2.85, 3.2), `translateY(${(1 - easeBack(prog(t, 1.1, 1.45))) * 120}px)`);
-    set('s1-tag', life(t, 1.6, 2.0, 2.85, 3.2) * 0.85, `translateY(${(1 - easeOut(prog(t, 1.6, 2.0))) * 40}px)`);
+  const inEnd = t >= 23;
+  drawFx(t, inEnd || t < 3 ? 1 : 0.55, inEnd ? 0.8 : (t < 3 ? 0.6 : 0));
+
+  TEXTS.forEach((d, i) => animText(textEls[i], d, t));
+
+  // 結尾資訊
+  const end = $('end');
+  end.style.opacity = inEnd ? 1 : 0;
+  if (inEnd) {
+    const set = (id, op, tf) => { $(id).style.opacity = op; $(id).style.transform = tf; };
+    set('e-logo', easeOut(prog(t, 23.1, 23.4)), `scale(${0.6 + 0.4 * easeBack(prog(t, 23.1, 23.45))})`);
+    set('e-kushi', easeOut(prog(t, 23.3, 23.6)), `translateY(${(1 - easeOut(prog(t, 23.3, 23.6))) * 50}px)`);
+    set('e-card', easeOut(prog(t, 23.5, 23.9)), `translateY(${(1 - easeOut(prog(t, 23.5, 23.9))) * 120}px)`);
+    const pulse = 1 + 0.04 * Math.sin((t - 24.3) * 6) * prog(t, 24.3, 24.5);
+    set('e-cta', easeOut(prog(t, 24.0, 24.3)), `scale(${(0.7 + 0.3 * easeBack(prog(t, 24.0, 24.3))) * pulse})`);
   }
 
-  // S2 炭火直烤
-  {
-    set('s2-a', life(t, 3.3, 3.6, 6.1, 6.4), `translateX(${(1 - easeOut(prog(t, 3.3, 3.6))) * -600}px)`);
-    set('s2-b', life(t, 3.75, 4.05, 6.1, 6.4), `translateX(${(1 - easeOut(prog(t, 3.75, 4.05))) * 600}px)`);
-    set('s2-c', life(t, 4.6, 5.0, 6.1, 6.4), `translateY(${(1 - easeOut(prog(t, 4.6, 5.0))) * 40}px)`);
-    if (!hasPhoto && t >= 3.2 && t < 6.4) {
-      const sx = 540 + (1 - easeOut(prog(t, 3.35, 4.2))) * 1200;
-      drawSkewer(t, sx, 1330, 1 - prog(t, 6.1, 6.4));
-    }
-  }
-
-  // S3 節奏字卡
-  ['s3-a', 's3-b', 's3-c'].forEach((id, i) => {
-    const a = 6.4 + i * 1.067, b = a + 1.067;
-    const p = prog(t, a, a + 0.22);
-    const vis = t >= a && t < b ? Math.min(p * 2, 1) * (1 - prog(t, b - 0.12, b)) : 0;
-    set(id, vis, `scale(${1.3 - 0.3 * easeOut(p) + 0.05 * prog(t, a, b)}) rotate(${(i - 1) * -3}deg)`);
-  });
-
-  // S4 標語
-  {
-    const p = prog(t, 10.1, 10.45);
-    set('s4-a', life(t, 9.7, 10.0, 12.1, 12.4), `translateY(${(1 - easeOut(prog(t, 9.7, 10.0))) * -60}px)`);
-    set('s4-b', Math.min(p * 2.5, 1) * (1 - prog(t, 12.1, 12.4)), `scale(${0.3 + 0.7 * easeBack(p) + 0.04 * Math.sin(t * 6) * prog(t, 10.5, 11)})`);
-    const bar = $('s4-bar');
-    bar.style.opacity = 1 - prog(t, 12.1, 12.4);
-    bar.style.width = `${760 * easeOut(prog(t, 10.5, 11.1))}px`;
-  }
-
-  // S5 結尾資訊
-  {
-    set('s5-logo', easeOut(prog(t, 12.5, 12.8)), `scale(${0.6 + 0.4 * easeBack(prog(t, 12.5, 12.85))})`);
-    set('s5-kushi', easeOut(prog(t, 12.7, 13.0)), `translateY(${(1 - easeOut(prog(t, 12.7, 13.0))) * 50}px)`);
-    set('s5-card', easeOut(prog(t, 12.9, 13.3)), `translateY(${(1 - easeOut(prog(t, 12.9, 13.3))) * 120}px)`);
-    const pulse = 1 + 0.04 * Math.sin((t - 13.6) * 8) * prog(t, 13.6, 13.8);
-    set('s5-cta', easeOut(prog(t, 13.4, 13.7)), `scale(${(0.7 + 0.3 * easeBack(prog(t, 13.4, 13.7))) * pulse})`);
-  }
+  if (s.video) await img.decode().catch(() => {});
 };
 
-// 瀏覽器直接開啟時自動預覽
+// 瀏覽器直接開啟時自動預覽（影片鏡頭需經 render.mjs 抽格後才會顯示）
 if (!window.__RENDERING__) {
   const start = performance.now();
   const loop = () => { window.render(((performance.now() - start) / 1000) % DURATION); requestAnimationFrame(loop); };
