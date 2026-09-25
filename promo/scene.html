@@ -65,20 +65,22 @@
       </div>
       <div class="row">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg></div>
-        <div><div class="lbl">訂位專線</div><div class="val">03-936-6628</div></div>
+        <div><div class="lbl">訂購專線</div><div class="val">03-936-6628</div></div>
       </div>
       <div class="row">
         <div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
         <div><div class="lbl">手機</div><div class="val">0960-298-898</div></div>
       </div>
     </div>
-    <div id="e-cta" class="black">歡迎訂位</div>
+    <div id="e-cta" class="black">歡迎來電下單</div>
   </div>
   <div id="flash"></div>
 </div>
 
 <script>
 const DURATION = 30;
+// 結尾按鈕文字（render.mjs 可用 CTA 環境變數覆寫）
+if (window.CTA) document.getElementById('e-cta').textContent = window.CTA;
 const FPS = 30;
 
 // ---------- 鏡頭表 ----------

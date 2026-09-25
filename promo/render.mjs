@@ -1,5 +1,5 @@
 // 將 scene.html 逐格渲染成 1080x1920 MP4。
-// 用法：node promo/render.mjs [輸出檔]（預設 promo/out/huobar-promo.mp4）
+// 用法：[CTA=結尾按鈕文字] node promo/render.mjs [輸出檔]（預設 promo/out/huobar-promo.mp4）
 // 素材放在 promo/media/：影片 <名稱>.mp4（已轉成 1080x1920 SDR）、照片 <名稱>.jpg，於 scene.html 的 SHOTS 指定。
 import { chromium } from 'playwright';
 import { spawn, execSync, execFileSync } from 'node:child_process';
@@ -31,7 +31,7 @@ for (const f of readdirSync(media).filter(f => f.endsWith('.mp4'))) {
 mkdirSync(dirname(out), { recursive: true });
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
-await page.addInitScript(f => { window.__RENDERING__ = true; window.FRAMES = f; }, frames);
+await page.addInitScript(([f, cta]) => { window.__RENDERING__ = true; window.FRAMES = f; window.CTA = cta; }, [frames, process.env.CTA || '']);
 await page.goto(pathToFileURL(join(here, 'scene.html')).href, { waitUntil: 'networkidle' });
 await page.evaluate(async () => {
   const text = document.body.innerText;
