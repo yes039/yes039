@@ -24,3 +24,11 @@ pip install imageio-ffmpeg numpy  # ffmpeg 與配樂合成
 NODE_PATH=$(npm root -g) node promo/render.mjs   # 需要 playwright
 CTA=歡迎點餐外帶 NODE_PATH=$(npm root -g) node promo/render.mjs promo/out/huobar-promo-takeout.mp4
 ```
+
+## 背景音樂版本
+| 版本 | 腳本 | 風格 | 影片 |
+|---|---|---|---|
+| 第一版 | `music.py` | 台客搖滾，E 大調，150 BPM，破音吉他＋推弦主奏 | `huobar-promo.mp4`、`huobar-promo-takeout.mp4` |
+| 第二版 | `music_v2.py` | 台客搖滾＋那卡西，A 小調（Am–F–G–E），155 BPM，電子琴「蹦恰」＋吉他與嗩吶對答 | `huobar-promo-v2.mp4`、`huobar-promo-takeout-v2.mp4` |
+
+第二版渲染：`BGM=v2 NODE_PATH=$(npm root -g) node promo/render.mjs promo/out/huobar-promo-v2.mp4`

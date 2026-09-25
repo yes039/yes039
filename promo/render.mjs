@@ -1,5 +1,5 @@
 // 將 scene.html 逐格渲染成 1080x1920 MP4。
-// 用法：[CTA=結尾按鈕文字] node promo/render.mjs [輸出檔]（預設 promo/out/huobar-promo.mp4）
+// 用法：[CTA=結尾按鈕文字] [BGM=v2] node promo/render.mjs [輸出檔]（預設 promo/out/huobar-promo.mp4）
 // 素材放在 promo/media/：影片 <名稱>.mp4（已轉成 1080x1920 SDR）、照片 <名稱>.jpg，於 scene.html 的 SHOTS 指定。
 import { chromium } from 'playwright';
 import { spawn, execSync, execFileSync } from 'node:child_process';
@@ -41,9 +41,10 @@ await page.evaluate(async () => {
   await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
 });
 
-// 背景音樂：music.py 合成的原創配樂（media/bgm.wav），音量正規化到 -14 LUFS
-const bgm = join(media, 'bgm.wav');
-if (!existsSync(bgm)) execFileSync('python3', [join(here, 'music.py')], { stdio: 'inherit' });
+// 背景音樂：music.py（bgm.wav）或 music_v2.py（BGM=v2 → bgm-v2.wav）合成的原創配樂，音量正規化到 -14 LUFS
+const v = process.env.BGM === 'v2' ? '-v2' : '';
+const bgm = join(media, `bgm${v}.wav`);
+if (!existsSync(bgm)) execFileSync('python3', [join(here, `music${v.replace('-', '_')}.py`)], { stdio: 'inherit' });
 const ff = spawn(ffmpeg, [
   '-y', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-',
   '-i', bgm,
