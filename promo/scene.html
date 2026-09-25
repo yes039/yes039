@@ -91,15 +91,17 @@ const SHOTS = [
   { t: [7.6, 8.3],   photo: 'rolls',    pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
   { t: [8.3, 9.0],   photo: 'veggies',  pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
   { t: [9.0, 9.7],   photo: 'tofuskin', pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
-  { t: [9.7, 11.9],   photo: 'tongs',   pan: [40, 0],  zoom: [1.05, 1.18], dark: 0.3 },
+  { t: [9.7, 11.9],   photo: 'platter', pan: [0, 30],  zoom: [1.05, 1.18], dark: 0.3 },
   { t: [11.9, 14.1],  photo: 'chef',    pan: [0, 30],  zoom: [1.15, 1.05], dark: 0.3 },
   { t: [14.1, 18.6], video: 'banner',  from: 2.0, dark: 0.15 },
-  { t: [18.6, 21.8], video: 'grill',   from: 3.3, dark: 0.45 },
+  { t: [18.6, 19.7], video: 'grill',   from: 3.3, dark: 0.45 },
+  { t: [19.7, 20.7], photo: 'platter-close', pan: [0, 0], zoom: [1.15, 1.25], dark: 0.4 },
+  { t: [20.7, 21.8], video: 'grill',   from: 5.4, dark: 0.45 },
   { t: [21.8, 25.1], photo: 'storefront', pan: [0, 0], zoom: [1.0, 1.12], dark: 0.35 },
   { t: [25.1, 30.0], photo: 'street',  pan: [0, 0],  zoom: [1.1, 1.2], dark: 0.72, blur: 10 },
 ];
 // 切換鏡頭時的閃光
-const FLASHES = [3.0, 7.6, 14.1, 18.6, 21.8, 25.1];
+const FLASHES = [3.0, 7.6, 14.1, 18.6, 19.7, 20.7, 21.8, 25.1];
 
 // ---------- 文字 ----------
 // anim: slam / left / right / up / pop / punch
