@@ -88,15 +88,18 @@ const SHOTS = [
   { t: [0.0, 3.0],   video: 'grill',   from: 0,   dark: 0.55 },
   { t: [3.0, 5.4],   video: 'closeup', from: 0,   dark: 0.25 },
   { t: [5.4, 7.6],   photo: 'prep',    pan: [0, -40], zoom: [1.12, 1.0], dark: 0.3 },
-  { t: [7.6, 9.8],   photo: 'tongs',   pan: [40, 0],  zoom: [1.05, 1.18], dark: 0.3 },
-  { t: [9.8, 12.0],  photo: 'chef',    pan: [0, 30],  zoom: [1.15, 1.05], dark: 0.3 },
-  { t: [12.0, 16.5], video: 'banner',  from: 2.0, dark: 0.15 },
-  { t: [16.5, 19.7], video: 'grill',   from: 3.3, dark: 0.45 },
-  { t: [19.7, 23.0], photo: 'storefront', pan: [0, 0], zoom: [1.0, 1.12], dark: 0.35 },
-  { t: [23.0, 30.0], photo: 'street',  pan: [0, 0],  zoom: [1.1, 1.2], dark: 0.72, blur: 10 },
+  { t: [7.6, 8.3],   photo: 'rolls',    pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
+  { t: [8.3, 9.0],   photo: 'veggies',  pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
+  { t: [9.0, 9.7],   photo: 'tofuskin', pan: [0, 0], zoom: [1.2, 1.08], dark: 0.2 },
+  { t: [9.7, 11.9],   photo: 'tongs',   pan: [40, 0],  zoom: [1.05, 1.18], dark: 0.3 },
+  { t: [11.9, 14.1],  photo: 'chef',    pan: [0, 30],  zoom: [1.15, 1.05], dark: 0.3 },
+  { t: [14.1, 18.6], video: 'banner',  from: 2.0, dark: 0.15 },
+  { t: [18.6, 21.8], video: 'grill',   from: 3.3, dark: 0.45 },
+  { t: [21.8, 25.1], photo: 'storefront', pan: [0, 0], zoom: [1.0, 1.12], dark: 0.35 },
+  { t: [25.1, 30.0], photo: 'street',  pan: [0, 0],  zoom: [1.1, 1.2], dark: 0.72, blur: 10 },
 ];
 // 切換鏡頭時的閃光
-const FLASHES = [3.0, 12.0, 16.5, 19.7, 23.0];
+const FLASHES = [3.0, 7.6, 14.1, 18.6, 21.8, 25.1];
 
 // ---------- 文字 ----------
 // anim: slam / left / right / up / pop / punch
@@ -112,20 +115,25 @@ const TEXTS = [
   // 備料
   { t: [5.5, 7.5],  y: 230,  html: '新鮮備料', cls: 'serif', size: 170, anim: 'punch' },
   { t: [5.8, 7.5],  y: 430,  html: '<span class="pill gold">豆干．香腸．米血．鮮蔬</span>', cls: 'black', size: 54, anim: 'up' },
+  // 串串任你挑（快剪）
+  { t: [7.65, 9.7], y: 230, html: '串串任你挑', cls: 'serif glow fire', size: 170, anim: 'punch' },
+  { t: [7.7, 8.3],  y: 1560, html: '<span class="pill">蔥肉捲</span>', cls: 'black', size: 64, anim: 'pop' },
+  { t: [8.4, 9.0],  y: 1560, html: '<span class="pill">青椒．四季豆．櫛瓜</span>', cls: 'black', size: 64, anim: 'pop' },
+  { t: [9.1, 9.7],  y: 1560, html: '<span class="pill">豆皮．香腸．熱狗</span>', cls: 'black', size: 64, anim: 'pop' },
   // 手作
-  { t: [7.7, 11.9], y: 230,  html: '一串一串', cls: 'serif', size: 180, anim: 'left' },
-  { t: [8.1, 11.9], y: 440,  html: '現點現烤', cls: 'serif glow fire', size: 180, anim: 'right' },
-  { t: [9.9, 11.9], y: 1560, html: '<span class="pill">用心顧火　每一串都到位</span>', cls: 'black', size: 56, anim: 'up' },
+  { t: [9.8, 14.0], y: 230,  html: '一串一串', cls: 'serif', size: 180, anim: 'left' },
+  { t: [10.2, 14.0], y: 440,  html: '現點現烤', cls: 'serif glow fire', size: 180, anim: 'right' },
+  { t: [12.0, 14.0], y: 1560, html: '<span class="pill">用心顧火　每一串都到位</span>', cls: 'black', size: 56, anim: 'up' },
   // 招牌
-  { t: [12.6, 16.4], y: 1500, html: '<span class="pill">這裡有酒有菜 🍻</span>', cls: 'black', size: 70, anim: 'pop' },
+  { t: [14.7, 18.5], y: 1500, html: '<span class="pill">這裡有酒有菜 🍻</span>', cls: 'black', size: 70, anim: 'pop' },
   // 節奏字卡
-  { t: [16.6, 17.6], y: 760, html: '下班後', cls: 'serif', size: 250, anim: 'punch' },
-  { t: [17.6, 18.6], y: 760, html: '來一串', cls: 'serif glow fire', size: 250, anim: 'punch' },
-  { t: [18.6, 19.7], y: 760, html: '配一杯', cls: 'serif gold', size: 250, anim: 'punch' },
+  { t: [18.7, 19.7], y: 760, html: '下班後', cls: 'serif', size: 250, anim: 'punch' },
+  { t: [19.7, 20.7], y: 760, html: '來一串', cls: 'serif glow fire', size: 250, anim: 'punch' },
+  { t: [20.7, 21.8], y: 760, html: '配一杯', cls: 'serif gold', size: 250, anim: 'punch' },
   // 標語
-  { t: [20.0, 22.9], y: 300, html: '今晚，', cls: 'serif', size: 150, anim: 'up' },
-  { t: [20.4, 22.9], y: 480, html: '夯一下！', cls: 'serif glow fire', size: 220, anim: 'pop' },
-  { t: [21.0, 22.9], y: 1580, html: '<span class="pill gold">平價串燒．碳烤現做</span>', cls: 'black', size: 60, anim: 'up' },
+  { t: [22.1, 25.0], y: 300, html: '今晚，', cls: 'serif', size: 150, anim: 'up' },
+  { t: [22.5, 25.0], y: 480, html: '夯一下！', cls: 'serif glow fire', size: 220, anim: 'pop' },
+  { t: [23.1, 25.0], y: 1580, html: '<span class="pill gold">平價串燒．碳烤現做</span>', cls: 'black', size: 60, anim: 'up' },
 ];
 
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -245,7 +253,7 @@ window.render = async function (t) {
   for (const f of FLASHES) if (t >= f - 0.05 && t < f + 0.25) fl = Math.max(fl, t < f ? 0.6 : 0.6 * (1 - prog(t, f, f + 0.25)));
   $('flash').style.opacity = fl;
 
-  const inEnd = t >= 23;
+  const inEnd = t >= 25.1;
   drawFx(t, inEnd || t < 3 ? 1 : 0.55, inEnd ? 0.8 : (t < 3 ? 0.6 : 0));
 
   TEXTS.forEach((d, i) => animText(textEls[i], d, t));
@@ -255,11 +263,11 @@ window.render = async function (t) {
   end.style.opacity = inEnd ? 1 : 0;
   if (inEnd) {
     const set = (id, op, tf) => { $(id).style.opacity = op; $(id).style.transform = tf; };
-    set('e-logo', easeOut(prog(t, 23.1, 23.4)), `scale(${0.6 + 0.4 * easeBack(prog(t, 23.1, 23.45))})`);
-    set('e-kushi', easeOut(prog(t, 23.3, 23.6)), `translateY(${(1 - easeOut(prog(t, 23.3, 23.6))) * 50}px)`);
-    set('e-card', easeOut(prog(t, 23.5, 23.9)), `translateY(${(1 - easeOut(prog(t, 23.5, 23.9))) * 120}px)`);
-    const pulse = 1 + 0.04 * Math.sin((t - 24.3) * 6) * prog(t, 24.3, 24.5);
-    set('e-cta', easeOut(prog(t, 24.0, 24.3)), `scale(${(0.7 + 0.3 * easeBack(prog(t, 24.0, 24.3))) * pulse})`);
+    set('e-logo', easeOut(prog(t, 25.2, 25.5)), `scale(${0.6 + 0.4 * easeBack(prog(t, 25.2, 25.6))})`);
+    set('e-kushi', easeOut(prog(t, 25.4, 25.7)), `translateY(${(1 - easeOut(prog(t, 25.4, 25.7))) * 50}px)`);
+    set('e-card', easeOut(prog(t, 25.6, 26.0)), `translateY(${(1 - easeOut(prog(t, 25.6, 26.0))) * 120}px)`);
+    const pulse = 1 + 0.04 * Math.sin((t - 26.4) * 6) * prog(t, 26.4, 26.6);
+    set('e-cta', easeOut(prog(t, 26.1, 26.4)), `scale(${(0.7 + 0.3 * easeBack(prog(t, 26.1, 26.4))) * pulse})`);
   }
 
   if (s.video) await img.decode().catch(() => {});
