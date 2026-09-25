@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>夯Bar串燒 宣傳影片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;900&family=Noto+Serif+TC:wght@900&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0906;
+    --fire: #ff6a00;
+    --gold: #ffb627;
+    --red: #e8341c;
+    --cream: #fff3e0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+  body { font-family: "Noto Sans TC", "WenQuanYi Zen Hei", sans-serif; color: var(--cream); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  canvas { position: absolute; inset: 0; }
+  #photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; }
+  #shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,9,6,.55), rgba(13,9,6,.25) 40%, rgba(13,9,6,.8)); opacity: 0; }
+  .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .el { will-change: transform, opacity; opacity: 0; }
+  .serif { font-family: "Noto Serif TC", "WenQuanYi Zen Hei", serif; font-weight: 900; }
+  .black { font-weight: 900; }
+  .glow { text-shadow: 0 0 30px rgba(255,106,0,.85), 0 0 80px rgba(255,60,0,.55); }
+
+  /* S1 */
+  #s1-hang { font-size: 520px; line-height: 1; color: var(--fire); }
+  #s1-bar { font-size: 230px; font-weight: 900; letter-spacing: 8px; color: var(--cream); margin-top: -40px; font-family: "Noto Sans TC", sans-serif; }
+  #s1-kushi { font-size: 170px; letter-spacing: 60px; margin-right: -60px; color: var(--gold); }
+  #s1-tag { font-size: 44px; letter-spacing: 18px; color: var(--cream); margin-top: 50px; opacity: .8; }
+
+  /* S2 */
+  #s2 { justify-content: flex-start; padding-top: 420px; }
+  .s2-line { font-size: 200px; }
+  #s2-a { color: var(--cream); }
+  #s2-b { color: var(--fire); margin-top: 10px; }
+  #s2-c { font-size: 60px; letter-spacing: 12px; color: var(--gold); position: absolute; top: 1560px; left: 0; right: 0; }
+
+  /* S3 */
+  .flash { position: absolute; font-size: 250px; }
+
+  /* S4 */
+  #s4-a { font-size: 150px; color: var(--cream); }
+  #s4-b { font-size: 220px; color: var(--fire); margin-top: 10px; white-space: nowrap; }
+  #s4-bar { width: 0; height: 14px; background: linear-gradient(90deg, var(--red), var(--gold)); margin-top: 60px; border-radius: 7px; }
+
+  /* S5 */
+  #s5 { justify-content: flex-start; padding-top: 250px; }
+  #s5-logo { display: flex; align-items: baseline; gap: 10px; }
+  #s5-logo .h { font-size: 300px; color: var(--fire); }
+  #s5-logo .b { font-size: 170px; font-weight: 900; }
+  #s5-kushi { font-size: 120px; letter-spacing: 40px; margin-right: -40px; color: var(--gold); margin-top: -10px; }
+  .card { width: 900px; margin-top: 50px; border: 3px solid rgba(255,182,39,.55); border-radius: 36px; background: rgba(20,12,8,.72); padding: 50px 56px; text-align: left; }
+  .row { display: flex; align-items: center; gap: 34px; padding: 22px 0; }
+  .row + .row { border-top: 2px dashed rgba(255,243,224,.18); }
+  .ico { flex: none; width: 96px; height: 96px; border-radius: 50%; background: var(--fire); display: flex; align-items: center; justify-content: center; }
+  .ico svg { width: 54px; height: 54px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .lbl { font-size: 34px; color: var(--gold); letter-spacing: 6px; }
+  .val { font-size: 64px; font-weight: 900; letter-spacing: 2px; line-height: 1.2; }
+  .val.addr { font-size: 54px; }
+  #s5-cta { margin-top: 60px; font-size: 76px; letter-spacing: 14px; color: var(--cream); padding: 22px 70px; border-radius: 80px; background: linear-gradient(90deg, var(--red), var(--fire)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="photo"></div>
+  <div id="shade"></div>
+  <canvas id="fx" width="1080" height="1920"></canvas>
+
+  <div class="layer" id="s1">
+    <div class="el serif glow" id="s1-hang">夯</div>
+    <div class="el" id="s1-bar">Bar</div>
+    <div class="el serif" id="s1-kushi">串燒</div>
+    <div class="el" id="s1-tag">宜蘭市．炭火串燒酒場</div>
+  </div>
+
+  <div class="layer" id="s2">
+    <div class="el serif s2-line" id="s2-a">炭火直烤</div>
+    <div class="el serif s2-line glow" id="s2-b">香到犯規</div>
+    <div class="el black" id="s2-c">一串一串　現點現烤</div>
+  </div>
+
+  <div class="layer" id="s3">
+    <div class="el serif flash" id="s3-a">下班後</div>
+    <div class="el serif flash glow" id="s3-b" style="color:var(--fire)">來一串</div>
+    <div class="el serif flash" id="s3-c" style="color:var(--gold)">配一杯</div>
+  </div>
+
+  <div class="layer" id="s4">
+    <div class="el serif" id="s4-a">今晚，</div>
+    <div class="el serif glow" id="s4-b">夯一下！</div>
+    <div class="el" id="s4-bar"></div>
+  </div>
+
+  <div class="layer" id="s5">
+    <div class="el" id="s5-logo"><span class="h serif glow">夯</span><span class="b">Bar</span></div>
+    <div class="el serif" id="s5-kushi">串燒</div>
+    <div class="el card" id="s5-card">
+      <div class="row">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div>
+        <div><div class="lbl">地址</div><div class="val addr">宜蘭市健康路2段135號</div></div>
+      </div>
+      <div class="row">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg></div>
+        <div><div class="lbl">訂位專線</div><div class="val">03-936-6628</div></div>
+      </div>
+      <div class="row">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
+        <div><div class="lbl">手機</div><div class="val">0960-298-898</div></div>
+      </div>
+    </div>
+    <div class="el black" id="s5-cta">歡迎訂位</div>
+  </div>
+</div>
+
+<script>
+// ---------- 時間軸（秒） ----------
+const DURATION = 15;
+const SCENES = { s1: [0, 3.2], s2: [3.2, 6.4], s3: [6.4, 9.6], s4: [9.6, 12.4], s5: [12.4, 15] };
+
+// 照片：由 render.mjs 注入 window.PHOTOS（promo/photos 內的檔案）。沒有照片時只顯示動態字卡。
+const PHOTOS = window.PHOTOS || [];
+// 每張照片出現的時段；照片多於時段時只取前幾張
+const PHOTO_SLOTS = [[3.2, 4.8], [4.8, 6.4], [6.4, 7.47], [7.47, 8.53], [8.53, 9.6], [9.6, 12.4]];
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeIn = p => p * p * p;
+const easeBack = p => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+const $ = id => document.getElementById(id);
+
+function set(id, opacity, transform = '') {
+  const e = $(id);
+  e.style.opacity = opacity;
+  e.style.transform = transform;
+}
+
+// 進場 + 出場的通用透明度
+function life(t, inA, inB, outA, outB) {
+  return Math.min(easeOut(prog(t, inA, inB)), 1 - prog(t, outA, outB));
+}
+
+function showLayer(id, t) {
+  const [a, b] = SCENES[id];
+  $(id).style.display = (t >= a - 0.01 && t <= b + 0.01) ? 'flex' : 'none';
+}
+
+// ---------- 火星粒子 ----------
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const EMBERS = Array.from({ length: 140 }, () => ({
+  x: rnd() * 1080, y: rnd() * 2200, s: 1.5 + rnd() * 5, v: 90 + rnd() * 260,
+  w: rnd() * 6.28, a: 30 + rnd() * 60, hue: 18 + rnd() * 30
+}));
+const ctx = $('fx').getContext('2d');
+
+function flicker(t) {
+  return 0.75 + 0.12 * Math.sin(t * 13.1) + 0.08 * Math.sin(t * 29.7 + 1) + 0.05 * Math.sin(t * 7.3 + 2);
+}
+
+function drawFx(t, heat) {
+  ctx.clearRect(0, 0, 1080, 1920);
+  // 底部炭火光
+  const f = flicker(t) * heat;
+  const g = ctx.createRadialGradient(540, 2050, 50, 540, 2050, 1300);
+  g.addColorStop(0, `rgba(255,110,20,${0.75 * f})`);
+  g.addColorStop(0.35, `rgba(220,50,10,${0.35 * f})`);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 1080, 1920);
+
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of EMBERS) {
+    const y = ((p.y - p.v * t) % 2200 + 2200) % 2200 - 140;
+    const x = p.x + Math.sin(t * 1.6 + p.w) * p.a;
+    const life = clamp(y / 1920);
+    const al = life * (0.5 + 0.5 * Math.sin(t * 9 + p.w)) * heat;
+    const r = p.s * (0.6 + life);
+    const eg = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+    eg.addColorStop(0, `hsla(${p.hue},100%,70%,${al})`);
+    eg.addColorStop(1, `hsla(${p.hue},100%,50%,0)`);
+    ctx.fillStyle = eg;
+    ctx.beginPath(); ctx.arc(x, y, r * 4, 0, 6.29); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// ---------- 串燒插圖（S2，無照片時） ----------
+function drawSkewer(t, x0, y, alpha) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x0, y);
+  ctx.rotate(-0.08);
+  ctx.fillStyle = '#c89a5b';
+  ctx.fillRect(-470, -9, 940, 18);
+  ctx.beginPath(); ctx.moveTo(470, -9); ctx.lineTo(530, 0); ctx.lineTo(470, 9); ctx.fill();
+  const pieces = ['m', 'g', 'm', 'g', 'm'];
+  pieces.forEach((k, i) => {
+    const cx = -300 + i * 150;
+    if (k === 'm') {
+      const mg = ctx.createLinearGradient(cx, -85, cx, 85);
+      mg.addColorStop(0, '#b0521f'); mg.addColorStop(0.5, '#7a2e10'); mg.addColorStop(1, '#4a1a08');
+      ctx.fillStyle = mg;
+      roundRect(cx - 70, -85, 140, 170, 38); ctx.fill();
+      ctx.fillStyle = 'rgba(255,190,90,.35)';
+      roundRect(cx - 52, -70, 40, 60, 16); ctx.fill();
+      ctx.strokeStyle = 'rgba(20,6,2,.8)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+      for (let j = -1; j <= 1; j++) { ctx.beginPath(); ctx.moveTo(cx - 45, j * 45 - 18); ctx.lineTo(cx + 45, j * 45 + 18); ctx.stroke(); }
+    } else {
+      const gg = ctx.createLinearGradient(cx, -60, cx, 60);
+      gg.addColorStop(0, '#d8e8a0'); gg.addColorStop(1, '#6f9b2c');
+      ctx.fillStyle = gg;
+      roundRect(cx - 42, -60, 84, 120, 30); ctx.fill();
+      ctx.fillStyle = 'rgba(60,30,10,.6)';
+      roundRect(cx - 30, -12, 60, 24, 10); ctx.fill();
+    }
+  });
+  ctx.restore();
+  // 白煙
+  for (let i = 0; i < 9; i++) {
+    const ph = (t * 0.55 + i / 9) % 1;
+    const sx = x0 - 320 + i * 80 + Math.sin(t * 2 + i) * 30;
+    const sy = y - 110 - ph * 520;
+    const sr = 40 + ph * 120;
+    const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    sg.addColorStop(0, `rgba(255,240,225,${0.16 * (1 - ph) * alpha})`);
+    sg.addColorStop(1, 'rgba(255,240,225,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.29); ctx.fill();
+  }
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+// ---------- 照片（Ken Burns） ----------
+function drawPhoto(t) {
+  const ph = $('photo'), sh = $('shade');
+  let shown = false;
+  PHOTO_SLOTS.forEach(([a, b], i) => {
+    if (shown || i >= PHOTOS.length || t < a || t >= b) return;
+    shown = true;
+    const p = prog(t, a, b);
+    ph.style.backgroundImage = `url("${PHOTOS[i]}")`;
+    ph.style.opacity = Math.min(prog(t, a, a + 0.25), 1);
+    const z = 1.08 + 0.12 * p;
+    const dx = (i % 2 ? -1 : 1) * 30 * (p - 0.5);
+    ph.style.transform = `scale(${z}) translateX(${dx}px)`;
+    sh.style.opacity = 1;
+  });
+  if (!shown) { ph.style.opacity = 0; sh.style.opacity = 0; }
+  return shown;
+}
+
+// ---------- 主渲染 ----------
+window.render = function (t) {
+  Object.keys(SCENES).forEach(id => showLayer(id, t));
+  const hasPhoto = drawPhoto(t);
+
+  // 螢幕震動（「夯」落下時）
+  const shakeP = prog(t, 0.55, 0.95);
+  const shake = shakeP > 0 && shakeP < 1 ? (1 - shakeP) * 18 : 0;
+  $('stage').style.transform = `translate(${Math.sin(t * 90) * shake}px, ${Math.cos(t * 77) * shake}px)`;
+
+  drawFx(t, hasPhoto ? 0.6 : 1);
+
+  // S1 開場
+  {
+    const out = prog(t, 2.85, 3.2);
+    const p = prog(t, 0.2, 0.6);
+    set('s1-hang', Math.min(p * 3, 1) * (1 - out), `scale(${3.2 - 2.2 * easeIn(p) + out * 0.3})`);
+    set('s1-bar', life(t, 0.75, 1.05, 2.85, 3.2), `translateX(${(1 - easeOut(prog(t, 0.75, 1.05))) * 500}px)`);
+    set('s1-kushi', life(t, 1.1, 1.45, 2.85, 3.2), `translateY(${(1 - easeBack(prog(t, 1.1, 1.45))) * 120}px)`);
+    set('s1-tag', life(t, 1.6, 2.0, 2.85, 3.2) * 0.85, `translateY(${(1 - easeOut(prog(t, 1.6, 2.0))) * 40}px)`);
+  }
+
+  // S2 炭火直烤
+  {
+    set('s2-a', life(t, 3.3, 3.6, 6.1, 6.4), `translateX(${(1 - easeOut(prog(t, 3.3, 3.6))) * -600}px)`);
+    set('s2-b', life(t, 3.75, 4.05, 6.1, 6.4), `translateX(${(1 - easeOut(prog(t, 3.75, 4.05))) * 600}px)`);
+    set('s2-c', life(t, 4.6, 5.0, 6.1, 6.4), `translateY(${(1 - easeOut(prog(t, 4.6, 5.0))) * 40}px)`);
+    if (!hasPhoto && t >= 3.2 && t < 6.4) {
+      const sx = 540 + (1 - easeOut(prog(t, 3.35, 4.2))) * 1200;
+      drawSkewer(t, sx, 1330, 1 - prog(t, 6.1, 6.4));
+    }
+  }
+
+  // S3 節奏字卡
+  ['s3-a', 's3-b', 's3-c'].forEach((id, i) => {
+    const a = 6.4 + i * 1.067, b = a + 1.067;
+    const p = prog(t, a, a + 0.22);
+    const vis = t >= a && t < b ? Math.min(p * 2, 1) * (1 - prog(t, b - 0.12, b)) : 0;
+    set(id, vis, `scale(${1.3 - 0.3 * easeOut(p) + 0.05 * prog(t, a, b)}) rotate(${(i - 1) * -3}deg)`);
+  });
+
+  // S4 標語
+  {
+    const p = prog(t, 10.1, 10.45);
+    set('s4-a', life(t, 9.7, 10.0, 12.1, 12.4), `translateY(${(1 - easeOut(prog(t, 9.7, 10.0))) * -60}px)`);
+    set('s4-b', Math.min(p * 2.5, 1) * (1 - prog(t, 12.1, 12.4)), `scale(${0.3 + 0.7 * easeBack(p) + 0.04 * Math.sin(t * 6) * prog(t, 10.5, 11)})`);
+    const bar = $('s4-bar');
+    bar.style.opacity = 1 - prog(t, 12.1, 12.4);
+    bar.style.width = `${760 * easeOut(prog(t, 10.5, 11.1))}px`;
+  }
+
+  // S5 結尾資訊
+  {
+    set('s5-logo', easeOut(prog(t, 12.5, 12.8)), `scale(${0.6 + 0.4 * easeBack(prog(t, 12.5, 12.85))})`);
+    set('s5-kushi', easeOut(prog(t, 12.7, 13.0)), `translateY(${(1 - easeOut(prog(t, 12.7, 13.0))) * 50}px)`);
+    set('s5-card', easeOut(prog(t, 12.9, 13.3)), `translateY(${(1 - easeOut(prog(t, 12.9, 13.3))) * 120}px)`);
+    const pulse = 1 + 0.04 * Math.sin((t - 13.6) * 8) * prog(t, 13.6, 13.8);
+    set('s5-cta', easeOut(prog(t, 13.4, 13.7)), `scale(${(0.7 + 0.3 * easeBack(prog(t, 13.4, 13.7))) * pulse})`);
+  }
+};
+
+// 瀏覽器直接開啟時自動預覽
+if (!window.__RENDERING__) {
+  const start = performance.now();
+  const loop = () => { window.render(((performance.now() - start) / 1000) % DURATION); requestAnimationFrame(loop); };
+  document.fonts.ready.then(loop);
+}
+</script>
+</body>
+</html>
