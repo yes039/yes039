@@ -17,18 +17,47 @@ FONT = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
 GOLD = (255, 214, 102)
 RED = (150, 10, 10)
 
-# (照片, 起點/終點取景 (cx, cy, zoom), 主標, 副標)
+# 每幕: (秒數, 素材, 起點取景, 終點取景, 主標, 副標)
+# 素材為照片檔名，或 ("clip", 影片檔名, 起始秒)；取景為 (cx, cy, zoom)
 SCENES = [
-    ("1_hall.jpg", (0.5, 0.45, 1.0), (0.5, 0.35, 1.18), "宜蘭天公廟", "草湖 玉尊宮"),
-    ("2_plaque.jpg", (0.5, 0.40, 1.20), (0.5, 0.30, 1.0), "玉皇上帝 天公祖", "神恩浩蕩 庇佑眾生"),
-    ("3_offerings.jpg", (0.5, 0.55, 1.0), (0.5, 0.65, 1.2), "祈福 · 消災", "誠心供奉 金紙鮮果"),
-    ("4_rice.jpg", (0.5, 0.70, 1.2), (0.5, 0.55, 1.0), "補運法會", "米糕桂圓 好運圓滿"),
-    ("5_incense.jpg", (0.45, 0.55, 1.0), (0.55, 0.50, 1.15), "國泰民安", "闔家平安 事事順心"),
+    (3.0, "1_hall.jpg", (0.5, 0.45, 1.0), (0.5, 0.35, 1.18), "宜蘭天公廟", "草湖 玉尊宮"),
+    (2.5, "2_plaque.jpg", (0.5, 0.40, 1.20), (0.5, 0.30, 1.0), "玉皇上帝 天公祖", "神恩浩蕩 庇佑眾生"),
+    (4.0, ("clip", "clip1_worship.mp4", 2.0), (0.5, 0.5, 1.0), (0.5, 0.5, 1.06), "祈福法會", "信眾虔誠 持香祈福"),
+    (2.5, "7_crowd_front.jpg", (0.5, 0.40, 1.0), (0.5, 0.40, 1.15), "誠心參拜", "善信雲集 共沐神恩"),
+    (3.0, "3_offerings.jpg", (0.5, 0.55, 1.0), (0.5, 0.65, 1.2), "消災解厄", "金紙鮮果 誠心供奉"),
+    (3.0, "4_rice.jpg", (0.5, 0.70, 1.2), (0.5, 0.55, 1.0), "補運法會", "米糕桂圓 好運圓滿"),
+    (4.0, ("clip", "clip2_offering.mp4", 1.0), (0.5, 0.5, 1.06), (0.5, 0.5, 1.0), "消災補運", "祈求平安 萬事順遂"),
+    (2.5, "6_crowd_side.jpg", (0.5, 0.45, 1.15), (0.45, 0.45, 1.0), "香火鼎盛", "虔心禮敬 天公祖"),
+    (2.5, "8_family_incense.jpg", (0.45, 0.55, 1.0), (0.5, 0.55, 1.12), "國泰民安", "闔家平安 事事順心"),
+    (3.0, "5_incense.jpg", (0.45, 0.55, 1.0), (0.55, 0.50, 1.15), None, None),
 ]
-SEG = DUR / len(SCENES)  # 每幕 6 秒
-XF = 0.8  # 轉場秒數
+STARTS = [sum(s[0] for s in SCENES[:i]) for i in range(len(SCENES))]
+assert abs(sum(s[0] for s in SCENES) - DUR) < 1e-6
+XF = 0.6  # 轉場秒數
 OVS = 1.25  # 取景用超取樣倍率，避免放大模糊
+FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
+
+class Clip:
+    """依時間順序逐格讀取影片（已轉正、1080x1920）。"""
+
+    def __init__(self, name, offset):
+        self.path = os.path.join(HERE, "clips", name)
+        self.offset = offset
+        self.proc = subprocess.Popen([FFMPEG, "-loglevel", "error", "-ss", str(offset), "-i", self.path,
+                                      "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS}",
+                                      "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.idx, self.img = -1, None
+
+    def get(self, sec):
+        want = max(0, int(sec * FPS))
+        while self.idx < want:
+            buf = self.proc.stdout.read(W * H * 3)
+            if len(buf) < W * H * 3:
+                break
+            self.img = Image.frombytes("RGB", (W, H), buf)
+            self.idx += 1
+        return self.img
 
 def font(size):
     return ImageFont.truetype(FONT, size)
@@ -40,16 +69,18 @@ def cover(img):
     return img.resize((round(img.width * s), round(img.height * s)), Image.LANCZOS), s
 
 
-def frame_of(base, a, b, t):
+def frame_of(base, a, b, t, ovs=OVS):
     e = t * t * (3 - 2 * t)
     cx, cy, z = (a[i] + (b[i] - a[i]) * e for i in range(3))
-    cw, ch = W * OVS / z, H * OVS / z
+    cw, ch = W * ovs / z, H * ovs / z
     x0 = min(max(cx * base.width - cw / 2, 0), base.width - cw)
     y0 = min(max(cy * base.height - ch / 2, 0), base.height - ch)
     return base.resize((W, H), Image.BILINEAR, box=(x0, y0, x0 + cw, y0 + ch))
 
 
 def text_layer(title, sub):
+    if title is None:
+        return None
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
     ft, fs = font(132), font(64)
@@ -94,6 +125,13 @@ def ending_layer():
     return layer
 
 
+def clip_audio(name, offset, dur, sr):
+    raw = subprocess.run([FFMPEG, "-loglevel", "error", "-ss", str(offset), "-t", str(dur),
+                          "-i", os.path.join(HERE, "clips", name), "-ac", "1", "-ar", str(sr),
+                          "-f", "s16le", "-"], stdout=subprocess.PIPE, check=True).stdout
+    return np.frombuffer(raw, np.int16).astype(np.float32) / 32768
+
+
 def make_audio(path):
     sr = 44100
     t = np.arange(int(sr * DUR)) / sr
@@ -101,11 +139,11 @@ def make_audio(path):
     drone = sum(np.sin(2 * np.pi * f * t) * g for f, g in ((110, .25), (164.8, .15), (220, .10), (329.6, .05)))
     drone *= 0.6 + 0.4 * np.sin(2 * np.pi * 0.1 * t)
     out = drone * 0.35
-    # 每幕開頭敲一聲銅鐘/磬
-    for k in range(len(SCENES) + 1):
-        st = int(k * SEG * sr) if k < len(SCENES) else int((DUR - 3.5) * sr)
-        n = len(t) - st
-        tt = np.arange(n) / sr
+    # 開場、兩段影片、結尾各敲一聲銅鐘/磬
+    bell_times = [0.0] + [STARTS[i] for i, s in enumerate(SCENES) if isinstance(s[1], tuple)] + [STARTS[-1] + 0.3]
+    for bt in bell_times:
+        st = int(bt * sr)
+        tt = np.arange(len(t) - st) / sr
         bell = sum(np.sin(2 * np.pi * 523.25 * r * tt) * g * np.exp(-tt * d)
                    for r, g, d in ((1, .5, 1.2), (2.76, .25, 2.5), (5.4, .12, 4), (0.5, .3, 0.8)))
         out[st:] += bell * 0.5
@@ -120,9 +158,22 @@ def make_audio(path):
         f = notes[i % len(notes)] * (0.5 if i % 4 == 3 else 1)
         env = np.minimum(tt / 0.02, 1) * np.exp(-tt * 3)
         out[st:st + n] += (np.sin(2 * np.pi * f * tt) + 0.3 * np.sin(4 * np.pi * f * tt)) * env * 0.18
+    out = out / np.abs(out).max() * 0.6
+    # 疊入影片現場聲音
+    for i, sc in enumerate(SCENES):
+        if isinstance(sc[1], tuple):
+            _, name, off = sc[1]
+            a0 = STARTS[i] - XF / 2
+            live = clip_audio(name, off, sc[0] + XF, sr)
+            n = len(live)
+            env = np.minimum(1, np.minimum(np.arange(n) / (0.4 * sr), (n - np.arange(n)) / (0.4 * sr)))
+            live = live / (np.abs(live).max() + 1e-6) * 0.5 * env
+            st = int(a0 * sr)
+            n = min(n, len(out) - st)
+            out[st:st + n] = out[st:st + n] * 0.6 + live[:n]
     fade = np.minimum(1, np.minimum(t / 1.0, (DUR - t) / 2.0))
     out = out * fade
-    out = out / np.abs(out).max() * 0.8
+    out = out / np.abs(out).max() * 0.85
     pcm = (out * 32767).astype(np.int16)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
@@ -136,52 +187,56 @@ def main():
     wav = os.path.join(HERE, "_audio.wav")
     make_audio(wav)
 
-    bases = [cover(Image.open(os.path.join(HERE, "photos", s[0])).convert("RGB"))[0] for s in SCENES]
-    texts = [text_layer(s[3], s[4]) for s in SCENES]
+    sources = []
+    for sc in SCENES:
+        if isinstance(sc[1], tuple):
+            sources.append(Clip(sc[1][1], sc[1][2]))
+        else:
+            sources.append(cover(Image.open(os.path.join(HERE, "photos", sc[1])).convert("RGB"))[0])
+    texts = [text_layer(sc[4], sc[5]) for sc in SCENES]
     over = static_overlay()
     ending = ending_layer()
 
-    ff = imageio_ffmpeg.get_ffmpeg_exe()
-    proc = subprocess.Popen([ff, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                             "-r", str(FPS), "-i", "-", "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "22",
+    proc = subprocess.Popen([FFMPEG, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                             "-r", str(FPS), "-i", "-", "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "23",
                              "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
                              out_mp4], stdin=subprocess.PIPE)
     total = int(DUR * FPS)
     for fi in range(total):
         tsec = fi / FPS
-        i = min(int(tsec / SEG), len(SCENES) - 1)
+        i = max(k for k in range(len(SCENES)) if STARTS[k] <= tsec + 1e-9)
+        dur = SCENES[i][0]
+        local = tsec - STARTS[i]
 
         def shot(j):
-            # 每幕實際顯示 SEG+XF 秒，讓轉場時兩張都在動
-            lt = (tsec - j * SEG + XF / 2) / (SEG + XF)
-            return frame_of(bases[j], SCENES[j][1], SCENES[j][2], min(max(lt, 0), 1)).convert("RGBA")
+            # 每幕實際顯示 秒數+XF，讓轉場時兩邊都在動
+            span = SCENES[j][0] + XF
+            since = tsec - STARTS[j] + XF / 2
+            lt = min(max(since / span, 0), 1)
+            src = sources[j]
+            if isinstance(src, Clip):
+                return frame_of(src.get(since), SCENES[j][2], SCENES[j][3], lt, ovs=1.0).convert("RGBA")
+            return frame_of(src, SCENES[j][2], SCENES[j][3], lt).convert("RGBA")
 
         img = shot(i)
-        local = tsec - i * SEG
-        if i + 1 < len(SCENES) and local > SEG - XF / 2:
-            a = (local - (SEG - XF / 2)) / XF
-            img = Image.blend(img, shot(i + 1), a)
+        if i + 1 < len(SCENES) and local > dur - XF / 2:
+            img = Image.blend(img, shot(i + 1), (local - (dur - XF / 2)) / XF)
         elif i > 0 and local < XF / 2:
-            a = 0.5 + local / XF
-            img = Image.blend(shot(i - 1), img, a)
+            img = Image.blend(shot(i - 1), img, 0.5 + local / XF)
         img.alpha_composite(over)
 
-        # 主標題淡入、上浮，幕尾淡出
-        ta = min(1, max(0, (local - 0.4) / 0.7)) * min(1, max(0, (SEG - 0.3 - local) / 0.5))
-        is_last = i == len(SCENES) - 1
-        if is_last and local > 3.0:
-            ta *= max(0, 1 - (local - 3.0) / 0.5)
-        if ta > 0:
+        # 標題淡入、上浮，幕尾淡出
+        ta = min(1, max(0, (local - 0.2) / 0.5)) * min(1, max(0, (dur - 0.25 - local) / 0.35))
+        if texts[i] is not None and ta > 0:
             dy = int((1 - ta) * 40)
             tl = texts[i].copy()
             tl.putalpha(tl.getchannel("A").point(lambda v: int(v * ta)))
             layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
             layer.paste(tl, (0, dy))
             img.alpha_composite(layer)
-        if is_last and local > 3.2:
-            ea = min(1, (local - 3.2) / 0.8)
-            dim = Image.new("RGBA", (W, H), (60, 0, 0, int(120 * ea)))
-            img.alpha_composite(dim)
+        if i == len(SCENES) - 1 and local > 0.2:
+            ea = min(1, (local - 0.2) / 0.7)
+            img.alpha_composite(Image.new("RGBA", (W, H), (60, 0, 0, int(120 * ea))))
             el = ending.copy()
             el.putalpha(el.getchannel("A").point(lambda v: int(v * ea)))
             img.alpha_composite(el)
@@ -195,6 +250,10 @@ def main():
             print(f"frame {fi}/{total}", flush=True)
     proc.stdin.close()
     proc.wait()
+    for src in sources:
+        if isinstance(src, Clip):
+            src.proc.kill()
+            src.proc.wait()
     os.remove(wav)
     print("done:", out_mp4)
 
