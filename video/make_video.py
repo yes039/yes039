@@ -21,25 +21,19 @@ DATE = "2026年9月27日（日）農曆八月十七"
 # 每幕: (秒數, 素材, 起點取景, 終點取景, 主標, 副標)
 # 素材為照片檔名，或 ("clip", 影片檔名, 起始秒)；取景為 (cx, cy, zoom)
 SCENES = [
-    (2.0, "9_exterior.jpg", (0.5, 0.45, 1.0), (0.5, 0.35, 1.12), "宜蘭天公廟", "草湖 玉尊宮"),
-    (1.8, "1_hall.jpg", (0.5, 0.45, 1.0), (0.5, 0.35, 1.18), "莊嚴殿宇", "雕樑畫棟 神威顯赫"),
-    (1.8, "2_plaque.jpg", (0.5, 0.40, 1.20), (0.5, 0.30, 1.0), "玉旨 玉尊宮", "神恩浩蕩"),
-    (2.2, "11_deity.jpg", (0.5, 0.45, 1.15), (0.5, 0.40, 1.0), "玉皇上帝 天公祖", "至尊至聖 庇佑萬民"),
-    (1.8, "3_offerings.jpg", (0.5, 0.55, 1.0), (0.5, 0.65, 1.2), "祈福 · 消災", "金紙鮮果 誠心供奉"),
-    (1.8, "4_rice.jpg", (0.5, 0.70, 1.2), (0.5, 0.55, 1.0), "補運法會", "米糕桂圓 好運圓滿"),
-    (2.4, ("clip", "clip1_worship.mp4", 2.0), (0.5, 0.5, 1.0), (0.5, 0.5, 1.06), "祈福法會", "信眾虔誠 持香祈福"),
-    (1.8, "7_crowd_front.jpg", (0.5, 0.40, 1.0), (0.5, 0.40, 1.15), "誠心參拜", "善信雲集 共沐神恩"),
-    (2.2, ("clip", "clip2_offering.mp4", 1.0), (0.5, 0.5, 1.06), (0.5, 0.5, 1.0), "消災補運", "祈求平安 萬事順遂"),
-    (1.8, "10_censer.jpg", (0.5, 0.50, 1.0), (0.5, 0.55, 1.12), "香火鼎盛", "心香一炷 上達天聽"),
-    (1.6, "6_crowd_side.jpg", (0.5, 0.45, 1.15), (0.45, 0.45, 1.0), "齊心祈願", "虔心禮敬 天公祖"),
-    (2.4, ("clip", "clip3_divination.mp4", 0.2), (0.5, 0.5, 1.0), (0.5, 0.5, 1.05), "擲筊請示", "恭請神明 指點迷津"),
-    (1.8, "12_furnace.jpg", (0.5, 0.55, 1.15), (0.5, 0.50, 1.0), "焚化金紙", "開門納福 功德圓滿"),
-    (2.0, "8_family_incense.jpg", (0.45, 0.55, 1.0), (0.5, 0.55, 1.12), "國泰民安", "闔家平安 事事順心"),
-    (2.6, "5_incense.jpg", (0.45, 0.55, 1.0), (0.55, 0.50, 1.15), None, None),
+    (3.6, "9_exterior.jpg", (0.5, 0.45, 1.0), (0.5, 0.38, 1.10), "宜蘭天公廟", "草湖 玉尊宮"),
+    (3.8, "11_deity.jpg", (0.5, 0.45, 1.12), (0.5, 0.40, 1.0), "玉皇上帝 天公祖", "至尊至聖 庇佑萬民"),
+    (3.0, "3_offerings.jpg", (0.5, 0.55, 1.0), (0.5, 0.62, 1.10), "祈福 · 消災", "金紙鮮果 誠心供奉"),
+    (3.0, "4_rice.jpg", (0.5, 0.68, 1.12), (0.5, 0.58, 1.0), "補運法會", "米糕桂圓 好運圓滿"),
+    (3.6, ("clip", "clip1_worship.mp4", 2.0), (0.5, 0.5, 1.0), (0.5, 0.5, 1.05), "祈福法會", "信眾虔誠 持香祈福"),
+    (3.0, "10_censer.jpg", (0.5, 0.50, 1.0), (0.5, 0.55, 1.10), "香火鼎盛", "心香一炷 上達天聽"),
+    (2.2, ("clip", "clip3_divination.mp4", 0.05), (0.5, 0.5, 1.0), (0.5, 0.5, 1.04), "擲筊請示", "恭請神明 指點迷津"),
+    (3.0, "12_furnace.jpg", (0.5, 0.55, 1.10), (0.5, 0.50, 1.0), "焚化金紙", "功德圓滿"),
+    (4.8, "5_incense.jpg", (0.45, 0.55, 1.0), (0.52, 0.50, 1.10), None, None),
 ]
 STARTS = [sum(s[0] for s in SCENES[:i]) for i in range(len(SCENES))]
 assert abs(sum(s[0] for s in SCENES) - DUR) < 1e-6
-XF = 0.5  # 轉場秒數
+XF = 0.8  # 轉場秒數
 OVS = 1.25  # 取景用超取樣倍率，避免放大模糊
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
@@ -137,15 +131,27 @@ def ending_layer():
 CHANT_START = 4.0  # 從去雜音後的誦經錄音第 4 秒起取 30 秒
 
 
+CHANT_MIX = 0.35  # 現場誦經聲疊在背景音樂下的比例
+
+
+def read_wav(name):
+    with wave.open(os.path.join(HERE, "audio", name)) as w:
+        return w.getframerate(), np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+
+
 def make_audio(path):
-    """配樂：現場誦經錄音 (audio/chant_clean.wav，由 clean_audio.py 去雜音)。"""
-    with wave.open(os.path.join(HERE, "audio", "chant_clean.wav")) as w:
-        sr = w.getframerate()
-        out = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
-    out = out[int(CHANT_START * sr):int((CHANT_START + DUR) * sr)]
-    t = np.arange(len(out)) / sr
-    fade = np.minimum(1, np.minimum(t / 0.5, (DUR - t) / 2.0))
-    out = out * fade
+    """背景音樂 (audio/music.wav，由 make_music.py 產生) 疊上輕聲的現場誦經 (audio/chant_clean.wav)。"""
+    sr, music = read_wav("music.wav")
+    sr2, chant = read_wav("chant_clean.wav")
+    assert sr == sr2
+    n = int(DUR * sr)
+    music = np.pad(music, (0, max(0, n - len(music))))[:n]
+    chant = chant[int(CHANT_START * sr):][:n]
+    chant = np.pad(chant, (0, n - len(chant)))
+    chant = chant / (np.sqrt((chant ** 2).mean()) + 1e-9) * np.sqrt((music ** 2).mean()) * CHANT_MIX
+    out = music + chant
+    t = np.arange(n) / sr
+    out = out * np.minimum(1, np.minimum(t / 1.0, (DUR - t) / 2.5))
     out = out / np.abs(out).max() * 0.9
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
@@ -198,16 +204,16 @@ def main():
         img.alpha_composite(over)
 
         # 標題淡入、上浮，幕尾淡出
-        ta = min(1, max(0, (local - 0.1) / 0.35)) * min(1, max(0, (dur - 0.2 - local) / 0.3))
+        ta = min(1, max(0, (local - 0.3) / 0.7)) * min(1, max(0, (dur - 0.3 - local) / 0.5))
         if texts[i] is not None and ta > 0:
-            dy = int((1 - ta) * 40)
+            dy = int((1 - ta) * 25)
             tl = texts[i].copy()
             tl.putalpha(tl.getchannel("A").point(lambda v: int(v * ta)))
             layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
             layer.paste(tl, (0, dy))
             img.alpha_composite(layer)
-        if i == len(SCENES) - 1 and local > 0.2:
-            ea = min(1, (local - 0.2) / 0.7)
+        if i == len(SCENES) - 1 and local > 0.5:
+            ea = min(1, (local - 0.5) / 1.2)
             img.alpha_composite(Image.new("RGBA", (W, H), (60, 0, 0, int(120 * ea))))
             el = ending.copy()
             el.putalpha(el.getchannel("A").point(lambda v: int(v * ea)))
