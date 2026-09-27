@@ -16,6 +16,7 @@ W, H, FPS, DUR = 1080, 1920, 30, 30.0
 FONT = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
 GOLD = (255, 214, 102)
 RED = (150, 10, 10)
+DATE = "2026年9月27日（日）農曆八月十七"
 
 # 每幕: (秒數, 素材, 起點取景, 終點取景, 主標, 副標)
 # 素材為照片檔名，或 ("clip", 影片檔名, 起始秒)；取景為 (cx, cy, zoom)
@@ -109,6 +110,9 @@ def static_overlay():
     tw = d.textlength(txt, font=f)
     d.rounded_rectangle(((W - tw) / 2 - 36, 90, (W + tw) / 2 + 36, 190), 50, fill=(160, 16, 16, 215), outline=GOLD + (255,), width=4)
     d.text(((W - tw) / 2, 108), txt, font=f, fill=GOLD)
+    f = font(46)
+    tw = d.textlength(DATE, font=f)
+    d.text(((W - tw) / 2, 212), DATE, font=f, fill=(255, 255, 255), stroke_width=4, stroke_fill=RED)
     # 邊框
     d.rectangle((24, 24, W - 25, H - 25), outline=GOLD + (170,), width=3)
     return ov
@@ -118,7 +122,7 @@ def ending_layer():
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
     for txt, size, y, fill in (("歡迎善信大德", 76, 740, (255, 255, 255)), ("蒞臨參拜 共沐神恩", 76, 850, (255, 255, 255)),
-                               ("宜蘭天公廟 草湖玉尊宮", 64, 1010, GOLD)):
+                               ("宜蘭天公廟 草湖玉尊宮", 64, 1010, GOLD), (DATE, 50, 1110, GOLD)):
         f = font(size)
         tw = d.textlength(txt, font=f)
         d.text(((W - tw) / 2, y), txt, font=f, fill=fill, stroke_width=5, stroke_fill=RED)
@@ -133,32 +137,13 @@ def clip_audio(name, offset, dur, sr):
 
 
 def make_audio(path):
+    """誦經配樂 (audio/chant.wav，由 make_chant.py 產生) 疊入影片現場聲音。"""
     sr = 44100
-    t = np.arange(int(sr * DUR)) / sr
-    # 低沉的五聲音階持續音
-    drone = sum(np.sin(2 * np.pi * f * t) * g for f, g in ((110, .25), (164.8, .15), (220, .10), (329.6, .05)))
-    drone *= 0.6 + 0.4 * np.sin(2 * np.pi * 0.1 * t)
-    out = drone * 0.35
-    # 開場、兩段影片、結尾各敲一聲銅鐘/磬
-    bell_times = [0.0] + [STARTS[i] for i, s in enumerate(SCENES) if isinstance(s[1], tuple)] + [STARTS[-1] + 0.3]
-    for bt in bell_times:
-        st = int(bt * sr)
-        tt = np.arange(len(t) - st) / sr
-        bell = sum(np.sin(2 * np.pi * 523.25 * r * tt) * g * np.exp(-tt * d)
-                   for r, g, d in ((1, .5, 1.2), (2.76, .25, 2.5), (5.4, .12, 4), (0.5, .3, 0.8)))
-        out[st:] += bell * 0.5
-    # 五聲旋律 (宮商角徵羽)
-    notes = [392, 440, 523.25, 587.33, 659.25, 587.33, 523.25, 440]
-    for i in range(int(DUR / 1.5)):
-        st = int((0.75 + i * 1.5) * sr)
-        n = min(int(1.4 * sr), len(t) - st)
-        if n <= 0:
-            break
-        tt = np.arange(n) / sr
-        f = notes[i % len(notes)] * (0.5 if i % 4 == 3 else 1)
-        env = np.minimum(tt / 0.02, 1) * np.exp(-tt * 3)
-        out[st:st + n] += (np.sin(2 * np.pi * f * tt) + 0.3 * np.sin(4 * np.pi * f * tt)) * env * 0.18
-    out = out / np.abs(out).max() * 0.6
+    with wave.open(os.path.join(HERE, "audio", "chant.wav")) as w:
+        assert w.getframerate() == sr
+        out = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+    out = np.pad(out, (0, max(0, int(sr * DUR) - len(out))))[:int(sr * DUR)]
+    t = np.arange(len(out)) / sr
     # 疊入影片現場聲音
     for i, sc in enumerate(SCENES):
         if isinstance(sc[1], tuple):
@@ -167,10 +152,10 @@ def make_audio(path):
             live = clip_audio(name, off, sc[0] + XF, sr)
             n = len(live)
             env = np.minimum(1, np.minimum(np.arange(n) / (0.4 * sr), (n - np.arange(n)) / (0.4 * sr)))
-            live = live / (np.abs(live).max() + 1e-6) * 0.5 * env
+            live = live / (np.abs(live).max() + 1e-6) * 0.2 * env
             st = int(a0 * sr)
             n = min(n, len(out) - st)
-            out[st:st + n] = out[st:st + n] * 0.6 + live[:n]
+            out[st:st + n] = out[st:st + n] * 0.9 + live[:n]
     fade = np.minimum(1, np.minimum(t / 1.0, (DUR - t) / 2.0))
     out = out * fade
     out = out / np.abs(out).max() * 0.85
