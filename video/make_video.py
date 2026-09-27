@@ -129,42 +129,24 @@ def ending_layer():
     return layer
 
 
-def clip_audio(name, offset, dur, sr):
-    raw = subprocess.run([FFMPEG, "-loglevel", "error", "-ss", str(offset), "-t", str(dur),
-                          "-i", os.path.join(HERE, "clips", name), "-ac", "1", "-ar", str(sr),
-                          "-f", "s16le", "-"], stdout=subprocess.PIPE, check=True).stdout
-    return np.frombuffer(raw, np.int16).astype(np.float32) / 32768
+CHANT_START = 4.0  # 從去雜音後的誦經錄音第 4 秒起取 30 秒
 
 
 def make_audio(path):
-    """誦經配樂 (audio/chant.wav，由 make_chant.py 產生) 疊入影片現場聲音。"""
-    sr = 44100
-    with wave.open(os.path.join(HERE, "audio", "chant.wav")) as w:
-        assert w.getframerate() == sr
+    """配樂：現場誦經錄音 (audio/chant_clean.wav，由 clean_audio.py 去雜音)。"""
+    with wave.open(os.path.join(HERE, "audio", "chant_clean.wav")) as w:
+        sr = w.getframerate()
         out = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
-    out = np.pad(out, (0, max(0, int(sr * DUR) - len(out))))[:int(sr * DUR)]
+    out = out[int(CHANT_START * sr):int((CHANT_START + DUR) * sr)]
     t = np.arange(len(out)) / sr
-    # 疊入影片現場聲音
-    for i, sc in enumerate(SCENES):
-        if isinstance(sc[1], tuple):
-            _, name, off = sc[1]
-            a0 = STARTS[i] - XF / 2
-            live = clip_audio(name, off, sc[0] + XF, sr)
-            n = len(live)
-            env = np.minimum(1, np.minimum(np.arange(n) / (0.4 * sr), (n - np.arange(n)) / (0.4 * sr)))
-            live = live / (np.abs(live).max() + 1e-6) * 0.2 * env
-            st = int(a0 * sr)
-            n = min(n, len(out) - st)
-            out[st:st + n] = out[st:st + n] * 0.9 + live[:n]
-    fade = np.minimum(1, np.minimum(t / 1.0, (DUR - t) / 2.0))
+    fade = np.minimum(1, np.minimum(t / 0.5, (DUR - t) / 2.0))
     out = out * fade
-    out = out / np.abs(out).max() * 0.85
-    pcm = (out * 32767).astype(np.int16)
+    out = out / np.abs(out).max() * 0.9
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes(pcm.tobytes())
+        w.writeframes((out * 32767).astype(np.int16).tobytes())
 
 
 def main():
