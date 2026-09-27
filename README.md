@@ -14,3 +14,7 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
+
+---
+
+- 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
