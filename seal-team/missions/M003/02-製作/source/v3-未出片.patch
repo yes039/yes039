@@ -1,0 +1,132 @@
+diff --git "a/seal-team/missions/M003/02-\350\243\275\344\275\234/source/mix.py" "b/seal-team/missions/M003/02-\350\243\275\344\275\234/source/mix.py"
+index 775530f..9bdc018 100644
+--- "a/seal-team/missions/M003/02-\350\243\275\344\275\234/source/mix.py"
++++ "b/seal-team/missions/M003/02-\350\243\275\344\275\234/source/mix.py"
+@@ -33,9 +33,9 @@ put(6.3, M(tone(1046, .12, 25), tone(1568, .12, 25) * .5), .35)            # 開
+ put(7.85, M(tone(1568, .12, 25), tone(1046, .12, 25) * .5), .3)            # 錄音結束
+ for k in range(20): put(8.55 + k * .105 + (k % 3) * .012, noise(.025, 1800, 6000, 140), .16)  # 打字
+ put(10.8, ding(), .45)
+-for i in range(3): put(12.3 + i * .6, pop(784 + i * 196), .5)
+-put(14.55, whoosh(.4), .5)
+-put(16.95, ding(), .4)                                                      # 訊息傳出
++put(12.3, pop(784), .5); put(14.0, pop(988), .5)
++put(15.55, whoosh(.35), .45)
++put(17.45, ding(), .4)                                                      # 訊息傳出
+ put(19.22, M(*[tone(f, 1.2, 3.5) * .18 for f in [1568, 2093, 2637, 3136]]), .7)  # 高點閃光
+ put(22.7, whoosh(.4), .5)
+ put(24.95, whoosh(.5), .6)
+diff --git "a/seal-team/missions/M003/02-\350\243\275\344\275\234/source/render.py" "b/seal-team/missions/M003/02-\350\243\275\344\275\234/source/render.py"
+index b6386fb..f14ceef 100644
+--- "a/seal-team/missions/M003/02-\350\243\275\344\275\234/source/render.py"
++++ "b/seal-team/missions/M003/02-\350\243\275\344\275\234/source/render.py"
+@@ -50,6 +50,8 @@ A04, s04, _ = cover_9x16(load('A04-咖啡廳三人一起玩.jpg'))
+ A05, s05, _ = cover_9x16(load('A05-拍一桌家常菜.jpg'))
+ A06, _ = fit_width(load('A06-山上旅行自拍.jpg'), 300)
+ A07, _ = fit_width(load('A07-課堂大家一起操作.jpg'), 300)
++A09, _, _ = cover_9x16(load('A09-老照片修復上色.jpg'))
++A12, _ = fit_width(load('A12-原來AI可以幫我寫文章.jpg'), 300)
+ # 素材左上角原有「AI生成」標示；以它為縮放錨點，推鏡時標示永遠完整留在畫面內
+ LBL01 = (80 * s01, 300 + 48 * s01)
+ LBL = (80 * s02, 48 * s02)
+@@ -114,7 +116,7 @@ def rrect(d, box, r, fill, outline=None, width=0):
+     d.rounded_rectangle(box, r, fill=fill, outline=outline, width=width)
+ 
+ # ── 場景 ────────────────────────────────────────────────
+-# 剪輯點對齊 100 BPM 拍點：0 | 4.8 | 12.0 | 16.8 | 19.2 | 22.8 | 25.2 | 30
++# 剪輯點對齊 100 BPM 拍點：0 | 4.8 | 12.0 | 13.8 | 15.6 | 17.4 | 19.2 | 22.8 | 25.2 | 30
+ def sc1(t):   # Hook：肯定他本來就會用手機 → 丟出問題
+     lt = t / 4.8
+     c = kenburns(A01, lt, 1.0, 1.06, LBL01).convert('RGBA')
+@@ -216,41 +218,52 @@ def sc2(t):   # 拍菜 → 用說的 → AI 寫好分享
+         c.alpha_composite(fl)
+     return c
+ 
+-CHIPS = [('旅行照片', '寫成遊記'), ('老照片', '說出家的故事'), ('腦袋裡的想法', '幫你整理成文字')]
+ 
+ @functools.lru_cache(None)
+-def chip_layer(a, b):
+-    fa, fb = font(50), font(50)
+-    w = int(fa.getlength(a) + fb.getlength('  →  ') + fb.getlength(b)) + 100
+-    im = Image.new('RGBA', (w + 60, 150), (0, 0, 0, 0))
+-    sh = Image.new('RGBA', im.size, (0, 0, 0, 0)); ImageDraw.Draw(sh).rounded_rectangle((30, 36, 30 + w, 36 + 96), 48, fill=(0, 0, 0, 110))
++def chip_layer(a, b, sz=60):
++    f = font(sz); bh = int(sz * 1.9)
++    w = int(f.getlength(a) + f.getlength('  →  ') + f.getlength(b)) + 110
++    im = Image.new('RGBA', (w + 60, bh + 60), (0, 0, 0, 0))
++    sh = Image.new('RGBA', im.size, (0, 0, 0, 0)); ImageDraw.Draw(sh).rounded_rectangle((30, 36, 30 + w, 36 + bh), bh // 2, fill=(0, 0, 0, 110))
+     im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(12)))
+-    d = ImageDraw.Draw(im); rrect(d, (30, 26, 30 + w, 26 + 96), 48, (255, 253, 248, 245))
+-    x = 80
+-    d.text((x, 74), a, font=fa, fill=INK, anchor='lm'); x += fa.getlength(a)
+-    d.text((x, 74), '  →  ', font=fb, fill=ORANGE, anchor='lm'); x += fb.getlength('  →  ')
+-    d.text((x, 74), b, font=fb, fill=ORANGE, anchor='lm')
++    d = ImageDraw.Draw(im); rrect(d, (30, 26, 30 + w, 26 + bh), bh // 2, (255, 253, 248, 245))
++    x = 85; y = 26 + bh / 2
++    d.text((x, y), a, font=f, fill=INK, anchor='lm'); x += f.getlength(a)
++    d.text((x, y), '  →  ', font=f, fill=ORANGE, anchor='lm'); x += f.getlength('  →  ')
++    d.text((x, y), b, font=f, fill=ORANGE, anchor='lm')
+     return im
+ 
+-def sc3(t):   # 旅行照 → 還能這樣玩 → 好像沒那麼難
+-    lt = (t - 12.0) / 4.8
+-    c = kenburns(A06, lt, 1.06, 1.0, LBL01).convert('RGBA')
++def chip(c, t, a, b, cy, t0, t1):
++    if not (t0 <= t <= t1): return
++    k = back_out((t - t0) / .4)
++    paste(c, chip_layer(a, b), W / 2 + (1 - ease_out((t - t0) / .4)) * 120, cy, ease_out((t - t0) / .2), .8 + .2 * k)
++
++def sc3(t):   # 還能這樣玩①：旅行照片
++    c = kenburns(A06, (t - 12.0) / 1.8, 1.0, 1.04, LBL01).convert('RGBA')
++    c.alpha_composite(gradient(170, 200))
++    caption(c, t, S('還能這樣玩'), 76, W / 2, 175, 12.05, 13.8)
++    chip(c, t, '旅行照片', '寫成遊記', 1450, 12.3, 13.8)
++    return c
++
++def sc3b(t):  # 還能這樣玩②：老照片（素材是泛黃照片 → 手機裡的彩色版）
++    c = kenburns(A09, (t - 13.8) / 1.8, 1.0, 1.04, LBL).convert('RGBA')
+     c.alpha_composite(gradient(170, 200))
+-    caption(c, t, S('還能這樣玩'), 76, W / 2, 175, 12.1, 16.8)
+-    for i, (a, b) in enumerate(CHIPS):
+-        t0 = 12.3 + i * .6
+-        if t0 <= t <= 14.6:
+-            k = back_out((t - t0) / .4); al = min(ease_out((t - t0) / .2), ease_out((14.6 - t) / .2))
+-            paste(c, chip_layer(a, b), W / 2 + (1 - ease_out((t - t0) / .4)) * 120, 1110 + i * 150, al, .8 + .2 * k)
+-    caption(c, t, S('好像⋯'), 80, W / 2, 1180, 14.6, 16.8)
+-    caption(c, t, S(('沒有想像中那麼難', YELLOW), '耶！'), 86, W / 2, 1320, 14.95, 16.8, stroke=2)
++    caption(c, t, S('還能這樣玩'), 76, W / 2, 200, 13.8, 15.6, pop=False)
++    chip(c, t, '老照片', '找回當年的顏色', 1450, 14.0, 15.6)
++    return c
++
++def sc3c(t):  # 素材手機上寫著「原來 AI 可以幫我寫文章」→ 好像沒那麼難
++    c = kenburns(A12, (t - 15.6) / 1.8, 1.0, 1.04, LBL01).convert('RGBA')
++    c.alpha_composite(gradient(150, 215))
++    caption(c, t, S('好像⋯'), 76, W / 2, 1400, 15.65, 17.4)
++    caption(c, t, S(('沒有想像中那麼難', YELLOW), '耶！'), 86, W / 2, 1530, 15.9, 17.4, stroke=2)
+     return c
+ 
+ def sc4(t):   # 做出來 → 傳給朋友（素材本身就有「你也會用 AI 了？」）
+-    lt = (t - 16.8) / 2.4
+-    c = kenburns(A03, lt, 1.0, 1.05, LBL).convert('RGBA')
++    lt = (t - 17.4) / 1.8
++    c = kenburns(A03, lt, 1.0, 1.04, LBL).convert('RGBA')
+     c.alpha_composite(gradient(120, 190))
+-    caption(c, t, S('自己做的，', ('傳給朋友看', YELLOW)), 80, W / 2, 1480, 16.9, 19.2, stroke=2)
++    caption(c, t, S('自己做的，', ('傳給朋友看', YELLOW)), 80, W / 2, 1480, 17.45, 19.2, stroke=2)
+     return c
+ 
+ def sparkle(d, x, y, r, a):
+@@ -316,11 +329,9 @@ def sc6(t):   # 片尾：課程名＋已確定資訊
+ def frame(t):
+     if t < 4.8: return sc1(t)
+     if t < 12.0: return sc2(t)
+-    if t < 16.8:
+-        c = sc3(t)
+-        if t > 16.55:   # 溶接到下一景
+-            n = sc4(16.8); return Image.blend(c, n, ease_io((t - 16.55) / .25))
+-        return c
++    if t < 13.8: return sc3(t)
++    if t < 15.6: return sc3b(t)
++    if t < 17.4: return sc3c(t)
+     if t < 19.2: return sc4(t)
+     if t < 22.8: return sc5(t)
+     if t < 25.2: return sc5b(t)
