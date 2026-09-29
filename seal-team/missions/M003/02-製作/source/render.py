@@ -48,6 +48,8 @@ A02, s02, _ = cover_9x16(load('A02-朋友圍看手機驚呼.jpg'))
 A03, s03, _ = cover_9x16(load('A03-你也會用AI了.jpg'))
 A04, s04, _ = cover_9x16(load('A04-咖啡廳三人一起玩.jpg'))
 A05, s05, _ = cover_9x16(load('A05-拍一桌家常菜.jpg'))
+A06, _ = fit_width(load('A06-山上旅行自拍.jpg'), 300)
+A07, _ = fit_width(load('A07-課堂大家一起操作.jpg'), 300)
 # 素材左上角原有「AI生成」標示；以它為縮放錨點，推鏡時標示永遠完整留在畫面內
 LBL01 = (80 * s01, 300 + 48 * s01)
 LBL = (80 * s02, 48 * s02)
@@ -112,7 +114,7 @@ def rrect(d, box, r, fill, outline=None, width=0):
     d.rounded_rectangle(box, r, fill=fill, outline=outline, width=width)
 
 # ── 場景 ────────────────────────────────────────────────
-# 剪輯點對齊 100 BPM 小節（2.4 s）：0 | 4.8 | 12.0 | 16.8 | 21.6 | 25.2 | 30
+# 剪輯點對齊 100 BPM 拍點：0 | 4.8 | 12.0 | 16.8 | 19.2 | 22.8 | 25.2 | 30
 def sc1(t):   # Hook：肯定他本來就會用手機 → 丟出問題
     lt = t / 4.8
     c = kenburns(A01, lt, 1.0, 1.06, LBL01).convert('RGBA')
@@ -230,11 +232,11 @@ def chip_layer(a, b):
     d.text((x, 74), b, font=fb, fill=ORANGE, anchor='lm')
     return im
 
-def sc3(t):   # 還能這樣玩 → 好像沒那麼難
+def sc3(t):   # 旅行照 → 還能這樣玩 → 好像沒那麼難
     lt = (t - 12.0) / 4.8
-    c = kenburns(A04, lt, 1.07, 1.0, LBL).convert('RGBA')
+    c = kenburns(A06, lt, 1.06, 1.0, LBL01).convert('RGBA')
     c.alpha_composite(gradient(170, 200))
-    caption(c, t, S('還能這樣玩'), 80, W / 2, 250, 12.1, 14.55)
+    caption(c, t, S('還能這樣玩'), 76, W / 2, 175, 12.1, 16.8)
     for i, (a, b) in enumerate(CHIPS):
         t0 = 12.3 + i * .6
         if t0 <= t <= 14.6:
@@ -245,10 +247,10 @@ def sc3(t):   # 還能這樣玩 → 好像沒那麼難
     return c
 
 def sc4(t):   # 做出來 → 傳給朋友（素材本身就有「你也會用 AI 了？」）
-    lt = (t - 16.8) / 4.8
-    c = kenburns(A03, lt, 1.0, 1.06, LBL).convert('RGBA')
+    lt = (t - 16.8) / 2.4
+    c = kenburns(A03, lt, 1.0, 1.05, LBL).convert('RGBA')
     c.alpha_composite(gradient(120, 190))
-    caption(c, t, S('自己做的，', ('傳給朋友看', YELLOW)), 80, W / 2, 1480, 17.05, 21.6, stroke=2)
+    caption(c, t, S('自己做的，', ('傳給朋友看', YELLOW)), 80, W / 2, 1480, 16.9, 19.2, stroke=2)
     return c
 
 def sparkle(d, x, y, r, a):
@@ -260,22 +262,30 @@ SPARK = [(150, 560, 30, 0), (930, 470, 38, .15), (820, 900, 24, .3), (240, 980, 
          (980, 760, 20, .5), (90, 780, 18, .35)]
 
 def sc5(t):   # 情緒高點：欸，我自己真的會了
-    lt = (t - 21.6) / 3.6
+    lt = (t - 19.2) / 3.6
     c = kenburns(A02, lt, 1.0, 1.07, LBL).convert('RGBA')
     c.alpha_composite(gradient(120, 215))
     lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
     for x, y, r, dl in SPARK:
-        u = (t - 21.7 - dl) / 1.2
+        u = (t - 19.3 - dl) / 1.2
         if 0 < u < 1: sparkle(d, x, y - u * 40, r * (0.5 + math.sin(u * math.pi)), math.sin(u * math.pi))
     c.alpha_composite(lay)
-    caption(c, t, S('欸，'), 84, W / 2 - 250, 1225, 21.75, 25.2)
-    caption(c, t, S('我自己', ('真的會了！', YELLOW)), 116, W / 2, 1360, 22.0, 25.2, stroke=3)
-    caption(c, t, S('學會了，還能教朋友一起玩'), 56, W / 2, 1505, 23.1, 25.2, pop=False)
+    caption(c, t, S('欸，'), 84, W / 2 - 250, 1225, 19.35, 22.8)
+    caption(c, t, S('我自己', ('真的會了！', YELLOW)), 116, W / 2, 1360, 19.6, 22.8, stroke=3)
+    caption(c, t, S('學會了，還能教朋友一起玩'), 56, W / 2, 1505, 20.7, 22.8, pop=False)
+    return c
+
+def sc5b(t):   # 課堂：這堂課是自己動手，不是坐著聽
+    lt = (t - 22.8) / 2.4
+    c = kenburns(A07, lt, 1.0, 1.05, LBL01).convert('RGBA')
+    c.alpha_composite(gradient(150, 215))
+    caption(c, t, S('不是坐著聽課，'), 72, W / 2, 1300, 22.9, 25.2)
+    caption(c, t, S('是', ('自己動手玩一次', YELLOW)), 96, W / 2, 1440, 23.25, 25.2, stroke=2)
     return c
 
 @functools.lru_cache(None)
 def end_bg():
-    bg = A04.filter(ImageFilter.GaussianBlur(26)).convert('RGBA')
+    bg = cover_9x16(A07)[0].filter(ImageFilter.GaussianBlur(26)).convert('RGBA')
     bg.alpha_composite(Image.new('RGBA', (W, H), (38, 24, 14, 175)))
     return bg
 
@@ -311,10 +321,11 @@ def frame(t):
         if t > 16.55:   # 溶接到下一景
             n = sc4(16.8); return Image.blend(c, n, ease_io((t - 16.55) / .25))
         return c
-    if t < 21.6: return sc4(t)
-    if t < 25.2: return sc5(t)
+    if t < 19.2: return sc4(t)
+    if t < 22.8: return sc5(t)
+    if t < 25.2: return sc5b(t)
     c, mix = sc6(t)
-    if mix > 0: return Image.blend(c, sc5(25.19), mix)
+    if mix > 0: return Image.blend(c, sc5b(25.19), mix)
     return c
 
 if __name__ == '__main__':
