@@ -6,5 +6,7 @@
   {"seq":5,"at":"2026-10-04T12:34:05.248Z","type":"DONE","by":"Claude","node":"intel","evidence":"campaigns/B001/02-情報.md（commit 5ca20bb）：7 條事實＋概念素材＋禁用清單"},
   {"seq":6,"at":"2026-10-04T12:34:05.284Z","type":"STARTED","by":"Claude","node":"angle","note":"定向：決定方向、大綱、開頭"},
   {"seq":7,"at":"2026-10-04T12:34:26.640Z","type":"DONE","by":"Claude","node":"angle","evidence":"campaigns/B001/03-定向.md（commit 7a2c22a）；方向由 Claude 決定，未另請 Shen 選，留待人工核可把關"},
-  {"seq":8,"at":"2026-10-04T12:34:26.683Z","type":"STARTED","by":"Claude","node":"draft","note":"撰寫：依大綱寫 PO 文全文"}
+  {"seq":8,"at":"2026-10-04T12:34:26.683Z","type":"STARTED","by":"Claude","node":"draft","note":"撰寫：依大綱寫 PO 文全文"},
+  {"seq":9,"at":"2026-10-04T12:35:14.829Z","type":"DONE","by":"Claude","node":"draft","evidence":"campaigns/B001/04-PO文-核可稿.md v1（commit 0e07064）：正文 764 字、20 段"},
+  {"seq":10,"at":"2026-10-04T12:35:14.871Z","type":"STARTED","by":"Claude","node":"check","note":"驗收：V1–V8 逐條對照，附引用句"}
 ]
