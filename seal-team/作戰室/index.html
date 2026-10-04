@@ -1,0 +1,252 @@
+<title>海豹作戰室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+TC:wght@500;700&display=swap">
+<style>
+/* Layout: one fixed 980px "screen" (header → flow canvas → 7 panels), scaled to fit like a video frame. Single dark look by design. */
+:root{
+  --bg:#0f080a;
+  --panel:#170c0f;
+  --node:#1d0f12;
+  --line:#3a1c21;
+  --grid:#1f1114;
+  --fg:#efdfe0;
+  --muted:#8c6a6f;
+  --accent:#ff4f45;
+  --warm:#ff8d6b;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --cjk:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{padding-inline:16px;padding-block:16px;font-family:var(--mono)}
+#fit{width:100%;max-width:980px;margin:0 auto;overflow:hidden}
+#stage{width:980px;transform-origin:0 0;background:var(--bg);font-variant-numeric:tabular-nums;position:relative}
+
+/* header */
+.hd{display:grid;grid-template-columns:auto 1fr repeat(4,88px) 20px;align-items:start;gap:16px;padding:14px 14px 10px}
+.brand b{display:block;font-size:26px;font-weight:800;letter-spacing:.02em;font-family:var(--mono),var(--cjk)}
+.brand small{display:block;margin-top:6px;font-size:10px;color:var(--muted);letter-spacing:.08em;font-family:var(--mono),var(--cjk)}
+.live{color:var(--accent);font-size:12px;letter-spacing:.08em;padding-top:8px}
+.stat span{display:block;font-size:9px;color:var(--muted);letter-spacing:.1em}
+.stat b{display:block;margin-top:8px;font-size:14px;font-weight:600}
+.stat.hot b{color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:6px;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.15}}
+.prog{height:3px;margin:0 14px;background:var(--line);position:relative}
+.prog i{position:absolute;inset:0 auto 0 0;width:22%;background:var(--accent)}
+.crumb{display:flex;justify-content:space-between;padding:12px 14px 0;font-size:10px;color:var(--fg);letter-spacing:.06em;font-family:var(--mono),var(--cjk)}
+.crumb em{font-style:normal;color:var(--warm)}
+
+/* flow canvas */
+svg#flow{display:block;width:980px;height:760px}
+.gl{stroke:var(--grid);stroke-width:1}
+.rowlab{fill:var(--muted);font:9px var(--mono);letter-spacing:.06em;opacity:.6}
+.wire{fill:none;stroke:var(--line);stroke-width:1.2}
+.wire2{fill:none;stroke:#5e2b31;stroke-width:.8;opacity:.6}
+.streak{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;filter:url(#glow)}
+.pt{fill:#fff}
+.n rect.box{fill:var(--node);stroke:#4a2329;stroke-width:1;transition:stroke .3s,fill .3s}
+.n rect.ico{fill:var(--warm)}
+.n circle{fill:var(--node)}
+.n .t{fill:var(--fg);font:700 11.5px var(--cjk)}
+.n .tag{fill:var(--muted);font:8px var(--mono);letter-spacing:.08em}
+.n .s{fill:var(--accent);font:600 9.5px var(--mono),var(--cjk);letter-spacing:.06em}
+.n.hot rect.box{stroke:var(--warm);fill:#2a1216;filter:url(#glow)}
+
+/* panels */
+.pn{display:grid;grid-template-columns:1.15fr 1.05fr 1fr 1fr 1fr .9fr .55fr;gap:8px;padding:6px 10px 0}
+.p{background:var(--panel);border-top:3px solid var(--accent);outline:1px solid var(--line);padding:10px 10px 12px;height:190px;overflow:hidden;min-width:0}
+.p h4{white-space:nowrap;margin:0 0 12px;font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--fg);padding-bottom:6px;border-bottom:1px solid var(--line);font-family:var(--mono),var(--cjk)}
+.log div{display:flex;gap:12px;font-size:9px;line-height:18px;font-family:var(--mono),var(--cjk)}
+.log span{color:var(--muted)}.log b{font-weight:400;color:var(--accent)}
+.bars div{display:flex;align-items:center;gap:10px;height:19px;font-size:9px;color:var(--muted)}
+.bars i{display:block;height:8px;background:var(--accent);transition:width .8s ease}
+.bars i.w{background:var(--warm)}
+.big{font-size:30px;font-weight:800;margin:6px 0 8px}
+.big.r{color:var(--warm)}
+.cap{font-size:9px;color:var(--muted);line-height:20px;font-family:var(--mono),var(--cjk)}
+.cap.a{color:var(--accent)}
+.heat{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.heat i{aspect-ratio:1;background:#3a1a1f;transition:background .6s}
+.heat i.a{background:#7a2c31}.heat i.b{background:var(--accent)}.heat i.c{background:var(--warm)}
+.ms div{font-size:10px;line-height:14px;margin-bottom:10px;font-family:var(--cjk)}.ms b{display:block;color:var(--warm);font-weight:600;margin-bottom:2px;font-family:var(--mono)}
+.st div{font-size:8px;line-height:22px;color:var(--accent);display:flex;justify-content:space-between}
+.st div b{color:var(--warm);font-weight:600}
+.ft{display:flex;justify-content:space-between;padding:8px 14px 10px;font-size:8px;color:var(--muted);letter-spacing:.08em}
+
+@media (prefers-reduced-motion:reduce){.dot{animation:none}.bars i,.heat i{transition:none}}
+</style>
+
+<div id="fit"><div id="stage">
+  <header class="hd">
+    <div class="brand"><b>SEAL / 作戰室</b><small>03 兵位 &nbsp;/&nbsp; 交接契約 &nbsp;/&nbsp; ALWAYS ITERATING</small></div>
+    <div class="live">// AGENT FLOW : LIVE</div>
+    <div class="stat"><span>TIME</span><b id="time">00:00</b></div>
+    <div class="stat"><span>兵位</span><b>03</b></div>
+    <div class="stat"><span>任務</span><b>M002</b></div>
+    <div class="stat hot"><span>STATUS</span><b>LIVE</b></div>
+    <div class="dot" aria-hidden="true"></div>
+  </header>
+  <div class="prog"><i id="prog"></i></div>
+  <div class="crumb"><span>素材 &gt; 企劃 &gt; 製作 &gt; 發布 &gt; 驗果 &gt; 回煉</span><em>ONE LOOP / 7D</em></div>
+
+  <svg id="flow" viewBox="0 0 980 760" role="img" aria-label="海豹小隊流程：素材、戰果庫、平台洞察進入企劃兵、製片兵、戰果兵，經隊長核可後發布、復盤，再回到下一場任務">
+    <defs>
+      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <g id="grid"></g><g id="wires"></g><g id="streaks"></g><g id="pts"></g><g id="nodes"></g>
+  </svg>
+
+  <section class="pn">
+    <div class="p"><h4>// EVENT LOG</h4><div class="log" id="log"></div></div>
+    <div class="p"><h4>// SIGNALS 兵位負載</h4><div class="bars" id="bars"></div></div>
+    <div class="p"><h4>// DECISIONS</h4><div class="big" id="pct">51%</div><div class="cap">測試點已判讀</div><div class="cap a" id="d1">04 routed</div><div class="cap a" id="d2">01 saved</div></div>
+    <div class="p"><h4>// HEAT MAP 7D</h4><div class="heat" id="heat"></div></div>
+    <div class="p"><h4>// REACH</h4><div class="big r" id="reach">03</div><div class="cap">signals found</div><div class="cap a" id="loops">01 / new loops</div><div class="cap">03 平台</div></div>
+    <div class="p ms"><h4>// MISSIONS</h4>
+      <div><b>M001</b>首場實戰</div><div><b>M002</b>60+ 學 AI</div><div><b>M003</b>待開作戰令</div></div>
+    <div class="p st"><h4>// STATUS</h4>
+      <div>PLAN <b>OK</b></div><div>MAKE <b>OK</b></div><div>JUDGE <b>OK</b></div><div>POST <b id="post">READY</b></div></div>
+  </section>
+  <div class="ft"><span>SEAL / MISSIONS / REAL WORK</span><span>FLOW / CONTINUOUS</span></div>
+</div></div>
+
+<script>
+// ===== 內容設定：換主題只改這裡 =====
+const W = 136, H = 44;
+const NODES = {
+  src:   {x:248, y:22,  t:"店家素材",   tag:"SOURCE", s:"M002 · 09 件"},
+  mem:   {x:422, y:22,  t:"戰果庫",     tag:"MEMORY", s:"小隊記憶"},
+  data:  {x:596, y:22,  t:"平台洞察",   tag:"SOURCE", s:"48H / 7D"},
+  skip:  {x:100, y:110, t:"退回",       tag:"LOG",    s:"00 TODAY"},
+  worth: {x:422, y:110, t:"值得拍嗎？", tag:"",       s:"03 測試點"},
+  tool:  {x:422, y:196, t:"選哪個器？", tag:"",       s:"CHOOSE 01 / 03"},
+  plan:  {x:148, y:268, t:"企劃兵",     tag:"PLAN",   s:"作戰令"},
+  make:  {x:400, y:300, t:"製片兵",     tag:"MAKE",   s:"剪輯單 + SRT"},
+  judge: {x:660, y:268, t:"戰果兵",     tag:"JUDGE",  s:"判讀規則"},
+  h2:    {x:192, y:368, t:"隊長核可",   tag:"H2",     s:"01 / READY"},
+  rend:  {x:422, y:398, t:"成片輸出",   tag:"RENDER", s:"30S · 9:16"},
+  h7:    {x:668, y:368, t:"讀數據",     tag:"H7",     s:"03 / READY"},
+  join:  {x:350, y:486, t:"交接契約",   tag:"JOIN",   s:"3 份文件"},
+  h4:    {x:532, y:486, t:"成片核可",   tag:"H4",     s:"PASS / 03"},
+  card:  {x:760, y:486, t:"戰果單",     tag:"DISK",   s:"03 測試點"},
+  post:  {x:422, y:584, t:"發布",       tag:"H5",     s:"IG · TT · YT"},
+  rev:   {x:728, y:584, t:"復盤",       tag:"CHECK",  s:"7 天"},
+  next:  {x:422, y:684, t:"下一場",     tag:"M003",   s:"READY"},
+  save:  {x:728, y:684, t:"戰果庫",     tag:"OUT",    s:"已追加"},
+};
+const EDGES = [
+  ["src","worth"],["mem","worth"],["data","worth"],["worth","tool"],["worth","skip","side"],
+  ["tool","plan"],["tool","make"],["tool","judge"],
+  ["plan","h2"],["make","rend"],["judge","h7"],
+  ["h2","join"],["rend","join"],["rend","h4"],["h7","h4"],["h7","card"],
+  ["skip","join","long"],["join","post"],["h4","post"],["h4","card","side"],
+  ["card","rev"],["post","rev","side"],["post","next"],["rev","save"],["plan","judge","arc"],
+];
+// 依序亮起的節點（＝一場任務的接力順序）
+const ROUTE = ["src","mem","worth","tool","plan","h2","make","rend","h4","join","post","h7","judge","card","rev","save","next"];
+const EVENTS = ["scan 素材","route 企劃","plan 作戰令","h2 核可","make 剪輯單","render 成片","h4 核可","post 發布","h7 讀數","judge 判讀","save 戰果庫","loop M003"];
+
+// ===== 繪製 =====
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, parent, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; parent && parent.appendChild(e); return e; };
+const $ = id => document.getElementById(id);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const grid = $("grid");
+for (let y = 30; y < 760; y += 30) el("line", {x1:0, x2:980, y1:y, y2:y, class:"gl"}, grid);
+for (let x = 40; x < 980; x += 40) el("line", {x1:x, x2:x, y1:0, y2:760, class:"gl", opacity:.5}, grid);
+[["05",80],["08",160],["11",246],["14",330],["17",420],["20",514],["23",610],["27",712]].forEach(([n,y]) => el("text", {x:6, y, class:"rowlab"}, grid, n + " / FLOW"));
+
+const ctr = k => { const n = NODES[k]; return {cx:n.x + W/2, top:n.y, bot:n.y + H, l:n.x, r:n.x + W, cy:n.y + H/2}; };
+function edgePath([a, b, kind]) {
+  const A = ctr(a), B = ctr(b);
+  if (kind === "side") { const fromR = B.cx > A.cx; const x1 = fromR ? A.r : A.l, x2 = fromR ? B.l : B.r; const m = (x1 + x2) / 2; return `M${x1},${A.cy} C${m},${A.cy - 18} ${m},${B.cy + 18} ${x2},${B.cy}`; }
+  if (kind === "long") return `M${A.cx},${A.bot} C${A.cx + 10},${A.bot + 200} ${B.cx - 220},${B.top - 40} ${B.cx},${B.top}`;
+  if (kind === "arc") return `M${A.cx},${A.top} C${A.cx + 60},${A.top - 70} ${B.cx - 60},${B.top - 70} ${B.cx},${B.top}`;
+  const dy = (B.top - A.bot) * .55;
+  return `M${A.cx},${A.bot} C${A.cx},${A.bot + dy} ${B.cx},${B.top - dy} ${B.cx},${B.top}`;
+}
+const paths = [];
+EDGES.forEach((e, i) => {
+  const d = edgePath(e);
+  const p = el("path", {d, class:"wire"}, $("wires"));
+  el("path", {d, class:"wire2", transform:`translate(${i % 2 ? 3 : -3},0)`}, $("wires"));
+  const len = p.getTotalLength();
+  const st = el("path", {d, class:"streak", "stroke-dasharray":`${Math.min(46, len * .3)} ${len}`, "stroke-dashoffset":len}, $("streaks"));
+  const dots = Array.from({length: len > 160 ? 3 : 2}, (_, j) => ({c: el("circle", {r:1.9, class:"pt"}, $("pts")), off: j / 3 + Math.random() * .2}));
+  paths.push({p, len, st, dots, speed: 0.05 + Math.random() * .05, phase: Math.random()});
+});
+// 幾條裝飾用的游離線，模仿原片外溢的訊號
+["M560,132 C700,120 820,150 900,128","M760,706 C820,700 860,690 900,700","M90,340 C40,420 60,520 110,560"].forEach(d => {
+  const p = el("path", {d, class:"wire2"}, $("wires")); const len = p.getTotalLength();
+  paths.push({p, len, st:null, dots:[{c:el("circle",{r:1.6,class:"pt"},$("pts")), off:0}], speed:.08, phase:Math.random()});
+});
+
+const nodeEls = {};
+for (const k in NODES) {
+  const n = NODES[k], g = el("g", {class:"n", transform:`translate(${n.x},${n.y})`}, $("nodes"));
+  el("rect", {class:"box", width:W, height:H, rx:3}, g);
+  el("rect", {class:"ico", x:8, y:8, width:11, height:11, rx:2}, g);
+  el("circle", {cx:13.5, cy:13.5, r:2.3}, g);
+  el("text", {class:"t", x:25, y:18}, g, n.t);
+  if (n.tag) el("text", {class:"tag", x:W - 8, y:17, "text-anchor":"end"}, g, n.tag);
+  el("text", {class:"s", x:9, y:35}, g, n.s);
+  nodeEls[k] = g;
+}
+
+// ===== 面板 =====
+const bars = $("bars"), barEls = [];
+for (let i = 0; i < 7; i++) { const d = document.createElement("div"); d.innerHTML = `<span>0${i + 1}</span><i class="${i % 3 === 0 ? "w" : ""}"></i>`; bars.appendChild(d); barEls.push(d.querySelector("i")); }
+const heat = $("heat"), cells = [];
+for (let i = 0; i < 64; i++) { const c = document.createElement("i"); heat.appendChild(c); cells.push(c); }
+const logBox = $("log"), logLines = [];
+const fmt = s => String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(Math.floor(s) % 60).padStart(2, "0");
+function pushLog(sec, txt) {
+  logLines.unshift(`<div><span>${fmt(sec)}</span><b>${txt}</b></div>`);
+  logLines.length = Math.min(logLines.length, 8);
+  logBox.innerHTML = logLines.join("");
+}
+const rnd = (a, b) => Math.round(a + Math.random() * (b - a));
+function tickPanels(sec, step) {
+  barEls.forEach(b => b.style.width = rnd(10, 100) + "px");
+  cells.forEach(c => { const r = Math.random(); c.className = r > .93 ? "c" : r > .8 ? "b" : r > .55 ? "a" : ""; });
+  $("pct").textContent = rnd(23, 62) + "%";
+  $("d1").textContent = String(rnd(0, 9)).padStart(2, "0") + " routed";
+  $("d2").textContent = String(rnd(0, 4)).padStart(2, "0") + " saved";
+  $("reach").textContent = String(5 + step * 3 % 45).padStart(2, "0");
+  $("loops").textContent = String(1 + step % 3).padStart(2, "0") + " / new loops";
+  $("prog").style.width = (step * 7 % 100) + "%";
+  pushLog(sec, EVENTS[step % EVENTS.length]);
+}
+
+// ===== 動畫迴圈 =====
+const t0 = performance.now();
+let step = 0, lastStep = -1;
+function frame(now) {
+  const t = (now - t0) / 1000;
+  $("time").textContent = fmt(t);
+  paths.forEach(o => {
+    const u = (t * o.speed + o.phase) % 1;
+    o.dots.forEach(d => { const q = o.p.getPointAtLength(((u + d.off) % 1) * o.len); d.c.setAttribute("cx", q.x); d.c.setAttribute("cy", q.y); });
+    if (o.st) o.st.setAttribute("stroke-dashoffset", o.len - ((t * o.speed * 1.6 + o.phase) % 1) * (o.len * 1.4));
+  });
+  step = Math.floor(t / 1.2);
+  if (step !== lastStep) {
+    lastStep = step;
+    Object.values(nodeEls).forEach(g => g.classList.remove("hot"));
+    nodeEls[ROUTE[step % ROUTE.length]].classList.add("hot");
+    nodeEls[ROUTE[(step + 7) % ROUTE.length]].classList.add("hot");
+    if (step % 2 === 0) tickPanels(t, step / 2);
+  }
+  if (!reduce) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+if (reduce) nodeEls.worth.classList.add("hot");
+
+// ===== 等比縮放：像影片一樣整格縮小，不出現橫向捲動 =====
+const fit = $("fit"), stage = $("stage");
+function scale() { const s = Math.min(1, fit.clientWidth / 980); stage.style.transform = `scale(${s})`; fit.style.height = stage.offsetHeight * s + "px"; }
+addEventListener("resize", scale); scale();
+document.fonts && document.fonts.ready.then(scale);
+</script>
