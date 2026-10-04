@@ -39,7 +39,7 @@ WarRoom.register({
   ],
   edges: [
     ["src", "worth"], ["mem", "worth"], ["data", "worth"], ["worth", "skip"],
-    ["worth", "plan"], ["plan", "h2"], ["plan", "tool"],
+    ["worth", "plan"], ["plan", "h2"], ["h2", "tool"],   // 作戰令須經隊長 H2 核可才配器
     ["tool", "make"], ["tool", "judge"],
     ["make", "rend"], ["rend", "h4"], ["h4", "post"], ["post", "h7"],
     ["h7", "judge"], ["judge", "card"], ["card", "save"], ["save", "next"], ["next", "worth"],

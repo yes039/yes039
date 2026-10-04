@@ -28,7 +28,8 @@ WarRoom.register({
     {id: "plan", stage: "JUDGE", title: "企劃", tag: "PLAN", sub: "作戰令 · 30s 片"},
     {id: "route", stage: "ROUTE", title: "配兵", tag: "UNIT", sub: "海豹小隊 ▸ 製片"},
     {id: "mat", stage: "RUN", title: "素材", tag: "H1", sub: "實拍 · 報名資訊"},
-    {id: "prod", stage: "RUN", title: "製片", tag: "SEAL", sub: "30s · 9:16"},
+    {id: "prod", stage: "RUN", title: "製片", tag: "SEAL", sub: "30s · 9:16",
+     execution: "delegated", unit: "seal-team", deliver: "h4"},   // V3：委派海豹小隊，交貨點＝海豹的成片核可
     {id: "pub", stage: "RUN", title: "發布／投放", tag: "H5", sub: "IG · FB · LINE"},
     {id: "rev", stage: "VERIFY", title: "審核", tag: "H4", sub: "成片 + 報名資訊"},
     {id: "lead", stage: "VERIFY", title: "名單／報名", tag: "LEADS", sub: "表單 · 私訊"},
