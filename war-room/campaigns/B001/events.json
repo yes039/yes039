@@ -1,4 +1,6 @@
 [
   {"seq":1,"at":"2026-10-04T12:32:56.414Z","type":"TASK_CREATED","by":"Shen","note":"B001 開戰","evidence":"Shen 原話：「B001 開戰」"},
-  {"seq":2,"at":"2026-10-04T12:32:56.455Z","type":"STARTED","by":"Claude","node":"order","note":"接令：將核可版軍令單存檔"}
+  {"seq":2,"at":"2026-10-04T12:32:56.455Z","type":"STARTED","by":"Claude","node":"order","note":"接令：將核可版軍令單存檔"},
+  {"seq":3,"at":"2026-10-04T12:33:25.176Z","type":"DONE","by":"Claude","node":"order","evidence":"campaigns/B001/01-軍令單.md（commit 1b29ae2）；Shen 核可原話：「現在軍令核可。」"},
+  {"seq":4,"at":"2026-10-04T12:33:25.210Z","type":"STARTED","by":"Claude","node":"intel","note":"情報：從 repo 真實紀錄整理可引用素材"}
 ]
