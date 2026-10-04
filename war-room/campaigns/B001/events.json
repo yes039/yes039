@@ -8,5 +8,8 @@
   {"seq":7,"at":"2026-10-04T12:34:26.640Z","type":"DONE","by":"Claude","node":"angle","evidence":"campaigns/B001/03-定向.md（commit 7a2c22a）；方向由 Claude 決定，未另請 Shen 選，留待人工核可把關"},
   {"seq":8,"at":"2026-10-04T12:34:26.683Z","type":"STARTED","by":"Claude","node":"draft","note":"撰寫：依大綱寫 PO 文全文"},
   {"seq":9,"at":"2026-10-04T12:35:14.829Z","type":"DONE","by":"Claude","node":"draft","evidence":"campaigns/B001/04-PO文-核可稿.md v1（commit 0e07064）：正文 764 字、20 段"},
-  {"seq":10,"at":"2026-10-04T12:35:14.871Z","type":"STARTED","by":"Claude","node":"check","note":"驗收：V1–V8 逐條對照，附引用句"}
+  {"seq":10,"at":"2026-10-04T12:35:14.871Z","type":"STARTED","by":"Claude","node":"check","note":"驗收：V1–V8 逐條對照，附引用句"},
+  {"seq":11,"at":"2026-10-04T12:35:40.763Z","type":"DONE","by":"Claude","node":"check","evidence":"campaigns/B001/05-驗收表.md（commit 9128d17）：V1–V8 全部 PASS，附引用句"},
+  {"seq":12,"at":"2026-10-04T12:35:40.798Z","type":"STARTED","by":"Claude","node":"approve","note":"人工核可：整理核可稿與驗收表送 Shen"},
+  {"seq":13,"at":"2026-10-04T12:35:40.836Z","type":"WAITING","by":"Claude","node":"approve","note":"核可稿 v1 送 Shen 核可","evidence":"campaigns/B001/04-PO文-核可稿.md v1、05-驗收表.md"}
 ]
