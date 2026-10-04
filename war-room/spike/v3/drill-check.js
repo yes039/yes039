@@ -38,6 +38,12 @@ const out = process.argv[2] || ".";
     await p.screenshot({path: `${out}/${mark}-campaign.png`});
     await p.click("#campRoot svg g.wr-n.v3-del"); await p.waitForTimeout(300);
     const m = await consistent("M003"), inside = await read();
+    const ids = await p.evaluate(() => {
+      const root = document.getElementById("misRoot");
+      return {text: document.getElementById("crumb").textContent + " " + root.textContent,
+        crumb: document.getElementById("crumb").textContent, slot: (root.querySelector("[data-v3=mission] b") || {}).textContent,
+        runtime: Object.keys(__drill.hq.missions), total: (root.querySelector(".k-TOTAL") || {}).textContent};
+    });
     await p.screenshot({path: `${out}/${mark}-mission.png`});
     await p.click("#back"); await p.waitForTimeout(300);
     const after = await p.evaluate(() => ({kept: document.querySelector("#campRoot .wr-stage").__keep === 1, snap: document.querySelector("#campRoot svg").innerHTML + document.querySelector('#campRoot [data-k="counts"]').innerHTML}));
@@ -47,11 +53,15 @@ const out = process.argv[2] || ".";
     ok(`${mark} 部隊層 DOM 與引擎一致`, !m.bad.length && m.status === m.engineStatus, m.bad.join(",") || `STATUS ${m.status}`);
     ok(`${mark} 下鑽顯示 breadcrumb`, inside.view === "mission" && inside.crumb.includes("C001 招生戰役 › 製片 › 海豹小隊 M003"));
     ok(`${mark} 返回後戰役層未重新 mount 且狀態相同`, after.kept && after.snap === snapBefore);
+    ok(`${mark} 下鑽畫面不出現 M002`, !ids.text.includes("M002"));
+    ok(`${mark} Mission 編號同一來源`, ids.runtime.length === 1 && ids.crumb.includes(ids.runtime[0]) && ids.slot === ids.runtime[0] && before.note[0].includes(ids.runtime[0]),
+      `HQ=${ids.runtime}｜breadcrumb、標題列 MISSION=${ids.slot}、外層摘要一致`);
+    ok(`${mark} 內層進度標示為小隊全程`, /小隊全程\s*\d+\/15/.test(ids.total), ids.total);
     const expect = {
-      A: before.prod === "ACTIVE" && inside.m.src === "READY" && /海豹小隊 M003 · .* READY · 0\/\d+/.test(before.note[0]),
-      B: before.prod === "WAITING" && inside.m.make === "WAITING" && before.camp === "WAITING" && before.note.some(t => t.includes("素材不足")),
+      A: before.prod === "ACTIVE" && inside.m.src === "READY" && /海豹小隊 M003 · 店家素材 READY · 交貨進度 0\/8/.test(before.note[0]),
+      B: before.prod === "WAITING" && inside.m.make === "WAITING" && before.camp === "WAITING" && before.note[0].includes("製片兵 WAITING · 交貨進度") && before.note.some(t => t.includes("素材不足")),
       C: before.prod === "ACTIVE" && inside.m.make === "ACTIVE" && before.note[0].includes("製片兵 ACTIVE"),
-      D: before.prod === "DONE" && before.rev === "READY" && inside.m.h4 === "DONE" && before.note[0].includes("已交貨"),
+      D: before.prod === "DONE" && before.rev === "READY" && inside.m.h4 === "DONE" && /交貨進度 (\d+)\/\1 ✓ 已交貨/.test(before.note[0]),
     }[mark];
     ok(`${mark} 戰況符合預期`, expect);
   }

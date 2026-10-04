@@ -32,7 +32,7 @@
   }
 
   // 依狀態畫一張圖（格式與 V2 core render 相同）
-  function paint(rootEl, config, states, status, logs) {
+  function paint(rootEl, config, states, status, logs, totalLabel) {
     const gs = rootEl.querySelectorAll("svg g.wr-n");
     config.nodes.forEach((n, i) => {
       const s = states[n.id], g = gs[i];
@@ -51,7 +51,7 @@
     $("prog").style.width = (cnt("DONE") / acts.length * 100) + "%";
     $("prog").classList.toggle("fail", status === "FAILED");
     $("counts").innerHTML = ["READY", "ACTIVE", "WAITING", "DONE", "FAILED"].map(s => `<div class="k-${s}">${s} <b>${pad2(cnt(s))}</b></div>`).join("") +
-      `<div class="k-TOTAL">DONE / ALL <b>${pad2(cnt("DONE"))}/${pad2(acts.length)}</b></div>`;
+      `<div class="k-TOTAL">${totalLabel || "DONE / ALL"} <b>${pad2(cnt("DONE"))}/${pad2(acts.length)}</b></div>`;
     $("log").innerHTML = logs.length ? logs.slice(0, 8).map(e => `<div class="${e.ok ? "" : "rej"}"><span>${e.time}</span><b>${esc(e.text)}</b></div>`).join("")
       : `<div class="wr-empty"><span>--:--:--</span><b>no events</b></div>`;
   }
@@ -65,10 +65,11 @@
     const E = m.engine, s = E.state, cfg = E.config;
     const inScope = cfg.nodes.filter(n => m.scope.includes(n.id) && n.type !== "resource");
     const done = inScope.filter(n => s[n.id] === "DONE").length;
-    if (m.delivered) return {mission: m, lines: [[`${unitName} ${m.id} · 已交貨 ✓ ${E.byId[m.deliver].title} · ${done}/${inScope.length}`, "done"]]};
+    // 外層只回答「離交貨還多遠」：交貨範圍內作戰節點的完成數
+    if (m.delivered) return {mission: m, lines: [[`${unitName} ${m.id} · 交貨進度 ${done}/${inScope.length} ✓ 已交貨`, "done"]]};
     const main = inScope.filter(n => s[n.id] in ORDER).sort((a, b) => ORDER[s[a.id]] - ORDER[s[b.id]])[0] || E.byId[m.deliver];
     const ms = s[main.id];
-    const lines = [[`${unitName} ${m.id} · ${main.title} ${ms} · ${done}/${inScope.length}`, ms]];
+    const lines = [[`${unitName} ${m.id} · ${main.title} ${ms} · 交貨進度 ${done}/${inScope.length}`, ms]];
     if (ms === "WAITING" || ms === "FAILED") {
       const last = hq.timeline.slice().reverse().find(x => x.ok && x.ev.mission === m.id && x.ev.node === main.id && x.ev.note);
       if (last) lines.push([`${ms === "WAITING" ? "⏸" : "✕"} ${last.ev.note}`, ms]);
@@ -84,11 +85,20 @@
   }
   function paintMission(rootEl, hq, missionId, logs) {
     const m = hq.missions[missionId], E = m.engine, cfg = E.config;
-    paint(rootEl, cfg, E.state, E.status(), logs);
+    paint(rootEl, cfg, E.state, E.status(), logs, "小隊全程");   // 內層回答「整支部隊跑到哪」
+    // Mission 編號由執行期帶入（Unit Config 不寫任務編號），放在標題列的空欄
+    let slot = rootEl.querySelector(".wr-hd [data-v3=mission]");
+    if (!slot) { slot = [...rootEl.querySelectorAll(".wr-hd > div")].find(d => !d.className && !d.children.length); if (slot) { slot.className = "wr-stat"; slot.dataset.v3 = "mission"; } }
+    if (slot) slot.innerHTML = `<span>MISSION</span><b>${esc(m.id)}</b>`;
     const g = overlay(rootEl);
     const i = cfg.nodes.findIndex(n => n.id === m.deliver);
     note(g, rootEl, i, [[m.delivered ? `◆ 交貨點 · 已交貨 → ${hq.campaign.byId[m.node].title} DONE` : `◆ 交貨點 → ${hq.campaign.config.header.title.split(" ")[0]} ${hq.campaign.byId[m.node].title}`, m.delivered ? "done" : "deliver"]]);
   }
 
-  root.WarRoomV3View = {paintCampaign, paintMission, missionSummary};
+  // breadcrumb 用：戰役名稱、委派節點、部隊名稱、Mission 編號全部來自同一個執行期來源（HQ）
+  function crumb(hq, missionId) {
+    const m = hq.missions[missionId], C = hq.campaign, u = hq.units[m.unit];
+    return {campaign: String(C.config.header.title).replace(" / ", " "), node: C.byId[m.node].title, unit: String(u.name || u.id).split(" / ").pop(), mission: m.id};
+  }
+  root.WarRoomV3View = {paintCampaign, paintMission, missionSummary, crumb};
 })(typeof globalThis !== "undefined" ? globalThis : this);

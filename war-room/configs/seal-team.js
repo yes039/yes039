@@ -9,8 +9,8 @@ WarRoom.register({
     flowLabel: "// AGENT FLOW : LIVE",
     stats: [
       {label: "兵位", value: "03"},
-      {label: "任務", value: "M002"},
       {label: "平台", value: "03"},
+      // 任務編號不寫在 Unit Config：Unit 是編制，Mission 編號由執行期（HQ）帶入
     ],
   },
   loopLabel: "ONE LOOP / 7D",
@@ -19,9 +19,9 @@ WarRoom.register({
     RUN: "製作發布", VERIFY: "核可驗果", SAVE: "回煉",
   },
   nodes: [
-    {id: "src", stage: "INPUT", title: "店家素材", tag: "SOURCE", sub: "M002 · 09 件"},
-    {id: "mem", stage: "INPUT", title: "戰果庫", tag: "MEMORY", sub: "小隊記憶"},
-    {id: "data", stage: "INPUT", title: "平台洞察", tag: "SOURCE", sub: "48H / 7D"},
+    {id: "src", stage: "INPUT", title: "店家素材", tag: "SOURCE", sub: "實拍 · 截圖"},
+    {id: "mem", stage: "INPUT", type: "resource", title: "戰果庫", tag: "MEMORY", sub: "小隊記憶"},
+    {id: "data", stage: "INPUT", type: "resource", title: "平台洞察", tag: "SOURCE", sub: "48H / 7D"},
     {id: "skip", stage: "DISCOVER", title: "退回", tag: "LOG", sub: "缺資料退回"},
     {id: "worth", stage: "DISCOVER", title: "值得拍嗎？", tag: "TEST", sub: "03 測試點"},
     {id: "plan", stage: "JUDGE", title: "企劃兵", tag: "PLAN", sub: "作戰令"},
@@ -35,7 +35,7 @@ WarRoom.register({
     {id: "judge", stage: "VERIFY", title: "戰果兵", tag: "JUDGE", sub: "判讀規則"},
     {id: "card", stage: "SAVE", title: "戰果單", tag: "DISK", sub: "03 測試點"},
     {id: "save", stage: "SAVE", title: "戰果庫", tag: "OUT", sub: "已追加"},
-    {id: "next", stage: "SAVE", title: "下一場", tag: "M003", sub: "READY"},
+    {id: "next", stage: "SAVE", title: "下一場", tag: "NEXT", sub: "READY"},
   ],
   edges: [
     ["src", "worth"], ["mem", "worth"], ["data", "worth"], ["worth", "skip"],
@@ -55,7 +55,7 @@ WarRoom.register({
     decisions: {title: "DECISIONS", caption: "測試點已判讀", a: "routed", b: "saved"},
     heat: {title: "HEAT MAP 7D"},
     reach: {title: "REACH", caption: "signals found", loops: "new loops", foot: "03 平台"},
-    roster: {title: "MISSIONS", items: [["M001", "首場實戰"], ["M002", "60+ 學 AI"], ["M003", "待開作戰令"]]},
+    roster: {title: "ROLES", items: [["企劃兵", "作戰令"], ["製片兵", "剪輯單 · 成片"], ["戰果兵", "判讀 · 戰果單"], ["隊長", "H2 · H4 · H5 · H7"]]},
     status: {title: "STATUS"},
   },
   footer: ["SEAL / MISSIONS / REAL WORK", "FLOW / CONTINUOUS"],

@@ -2,7 +2,7 @@
 
 - 時間為**模擬時鐘**（每個事件 +1 分），不是真實時間。
 - 層：C001＝司令部（Campaign 引擎），M003＝海豹小隊任務（Mission 引擎），HQ＝出兵指令。
-- 「C001.製片」欄是委派節點的狀態，只由 M003 交貨範圍推算：成片核可、成片輸出、製片兵、選哪個器？、隊長核可、企劃兵、值得拍嗎？、店家素材、戰果庫、平台洞察（交貨點：成片核可 h4）。
+- 「C001.製片」欄是委派節點的狀態，只由 M003 交貨範圍推算：成片核可、成片輸出、製片兵、選哪個器？、隊長核可、企劃兵、值得拍嗎？、店家素材（交貨點：成片核可 h4）。
 
 | # | 時間 | 層 | 事件 | 結果 | C001 狀態變化 | M003 狀態變化 | C001.製片 | C001 | M003 | 說明 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -22,7 +22,7 @@
 | 14 | 09:13 | C001 | DONE 素材 | ✓ | 素材 ACTIVE→DONE；製片 IDLE→READY |  | READY | RUNNING | — |  |
 | 15 | 09:14 | C001 | DONE 製片 | ✕ 製片 是委派節點（seal-team），只能由 Mission 交貨推動 |  |  | READY | RUNNING | — | 假交貨：直接報製片完成 |
 | 16 | 09:15 | C001 | STARTED 製片 | ✕ 製片 是委派節點（seal-team），只能由 Mission 交貨推動 |  |  | READY | RUNNING | — | 繞過海豹直接開工 |
-| 17 | 09:16 | HQ | MISSION_OPENED 製片 → M003 | ✓ | 製片 READY→ACTIVE | 開戰：店家素材、戰果庫、平台洞察 READY | ACTIVE | RUNNING | RUNNING | 司令部下令：製片委派海豹，建立 M003 |
+| 17 | 09:16 | HQ | MISSION_OPENED 製片 → M003 | ✓ | 製片 READY→ACTIVE | 開戰：店家素材 READY | ACTIVE | RUNNING | RUNNING | 司令部下令：製片委派海豹，建立 M003 |
 | 18 | 09:17 | M003 | STARTED 店家素材 | ✓ |  | 店家素材 READY→ACTIVE | ACTIVE | RUNNING | RUNNING |  |
 | 19 | 09:18 | M003 | DONE 店家素材 | ✓ |  | 店家素材 ACTIVE→DONE；值得拍嗎？ IDLE→READY | ACTIVE | RUNNING | RUNNING |  |
 | 20 | 09:19 | M003 | STARTED 值得拍嗎？ | ✓ |  | 值得拍嗎？ READY→ACTIVE | ACTIVE | RUNNING | RUNNING |  |
@@ -83,10 +83,10 @@
 | 4 | 子任務軍情往上反映 | ✅ PASS | H2 等核可→WAITING，核可→ACTIVE；make WAITING→WAITING（C001 WAITING），RESUMED→ACTIVE；rend FAILED→FAILED（C001 FAILED），重試→ACTIVE |
 | 5 | 只有交貨點能完成委派 | ✅ PASS | 範圍外「退回」WAITING 時製片=ACTIVE；make DONE 後製片=ACTIVE、rend DONE 後=ACTIVE、h2 APPROVED 後=ACTIVE；h4 未開工 DONE 被拒；H4 APPROVED 後製片=DONE |
 | 6 | 交貨之後兩層脫鉤 | ✅ PASS | 交貨當下 審核=READY；交貨後 M003.h7 FAILED 時 製片=DONE、C001=RUNNING |
-| S | 交貨範圍不含下游 | ✅ PASS | 範圍：成片核可、成片輸出、製片兵、選哪個器？、隊長核可、企劃兵、值得拍嗎？、店家素材、戰果庫、平台洞察 |
+| S | 交貨範圍不含下游 | ✅ PASS | 範圍：成片核可、成片輸出、製片兵、選哪個器？、隊長核可、企劃兵、值得拍嗎？、店家素材 |
 | H2 | SEAL H2 死路已修 | ✅ PASS | 企劃兵 DONE 後、H2 核可前，選器=IDLE |
 
 ## 最終狀態
 
 - C001：COMPLETE｜招生目標=DONE、戰果庫=RESOURCE、受眾=DONE、策略=DONE、企劃=DONE、配兵=DONE、素材=DONE、製片=DONE、發布／投放=DONE、審核=DONE、名單／報名=DONE、戰果=DONE、寫回戰果庫=DONE
-- M003：RUNNING｜店家素材=DONE、戰果庫=READY、平台洞察=READY、退回=DONE、值得拍嗎？=DONE、企劃兵=DONE、隊長核可=DONE、選哪個器？=DONE、製片兵=DONE、成片輸出=DONE、發布=DONE、成片核可=DONE、讀數據=DONE、戰果兵=DONE、戰果單=DONE、戰果庫=READY、下一場=IDLE
+- M003：RUNNING｜店家素材=DONE、戰果庫=RESOURCE、平台洞察=RESOURCE、退回=DONE、值得拍嗎？=DONE、企劃兵=DONE、隊長核可=DONE、選哪個器？=DONE、製片兵=DONE、成片輸出=DONE、發布=DONE、成片核可=DONE、讀數據=DONE、戰果兵=DONE、戰果單=DONE、戰果庫=READY、下一場=IDLE

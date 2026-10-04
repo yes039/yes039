@@ -51,7 +51,7 @@ WarRoom.register({
     decisions: {title: "DECISIONS", caption: "名單已判讀", a: "leads", b: "enrolled"},
     heat: {title: "HEAT MAP"},
     reach: {title: "REACH", caption: "觸及", loops: "渠道", foot: "IG · FB · LINE"},
-    roster: {title: "UNITS", items: [["海豹小隊", "製片單位"], ["隊長", "H1 素材 · H4 審核 · H5 投放"], ["M002", "60+ 學 AI 招生片"]]},
+    roster: {title: "UNITS", items: [["海豹小隊", "製片單位"], ["隊長", "H1 素材 · H4 審核 · H5 投放"]]},
     status: {title: "STATUS"},
   },
   footer: ["C001 / CAMPAIGN / REHEARSAL", ""],

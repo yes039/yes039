@@ -79,10 +79,10 @@ body{padding-inline:16px;padding-block:12px 16px;font-family:"JetBrains Mono",ui
     M("STARTED", "post"), M("DONE", "post"), ...P(["pub", "lead", "result", "lib"]), [null, "END"],
   ];
   const T = (cfg, id) => (cfg.nodes.find(n => n.id === id) || {}).title || id;
-  let hq, step, times, view = "campaign";
+  let hq, step, times, view = "campaign", openMission = null;
   const clock = () => { const d = new Date(); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, "0")).join(":"); };
 
-  function reset() { hq = WarRoomV3.createHQ({campaign: campCfg, units: {"seal-team": sealCfg}}); step = 0; times = {}; }
+  function reset() { hq = WarRoomV3.createHQ({campaign: campCfg, units: {"seal-team": sealCfg}}); step = 0; times = {}; openMission = null; if (view === "mission") show("campaign"); }
   function logs(layer) { // 戰役層：C001／HQ 事件＋委派節點被 Mission 推算的變化；部隊層：該 Mission 的事件
     return hq.timeline.slice().reverse().flatMap(x => {
       const time = times[x.seq] || "--:--:--";
@@ -97,11 +97,12 @@ body{padding-inline:16px;padding-block:12px 16px;font-family:"JetBrains Mono",ui
   function paint() {
     WarRoomV3View.paintCampaign(campRoot, hq, logs("campaign"));
     campRoot.querySelectorAll("svg g.wr-n").forEach((g, i) => { if (campCfg.nodes[i].execution === "delegated") g.classList.add("v3-del"); });   // 狀態 class 改寫後補回可點標記
-    if (hq.missions.M003) WarRoomV3View.paintMission(misRoot, hq, "M003", logs("M003"));
+    if (openMission && hq.missions[openMission]) WarRoomV3View.paintMission(misRoot, hq, openMission, logs(openMission));
     bindDelegated();
     const crumb = document.getElementById("crumb");
-    if (view === "campaign") crumb.innerHTML = `<b>C001 招生戰役</b>　<i>點「製片」查看承接部隊</i>`;
-    else crumb.innerHTML = `C001 招生戰役 › 製片 › <b>海豹小隊 M003</b>`;
+    const campName = String(campCfg.header.title).replace(" / ", " ");
+    if (view === "campaign") crumb.innerHTML = `<b>${campName}</b>　<i>點委派節點查看承接部隊</i>`;
+    else { const c = WarRoomV3View.crumb(hq, openMission); crumb.innerHTML = `${c.campaign} › ${c.node} › <b>${c.unit} ${c.mission}</b>`; }
   }
   function bindDelegated() {
     const gs = campRoot.querySelectorAll("svg g.wr-n");
@@ -113,6 +114,7 @@ body{padding-inline:16px;padding-block:12px 16px;font-family:"JetBrains Mono",ui
       const open = () => {
         const m = Object.values(hq.missions).find(x => x.node === n.id);
         if (!m) { say(`${n.title} 尚未出兵，沒有可下鑽的部隊。`); return; }
+        openMission = m.id;   // 下鑽目標由執行期的 Mission 決定
         show("mission");
       };
       g.addEventListener("click", open);
