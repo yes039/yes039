@@ -25,6 +25,13 @@ body{padding-inline:16px;padding-block:12px 16px;font-family:"JetBrains Mono",ui
 .wr svg .v3-note.FAILED{fill:var(--wr-failed)}
 .wr svg .v3-note.done{fill:var(--wr-warm)}
 .wr svg .v3-note.deliver{fill:var(--wr-waiting)}
+.wr svg .v3-note.next{fill:var(--wr-fg)}
+/* Mission 畫面交貨後的說明列 */
+.wr .v3-deliv{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin:10px 14px 0;padding:7px 10px;border:1px solid var(--wr-warm);font-size:11px;letter-spacing:.04em}
+.wr .v3-deliv b{color:var(--wr-warm)}
+#misRoot [data-k="hstat"] span{letter-spacing:0}   /* 「MISSION STATUS」比原本的 STATUS 長，避免壓到右側狀態燈 */
+.wr .v3-deliv span{color:var(--wr-muted)}
+.wr .v3-deliv em{font-style:normal;color:var(--wr-fg)}
 .wr svg g.wr-n.v3-del{cursor:pointer}
 .wr svg g.wr-n.v3-del:focus{outline:none}
 .wr svg g.wr-n.v3-del:focus .box,.wr svg g.wr-n.v3-del:hover .box{stroke-width:2.2}

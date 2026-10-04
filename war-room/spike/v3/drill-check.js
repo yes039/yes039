@@ -42,7 +42,10 @@ const out = process.argv[2] || ".";
       const root = document.getElementById("misRoot");
       return {text: document.getElementById("crumb").textContent + " " + root.textContent,
         crumb: document.getElementById("crumb").textContent, slot: (root.querySelector("[data-v3=mission] b") || {}).textContent,
-        runtime: Object.keys(__drill.hq.missions), total: (root.querySelector(".k-TOTAL") || {}).textContent};
+        runtime: Object.keys(__drill.hq.missions), total: (root.querySelector(".k-TOTAL") || {}).textContent,
+        bar: (() => { const b = root.querySelector(".v3-deliv"); return b && !b.hidden ? b.textContent : null; })(),
+        statusLabel: root.querySelector('[data-k="hstat"] span').textContent, statusValue: root.querySelector('[data-k="status"]').textContent,
+        expectNext: __drill.hq.campaign.config.edges.filter(([a]) => a === "prod").map(([, b]) => `${__drill.hq.campaign.byId[b].title} ${__drill.hq.campaign.state[b]}`).join("、")};
     });
     await p.screenshot({path: `${out}/${mark}-mission.png`});
     await p.click("#back"); await p.waitForTimeout(300);
@@ -61,10 +64,30 @@ const out = process.argv[2] || ".";
       A: before.prod === "ACTIVE" && inside.m.src === "READY" && /海豹小隊 M003 · 店家素材 READY · 交貨進度 0\/8/.test(before.note[0]),
       B: before.prod === "WAITING" && inside.m.make === "WAITING" && before.camp === "WAITING" && before.note[0].includes("製片兵 WAITING · 交貨進度") && before.note.some(t => t.includes("素材不足")),
       C: before.prod === "ACTIVE" && inside.m.make === "ACTIVE" && before.note[0].includes("製片兵 ACTIVE"),
-      D: before.prod === "DONE" && before.rev === "READY" && inside.m.h4 === "DONE" && /交貨進度 (\d+)\/\1 ✓ 已交貨/.test(before.note[0]),
+      D: before.prod === "DONE" && before.rev === "READY" && inside.m.h4 === "DONE" && /^▸ ✓ 已交貨 · 海豹小隊 M003 · 交貨進度 (\d+)\/\1$/.test(before.note[0]),
     }[mark];
     ok(`${mark} 戰況符合預期`, expect);
+    if (mark !== "D") {
+      ok(`${mark} 交貨前不顯示下一棒`, !before.note.some(t => t.includes("下一棒")) && ids.bar === null, before.note.join(" / "));
+    } else {
+      ok("D 外層下一棒由 Campaign graph 推算", before.note[1] === `▸ → 下一棒：${ids.expectNext}` && ids.expectNext === "審核 READY", before.note[1]);
+      ok("D 內層 DELIVERED 與 MISSION STATUS 並存", ids.bar && ids.bar.includes("DELIVERED → C001 製片 ✓") && ids.bar.includes("小隊收尾中") && ids.statusLabel === "MISSION STATUS" && ids.statusValue === "RUNNING", `${ids.bar}｜${ids.statusLabel} ${ids.statusValue}`);
+      ok("D 海豹 H5 READY 也不被當成戰役下一棒", inside.m.post === "READY" && ids.bar.includes("C001 下一棒：審核 READY") && !ids.bar.includes("下一棒：發布") && !before.note.some(t => t.includes("下一棒：發布")),
+        `M003.發布=${inside.m.post}`);
+    }
   }
+  // 下一棒不是寫死：把製片的下游改接到「發布／投放」，摘要必須跟著改
+  const alt = await p.evaluate(() => {
+    const base = WarRoom.get("campaign-enroll"), cfg = JSON.parse(JSON.stringify(base));
+    cfg.edges = cfg.edges.map(([a, b]) => a === "prod" && b === "rev" ? ["prod", "pub"] : [a, b]);
+    const hq = WarRoomV3.createHQ({campaign: cfg, units: {"seal-team": WarRoom.get("seal-team")}});
+    hq.emit({type: "TASK_CREATED"});
+    ["goal", "aud", "strat", "plan", "route", "mat"].forEach(n => { hq.emit({type: "STARTED", node: n}); hq.emit({type: "DONE", node: n}); });
+    hq.emit({type: "MISSION_OPENED", node: "prod", mission: "M003"});
+    ["src", "worth", "plan", "h2", "tool", "make", "rend", "h4"].forEach(n => { hq.emit({mission: "M003", type: "STARTED", node: n}); hq.emit({mission: "M003", type: "DONE", node: n}); });
+    return WarRoomV3View.missionSummary(hq, "prod").lines.map(l => l[0]);
+  });
+  ok("下一棒隨 graph 改變（非寫死）", alt[1] === "→ 下一棒：發布／投放 READY", alt.join(" / "));
   ok("無頁面錯誤", !errs.length, errs.join(";"));
   await b.close();
   console.log(`\n${results.filter(r => r.pass).length}/${results.length} PASS`);

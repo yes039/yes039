@@ -56,6 +56,12 @@
       : `<div class="wr-empty"><span>--:--:--</span><b>no events</b></div>`;
   }
 
+  // 下一棒：由 Campaign graph 推算——委派節點往下游連到的作戰節點（不含資源節點），附目前狀態
+  function nextBaton(hq, nodeId) {
+    const C = hq.campaign;
+    return (C.config.edges || []).filter(([a, b]) => a === nodeId && !C.isRes(b)).map(([, b]) => ({id: b, title: C.byId[b].title || b, state: C.state[b]}));
+  }
+
   // 委派摘要：主要節點＝交貨範圍內 FAILED > WAITING > ACTIVE > READY 的第一個（依 Config 順序）
   function missionSummary(hq, nodeId) {
     const C = hq.campaign, cn = C.byId[nodeId];
@@ -66,7 +72,12 @@
     const inScope = cfg.nodes.filter(n => m.scope.includes(n.id) && n.type !== "resource");
     const done = inScope.filter(n => s[n.id] === "DONE").length;
     // 外層只回答「離交貨還多遠」：交貨範圍內作戰節點的完成數
-    if (m.delivered) return {mission: m, lines: [[`${unitName} ${m.id} · 交貨進度 ${done}/${inScope.length} ✓ 已交貨`, "done"]]};
+    if (m.delivered) {
+      const next = nextBaton(hq, nodeId);
+      const lines = [[`✓ 已交貨 · ${unitName} ${m.id} · 交貨進度 ${done}/${inScope.length}`, "done"]];
+      if (next.length) lines.push([`→ 下一棒：${next.map(n => `${n.title} ${n.state}`).join("、")}`, "next"]);
+      return {mission: m, next, lines};
+    }
     const main = inScope.filter(n => s[n.id] in ORDER).sort((a, b) => ORDER[s[a.id]] - ORDER[s[b.id]])[0] || E.byId[m.deliver];
     const ms = s[main.id];
     const lines = [[`${unitName} ${m.id} · ${main.title} ${ms} · 交貨進度 ${done}/${inScope.length}`, ms]];
@@ -92,6 +103,20 @@
     if (slot) slot.innerHTML = `<span>MISSION</span><b>${esc(m.id)}</b>`;
     const g = overlay(rootEl);
     const i = cfg.nodes.findIndex(n => n.id === m.deliver);
+    // 交貨後：貨已交（DELIVERED）與小隊仍在收尾（MISSION STATUS）分開講清楚；只是顯示語意，不是新狀態
+    const stage = rootEl.querySelector(".wr-stage");
+    rootEl.querySelector('[data-k="hstat"] span').textContent = "MISSION STATUS";
+    let bar = stage.querySelector(".v3-deliv");
+    if (!bar) { bar = document.createElement("div"); bar.className = "v3-deliv"; bar.hidden = true; stage.querySelector(".wr-crumb").after(bar); }
+    const campName = String(hq.campaign.config.header.title).split(" / ")[0], nodeTitle = hq.campaign.byId[m.node].title;
+    const wasHidden = bar.hidden;
+    if (m.delivered) {
+      const next = nextBaton(hq, m.node);
+      bar.innerHTML = `<b>DELIVERED → ${esc(campName)} ${esc(nodeTitle)} ✓</b><span>小隊收尾中（不影響戰役）</span>` +
+        (next.length ? `<em>${esc(campName)} 下一棒：${esc(next.map(n => `${n.title} ${n.state}`).join("、"))}</em>` : "");
+      bar.hidden = false;
+    } else bar.hidden = true;
+    if (wasHidden !== bar.hidden) dispatchEvent(new Event("resize"));   // 列的有無會改變高度，請 V2 core 重算縮放
     note(g, rootEl, i, [[m.delivered ? `◆ 交貨點 · 已交貨 → ${hq.campaign.byId[m.node].title} DONE` : `◆ 交貨點 → ${hq.campaign.config.header.title.split(" ")[0]} ${hq.campaign.byId[m.node].title}`, m.delivered ? "done" : "deliver"]]);
   }
 
@@ -100,5 +125,5 @@
     const m = hq.missions[missionId], C = hq.campaign, u = hq.units[m.unit];
     return {campaign: String(C.config.header.title).replace(" / ", " "), node: C.byId[m.node].title, unit: String(u.name || u.id).split(" / ").pop(), mission: m.id};
   }
-  root.WarRoomV3View = {paintCampaign, paintMission, missionSummary, crumb};
+  root.WarRoomV3View = {paintCampaign, paintMission, missionSummary, crumb, nextBaton};
 })(typeof globalThis !== "undefined" ? globalThis : this);
