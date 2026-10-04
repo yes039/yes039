@@ -1,0 +1,34 @@
+/* 調亮配色實驗（Spike）：只在 <body data-tone="bright"> 時生效，不改 core。
+   保留黑／咖／紅橘的作戰室氣質，底色改成深暖灰／深咖灰，並拉開三個層級：
+   頁面底色 #231d1b  <  作戰區 #2e2623  <  節點／面板 #3a302b
+   狀態語意色（ACTIVE 紅、WAITING 黃、READY 虛線、DONE 暖橘框）不變，只為較亮底色微調明度。 */
+body[data-tone="bright"]{
+  --bg:#231d1b; --fg:#f5e9e4; --muted:#b5a097; --line:#5a463f; --accent:#ff5d4f;
+  background:#231d1b; color:#f5e9e4;
+}
+body[data-tone="bright"] .wr{
+  --wr-bg:#2e2623;        /* 作戰區 */
+  --wr-panel:#3a302b;     /* 面板 */
+  --wr-node:#3d322d;      /* 節點 */
+  --wr-line:#6e5148;      /* 連線、面板外框 */
+  --wr-grid:#3a312d;      /* 格線：比作戰區略亮，看得到但不搶 */
+  --wr-fg:#f5e9e4;
+  --wr-muted:#b9a39a;     /* 小字：比深色版亮，手機上可讀 */
+  --wr-accent:#ff5d4f;
+  --wr-warm:#ffa07a;
+  --wr-waiting:#f5c15c;
+  --wr-alert:#ffa07a;
+  --wr-failed:#ff5252;
+  --wr-skipped:#8a7570;
+}
+/* core 裡寫死的深色值，依新底色重新對應 */
+body[data-tone="bright"] .wr .wr-wire2{stroke:#8a5d52;opacity:.7}
+body[data-tone="bright"] .wr .wr-wire{stroke:#7a5a50}
+body[data-tone="bright"] .wr .wr-n .box{stroke:#76594f}
+body[data-tone="bright"] .wr .wr-n.hot .box{stroke:var(--wr-warm);fill:#4a302a}
+body[data-tone="bright"] .wr .wr-n.st-DONE .box{stroke:var(--wr-warm);fill:#433029}
+body[data-tone="bright"] .wr .wr-wire.done{stroke:#d0634f}
+body[data-tone="bright"] .wr .wr-n.st-FAILED .box{stroke:var(--wr-failed);fill:#4c2526}
+body[data-tone="bright"] .wr .wr-heat i{background:#4a3c36}
+body[data-tone="bright"] .wr .wr-heat i.a{background:#8f4a3f}
+body[data-tone="bright"] .wr .wr-pt.fixed{opacity:.6}

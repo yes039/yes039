@@ -1,0 +1,177 @@
+<title>掌上戰情室</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="core/war-room.css">
+<style>
+/* MOBILE COMMAND VIEW SPIKE：手機先看戰況摘要，需要時才展開完整兵陣。
+   狀態只讀 spike/v3 的 HQ；完整兵陣由 V2 core mount、spike/v3/view.js 上色。不改引擎、不改 V3.1。
+   Layout: one column, summary card first; full war room behind a toggle in a horizontal-scroll strip. */
+:root{
+  --bg:#0f080a; --zone:#170c0f; --card:#1d0f12; --line:#3a1c21; --fg:#efdfe0; --muted:#8c6a6f;
+  --accent:#ff4f45; --warm:#ff8d6b; --wait:#e8b04a; --fail:#ff3b3b;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:dark;
+}
+body[data-tone="bright"]{ --zone:#2e2623; --card:#3a302b; --line:#5a463f; --muted:#b5a097; --warm:#ffa07a; --wait:#f5c15c; --fail:#ff5252; --accent:#ff5d4f }
+html,body{background:var(--bg);color:var(--fg)}
+body{padding-inline:16px;padding-block:14px 24px;font-family:var(--sans);font-size:15px;line-height:1.5}
+.m{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--zone);border:1px solid var(--line);border-top:3px solid var(--accent);padding:14px 14px 16px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.head h1{margin:2px 0 0;font-size:22px;line-height:1.25;font-weight:700;text-wrap:balance}
+.chip{font:700 12px var(--mono);letter-spacing:.06em;padding:3px 8px;border:1px solid currentColor;white-space:nowrap;align-self:flex-start}
+.s-RUNNING,.s-ACTIVE{color:var(--accent)} .s-WAITING{color:var(--wait)} .s-FAILED{color:var(--fail)}
+.s-COMPLETE,.s-DONE{color:var(--warm)} .s-READY{color:var(--fg)} .s-IDLE{color:var(--muted)}
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.counts div{background:var(--card);padding:6px 8px;display:flex;flex-direction:column}
+.counts span{font:600 10.5px var(--mono);letter-spacing:.08em;color:var(--muted)}
+.counts b{font:800 18px var(--mono);font-variant-numeric:tabular-nums}
+.block{background:var(--card);padding:12px;display:flex;flex-direction:column;gap:8px}
+.block h2{margin:0;font:600 11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+.block.alert{border-left:3px solid var(--wait)}
+.block.alert.fail{border-left-color:var(--fail)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.row .t{font-weight:700}
+.row small{display:block;color:var(--muted);font-size:13px;font-weight:400}
+.why{font-size:16px;font-weight:700}
+.bar{height:8px;background:var(--line);position:relative;margin-top:2px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--warm)}
+.next{font-size:16px;font-weight:700}
+.next b{color:var(--fg)}
+.muted{color:var(--muted);font-size:13px}
+.toggle{font:600 14px var(--sans);color:var(--fg);background:var(--card);border:1px solid var(--line);padding:12px;cursor:pointer;width:100%}
+.toggle:focus-visible,.dev button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.full{margin-inline:-16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.full-inner{width:700px;padding-inline:16px}
+.full-hint{font-size:12px;color:var(--muted);margin:0 0 6px}
+.dev{font:11px var(--mono);color:var(--muted);border:1px dashed var(--line);padding:10px}
+.dev .r{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dev button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);padding:6px 10px;cursor:pointer}
+/* 完整兵陣裡的委派摘要（與下鑽頁同款） */
+.wr svg .v3-note{font:600 9.5px var(--wr-mono),var(--wr-cjk);fill:var(--wr-fg)}
+.wr svg .v3-note.muted{fill:var(--wr-muted)} .wr svg .v3-note.ACTIVE{fill:var(--wr-accent)} .wr svg .v3-note.WAITING{fill:var(--wr-waiting)}
+.wr svg .v3-note.FAILED{fill:var(--wr-failed)} .wr svg .v3-note.done{fill:var(--wr-warm)} .wr svg .v3-note.next{fill:var(--wr-fg)}
+</style>
+<link rel="stylesheet" href="spike/mobile/tone-bright.css">
+
+<main class="m">
+  <section class="card" id="summary" aria-live="polite"></section>
+  <button type="button" class="toggle" id="toggle" aria-expanded="false" aria-controls="full">查看完整兵陣 ▾</button>
+  <section class="full" id="full" hidden>
+    <div class="full-inner"><p class="full-hint">完整兵陣可左右滑動</p><div id="campRoot"></div></div>
+  </section>
+  <details class="dev">
+    <summary>DRILL SCRIPT · DEV</summary>
+    <div class="r">
+      <button type="button" data-jump="A">A 剛出兵</button><button type="button" data-jump="B">B 受阻</button>
+      <button type="button" data-jump="C">C 恢復</button><button type="button" data-jump="D">D 交貨</button>
+      <button type="button" id="tone">切換配色（調亮／原深色）</button>
+    </div>
+  </details>
+</main>
+
+<script src="core/war-room.js"></script>
+<script src="configs/campaign-enroll.js"></script>
+<script src="configs/seal-team.js"></script>
+<script src="spike/v3/engine.js"></script>
+<script src="spike/v3/view.js"></script>
+<script>
+(function () {
+  document.body.dataset.tone = "bright";
+  const campCfg = WarRoom.get("campaign-enroll"), sealCfg = WarRoom.get("seal-team");
+  const campRoot = document.getElementById("campRoot"), full = document.getElementById("full");
+  full.hidden = false; WarRoom.mount(campRoot, campCfg); full.hidden = true;   // 可見時排版一次，再收起
+
+  // 與下鑽頁同一份演練腳本
+  const P = ids => ids.flatMap(n => [[null, "STARTED", n], [null, "DONE", n]]);
+  const M = (type, node, note) => ["M003", type, node, note];
+  const SCRIPT = [
+    [null, "TASK_CREATED", null, "司令部開戰"], ...P(["goal", "aud", "strat", "plan", "route", "mat"]),
+    ["HQ", "MISSION_OPENED", "prod", "司令部下令：製片委派海豹小隊，建立 M003", "A"],
+    M("STARTED", "src"), M("DONE", "src"), M("STARTED", "worth"), M("DONE", "worth"), M("STARTED", "plan"), M("DONE", "plan"),
+    M("STARTED", "h2"), M("WAITING", "h2", "作戰令等隊長核可"), M("APPROVED", "h2", "隊長核可作戰令"),
+    M("STARTED", "tool"), M("DONE", "tool"), M("STARTED", "make"),
+    [...M("WAITING", "make", "素材不足，等補件"), "B"],
+    [...M("RESUMED", "make", "補件完成，恢復作戰"), "C"],
+    M("DONE", "make"), M("STARTED", "rend"), M("DONE", "rend"), M("STARTED", "h4"), M("WAITING", "h4", "成片送隊長 H4 核可"),
+    [...M("APPROVED", "h4", "H4 核可＝交貨"), "D"],
+  ];
+  let hq;
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const ACT = ["ACTIVE", "WAITING", "FAILED", "READY"];
+  const lastNote = (mission, node) => { const x = hq.timeline.slice().reverse().find(x => x.ok && (x.ev.mission || null) === mission && x.ev.node === node); return x && x.ev.note; };
+
+  function summary() {
+    const C = hq.campaign, cfg = C.config, st = C.state, status = C.status();
+    const name = String(cfg.header.title).replace(" / ", " ");
+    const acts = cfg.nodes.filter(n => !C.isRes(n.id)), cnt = s => acts.filter(n => st[n.id] === s).length;
+    const unitOf = n => { const m = Object.values(hq.missions).find(m => m.node === n.id); if (!m) return null; const u = hq.units[m.unit]; return {m, unit: String(u.name || u.id).split(" / ").pop()}; };
+    // 卡點：戰役直接節點，以及各 Mission 交貨範圍內的節點
+    const blocks = [];
+    acts.forEach(n => { if ((st[n.id] === "WAITING" || st[n.id] === "FAILED") && !C.isDel(n.id)) blocks.push({who: n.title, where: "司令部", s: st[n.id], why: lastNote(null, n.id)}); });
+    Object.values(hq.missions).forEach(m => {
+      if (m.delivered) return;
+      const E = m.engine, u = hq.units[m.unit], unit = String(u.name || u.id).split(" / ").pop();
+      E.config.nodes.forEach(n => { if (m.scope.includes(n.id) && (E.state[n.id] === "WAITING" || E.state[n.id] === "FAILED")) blocks.push({who: n.title, where: `${unit} ${m.id}`, s: E.state[n.id], why: lastNote(m.id, n.id)}); });
+    });
+    const front = acts.filter(n => ACT.includes(st[n.id]));
+    let html = `<div class="head"><div><div class="eyebrow">戰役</div><h1>${esc(name)}</h1></div><span class="chip s-${status}">${status}</span></div>`;
+    if (!C.started) return html + `<p class="muted">尚未開戰。</p>`;
+    html += `<div class="counts">${["ACTIVE", "WAITING", "FAILED"].map(s => `<div><span>${s}</span><b class="s-${s}">${cnt(s)}</b></div>`).join("")}<div><span>DONE</span><b>${cnt("DONE")}/${acts.length}</b></div></div>`;
+    blocks.forEach(b => { html += `<div class="block alert ${b.s === "FAILED" ? "fail" : ""}"><h2>卡點</h2><div class="row"><span class="t">${esc(b.who)}<small>${esc(b.where)}</small></span><span class="chip s-${b.s}">${b.s}</span></div>${b.why ? `<div class="why">原因：${esc(b.why)}</div>` : ""}</div>`; });
+    html += `<div class="block"><h2>目前前線</h2>${front.length ? front.map(n => { const u = unitOf(n); return `<div class="row"><span class="t">${esc(n.title)}<small>${u ? `${esc(u.unit)} ${esc(u.m.id)} 執行` : "司令部"}</small></span><span class="chip s-${st[n.id]}">${st[n.id]}</span></div>`; }).join("") : `<p class="muted">沒有進行中或待接手的節點。</p>`}</div>`;
+    Object.values(hq.missions).forEach(m => {
+      const E = m.engine, u = hq.units[m.unit], unit = String(u.name || u.id).split(" / ").pop(), cn = C.byId[m.node].title;
+      const inScope = E.config.nodes.filter(n => m.scope.includes(n.id) && !E.isRes(n.id)), done = inScope.filter(n => E.state[n.id] === "DONE").length;
+      const order = {FAILED: 0, WAITING: 1, ACTIVE: 2, READY: 3};
+      const main = inScope.filter(n => E.state[n.id] in order).sort((a, b) => order[E.state[a.id]] - order[E.state[b.id]])[0];
+      html += `<div class="block"><h2>執行部隊</h2><div class="row"><span class="t">${esc(unit)} ${esc(m.id)}<small>承接 ${esc(cn)}</small></span><span class="chip s-${E.status()}">${E.status()}</span></div>`;
+      if (m.delivered) {
+        html += `<div class="next s-DONE">✓ 已交貨 → ${esc(cn)}</div><div class="muted">小隊收尾中，不影響戰役</div>`;
+      } else if (main) html += `<div class="row"><span>目前主要兵：<b>${esc(main.title)}</b></span><span class="chip s-${E.state[main.id]}">${E.state[main.id]}</span></div>`;
+      html += `<div class="row"><span>交貨進度</span><b>${done}/${inScope.length}${m.delivered ? " ✓" : ""}</b></div><div class="bar" role="img" aria-label="交貨進度 ${done}/${inScope.length}"><i style="width:${done / inScope.length * 100}%"></i></div></div>`;
+      if (m.delivered) {
+        const next = WarRoomV3View.nextBaton(hq, m.node);
+        if (next.length) html += `<div class="block"><h2>下一棒</h2><div class="next">→ ${next.map(n => `<b>${esc(n.title)}</b> <span class="chip s-${n.state}">${n.state}</span>`).join("　")}</div><div class="muted">${esc(cn)} 已交貨，戰役由此接手</div></div>`;
+      }
+    });
+    return html;
+  }
+  // 完整兵陣的 EVENT LOG：司令部事件，以及委派節點被 Mission 推算的變化（與下鑽頁相同語意）
+  const T = (cfg, id) => (cfg.nodes.find(n => n.id === id) || {}).title || id;
+  function logs() {
+    return hq.timeline.slice().reverse().flatMap(x => {
+      if (!x.ev.mission || x.ev.type === "MISSION_OPENED") return [{time: "#" + x.seq, ok: x.ok, text: x.ok ? (x.ev.type === "MISSION_OPENED" ? `出兵 ${x.ev.mission} · ${T(campCfg, x.ev.node)}` : `${x.ev.type} · ${x.ev.node ? T(campCfg, x.ev.node) : "開戰"}`) : `✕ ${x.ev.type} · ${x.reason}`}];
+      const c = x.campaignChanges.find(c => hq.campaign.isDel(c[0]));
+      return c ? [{time: "#" + x.seq, ok: true, text: `${x.ev.mission} → ${T(campCfg, c[0])} ${c[2]}`}] : [];
+    });
+  }
+  function paint() {
+    document.getElementById("summary").innerHTML = summary();
+    WarRoomV3View.paintCampaign(campRoot, hq, logs());
+  }
+  function jump(mark) {
+    hq = WarRoomV3.createHQ({campaign: campCfg, units: {"seal-team": sealCfg}});
+    for (const s of SCRIPT) {
+      const [mission, type, node, note, tag] = s;
+      hq.emit(mission === "HQ" ? {type, node, mission: "M003", note} : mission ? {mission, type, node, note} : {type, node, note});
+      if (tag === mark) break;
+    }
+    paint();
+  }
+  const toggle = document.getElementById("toggle");
+  toggle.addEventListener("click", () => {
+    full.hidden = !full.hidden;
+    toggle.setAttribute("aria-expanded", String(!full.hidden));
+    toggle.textContent = full.hidden ? "查看完整兵陣 ▾" : "收起完整兵陣 ▴";
+    dispatchEvent(new Event("resize"));   // 讓 V2 core 依展開後寬度重算縮放
+    if (!full.hidden) full.scrollLeft = (full.scrollWidth - full.clientWidth) / 2;   // 打開時置中，主線節點在畫面內
+  });
+  document.querySelectorAll("[data-jump]").forEach(b => b.addEventListener("click", () => jump(b.dataset.jump)));
+  document.getElementById("tone").addEventListener("click", () => { document.body.dataset.tone = document.body.dataset.tone === "bright" ? "" : "bright"; });
+  jump("B");
+  window.__mobile = {jump, get hq() { return hq; }};
+})();
+</script>
