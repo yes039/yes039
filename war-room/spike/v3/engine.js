@@ -184,7 +184,7 @@
       timeline.push(entry);
       return entry;
     }
-    return {emit, campaign: C, missions, timeline};
+    return {emit, campaign: C, missions, timeline, units};
   }
 
   const api = {STATES, EVENT_TYPES: Object.keys(EVENTS), createEngine, createHQ, validateDelegation};
