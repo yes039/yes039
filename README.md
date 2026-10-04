@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🛰️ 作戰室母體（換 Config 裝入不同 AI 部隊）：[war-room/](war-room/)
