@@ -62,7 +62,7 @@ body{padding-inline:16px;padding-block:14px 24px;font-family:var(--sans);font-si
   <section class="full" id="full" hidden>
     <div class="full-inner"><p class="full-hint">完整兵陣可左右滑動</p><div id="campRoot"></div></div>
   </section>
-  <details class="dev">
+  <details class="dev" hidden>
     <summary>DRILL SCRIPT · DEV</summary>
     <div class="r">
       <button type="button" data-jump="A">A 剛出兵</button><button type="button" data-jump="B">B 受阻</button>
@@ -80,6 +80,7 @@ body{padding-inline:16px;padding-block:14px 24px;font-family:var(--sans);font-si
 <script>
 (function () {
   document.body.dataset.tone = "bright";
+  if (location.hash === "#dev") document.querySelector(".dev").hidden = false;   // 開發模式才顯示演練控制
   const campCfg = WarRoom.get("campaign-enroll"), sealCfg = WarRoom.get("seal-team");
   const campRoot = document.getElementById("campRoot"), full = document.getElementById("full");
   full.hidden = false; WarRoom.mount(campRoot, campCfg); full.hidden = true;   // 可見時排版一次，再收起
@@ -121,16 +122,16 @@ body{padding-inline:16px;padding-block:14px 24px;font-family:var(--sans);font-si
     if (!C.started) return html + `<p class="muted">尚未開戰。</p>`;
     html += `<div class="counts">${["ACTIVE", "WAITING", "FAILED"].map(s => `<div><span>${s}</span><b class="s-${s}">${cnt(s)}</b></div>`).join("")}<div><span>DONE</span><b>${cnt("DONE")}/${acts.length}</b></div></div>`;
     blocks.forEach(b => { html += `<div class="block alert ${b.s === "FAILED" ? "fail" : ""}"><h2>卡點</h2><div class="row"><span class="t">${esc(b.who)}<small>${esc(b.where)}</small></span><span class="chip s-${b.s}">${b.s}</span></div>${b.why ? `<div class="why">原因：${esc(b.why)}</div>` : ""}</div>`; });
-    html += `<div class="block"><h2>目前前線</h2>${front.length ? front.map(n => { const u = unitOf(n); return `<div class="row"><span class="t">${esc(n.title)}<small>${u ? `${esc(u.unit)} ${esc(u.m.id)} 執行` : "司令部"}</small></span><span class="chip s-${st[n.id]}">${st[n.id]}</span></div>`; }).join("") : `<p class="muted">沒有進行中或待接手的節點。</p>`}</div>`;
+    html += `<div class="block"><h2>目前前線</h2>${front.length ? front.map(n => { const u = unitOf(n); return `<div class="row"><span class="t">${esc(n.title)}<small>${u ? `${esc(u.unit)} ${esc(u.m.id)} 執行` : "司令部"} · ${st[n.id]}</small></span></div>`; }).join("") : `<p class="muted">沒有進行中或待接手的節點。</p>`}</div>`;
     Object.values(hq.missions).forEach(m => {
       const E = m.engine, u = hq.units[m.unit], unit = String(u.name || u.id).split(" / ").pop(), cn = C.byId[m.node].title;
       const inScope = E.config.nodes.filter(n => m.scope.includes(n.id) && !E.isRes(n.id)), done = inScope.filter(n => E.state[n.id] === "DONE").length;
       const order = {FAILED: 0, WAITING: 1, ACTIVE: 2, READY: 3};
       const main = inScope.filter(n => E.state[n.id] in order).sort((a, b) => order[E.state[a.id]] - order[E.state[b.id]])[0];
-      html += `<div class="block"><h2>執行部隊</h2><div class="row"><span class="t">${esc(unit)} ${esc(m.id)}<small>承接 ${esc(cn)}</small></span><span class="chip s-${E.status()}">${E.status()}</span></div>`;
+      html += `<div class="block"><h2>執行部隊</h2><div class="row"><span class="t">${esc(unit)} ${esc(m.id)}<small>承接 ${esc(cn)}${m.delivered ? "" : ` · 小隊 ${E.status()}`}</small></span></div>`;
       if (m.delivered) {
-        html += `<div class="next s-DONE">✓ 已交貨 → ${esc(cn)}</div><div class="muted">小隊收尾中，不影響戰役</div>`;
-      } else if (main) html += `<div class="row"><span>目前主要兵：<b>${esc(main.title)}</b></span><span class="chip s-${E.state[main.id]}">${E.state[main.id]}</span></div>`;
+        html += `<div class="next s-DONE">✓ 已交貨 → ${esc(cn)}</div><div class="muted">小隊收尾中（${E.status()}），不影響戰役</div>`;
+      } else if (main) html += `<div>目前主要兵：<b>${esc(main.title)}</b> <span class="muted">${E.state[main.id]}</span></div>`;
       html += `<div class="row"><span>交貨進度</span><b>${done}/${inScope.length}${m.delivered ? " ✓" : ""}</b></div><div class="bar" role="img" aria-label="交貨進度 ${done}/${inScope.length}"><i style="width:${done / inScope.length * 100}%"></i></div></div>`;
       if (m.delivered) {
         const next = WarRoomV3View.nextBaton(hq, m.node);
