@@ -1,35 +1,38 @@
-/* 作戰室母體（War Room Core）— EVENT ENGINE V0.1
+/* 作戰室母體（War Room Core）— EVENT ENGINE V2
  *
  * 三者分離：
  *   CONFIG     = 裝誰：節點、連線、哪個節點接哪種事件（eventMap）
  *   EVENT      = 發生什麼：只有 emit(event) 能改變流程狀態
  *   WAR ROOM   = 讓人看見：把狀態畫出來，事件來了才跑一次光流
  *
- * 沒有 Event，流程不前進。底部 SIGNALS / DECISIONS / HEAT MAP / REACH 是標示 MOCK 的展示數據，
+ * 沒有 Event，流程不前進。V2：每個節點自己的狀態；路過 ≠ 完成；異常可原地恢復。
+ *底部 SIGNALS / DECISIONS / HEAT MAP / REACH 是標示 MOCK 的展示數據，
  * 跟流程狀態完全隔離。Config 格式見 war-room/README.md。
  */
 (function () {
   "use strict";
 
   const STAGES = ["INPUT", "DISCOVER", "JUDGE", "ROUTE", "RUN", "VERIFY", "SAVE"];
-  // 節點的執行期狀態，只能由事件改變
-  const NODE_STATES = ["IDLE", "ACTIVE", "DONE", "WAITING", "FAILED"];
+  // V2：每個節點有自己的狀態，只能由「指名這個節點」的事件改變
+  //   IDLE    上游尚未完成，還不能開始
+  //   READY   上游已完成，可以開始
+  //   ACTIVE  進行中
+  //   WAITING 卡住，等外部（補件、審核）；原地等待，不影響其他節點
+  //   DONE    收到自己的完成事件（DONE 或 APPROVED）才會是 DONE
+  //   FAILED  失敗；可以原地重新 STARTED
+  const NODE_STATES = ["IDLE", "READY", "ACTIVE", "WAITING", "DONE", "FAILED"];
 
-  // 事件 → 允許的前一個流程階段、事件後的階段、目標節點所在的 stage
+  // 節點事件：from = 允許的目前狀態，to = 之後狀態
   const EVENTS = {
-    TASK_CREATED:     {from: ["IDLE", "COMPLETE", "FAILED"], to: "CREATED", stage: "INPUT"},
-    SIGNAL_FOUND:     {from: ["CREATED"], to: "SIGNAL", stage: "DISCOVER"},
-    JUDGED:           {from: ["SIGNAL"], to: "JUDGED", stage: "JUDGE"},
-    ROUTED:           {from: ["JUDGED"], to: "ROUTED", stage: "ROUTE"},
-    RUNNING:          {from: ["ROUTED", "RUNNING"], to: "RUNNING", stage: "RUN"},
-    WAITING_APPROVAL: {from: ["RUNNING"], to: "WAITING", stage: "VERIFY"},
-    APPROVED:         {from: ["WAITING"], to: "APPROVED", stage: null},
-    VERIFIED:         {from: ["APPROVED"], to: "VERIFIED", stage: "VERIFY"},
-    SAVED:            {from: ["VERIFIED"], to: "COMPLETE", stage: "SAVE"},
-    FAILED:           {from: ["CREATED", "SIGNAL", "JUDGED", "ROUTED", "RUNNING", "WAITING", "APPROVED", "VERIFIED"], to: "FAILED", stage: null},
+    TASK_CREATED: {from: null, to: null},            // 開戰：全部重置，沒有上游的節點變 READY
+    STARTED:  {from: ["READY", "FAILED"], to: "ACTIVE"},   // FAILED → STARTED = 原地重試
+    WAITING:  {from: ["ACTIVE"], to: "WAITING"},           // 例：素材不足等補件、送審等核可
+    RESUMED:  {from: ["WAITING"], to: "ACTIVE"},           // 例：補件完成，回到進行中
+    APPROVED: {from: ["WAITING"], to: "DONE"},             // 人工核可＝這個節點的完成事件
+    DONE:     {from: ["ACTIVE"], to: "DONE"},
+    FAILED:   {from: ["ACTIVE", "WAITING"], to: "FAILED"},
   };
   const EVENT_TYPES = Object.keys(EVENTS);
-  const PHASE_ORDER = ["IDLE", "CREATED", "SIGNAL", "JUDGED", "ROUTED", "RUNNING", "WAITING", "APPROVED", "VERIFIED", "COMPLETE"];
 
   // 畫布幾何
   const CW = 980, NW = 136, NH = 44, ROW = 104, TOP = 20, LEFT = 120, RIGHT = 960;
@@ -74,12 +77,7 @@
       else e.slice(0, 2).forEach(id => { if (!ids.has(id)) errs.push(`edges[${i}] 指向不存在的節點：${id}`); });
     });
     if ("route" in c || "events" in c) errs.push("route / events 已移除：流程只能由 Event 推進");
-    const byId = Object.fromEntries((c.nodes || []).map(n => [n.id, n]));
-    for (const [type, id] of Object.entries(c.eventMap || {})) {
-      if (!EVENTS[type] || type === "APPROVED" || type === "FAILED") errs.push(`eventMap 不支援「${type}」`);
-      else if (!byId[id]) errs.push(`eventMap.${type} 指向不存在的節點：${id}`);
-      else if (EVENTS[type].stage && type !== "WAITING_APPROVAL" && byId[id].stage !== EVENTS[type].stage) errs.push(`eventMap.${type} 的節點 ${id} 應在 ${EVENTS[type].stage}`);
-    }
+    // eventMap 是 V0.1 欄位，V2 事件一律指名節點，保留不報錯也不使用
     if (c.header && c.header.stats && c.header.stats.length > 3) errs.push("header.stats 最多 3 個");
     return errs;
   }
@@ -124,7 +122,7 @@
       return api;
     }
 
-    const c = config, h = c.header || {}, p = c.panels || {}, labels = c.stageLabels || {}, emap = c.eventMap || {};
+    const c = config, h = c.header || {}, p = c.panels || {}, labels = c.stageLabels || {};
     const nodes = c.nodes, byId = Object.fromEntries(nodes.map(n => [n.id, n]));
     const pos = layout(nodes);
     const stats = (h.stats || []).slice(0, 3);
@@ -184,23 +182,8 @@
       const mv = [0, 1].map(() => svg("circle", {r: 2, class: "wr-pt mv"}, $("pts")));
       return {from, to, p: pth, len, seg, st, mv};
     });
-    const out = {};
-    edges.forEach((e, i) => { (out[e.from] = out[e.from] || []).push(i); });
-    function findPath(a, b) { // 依 Config 連線找最短路徑（BFS），回傳連線索引
-      if (!a || a === b) return [];
-      const prev = {[a]: null}, q = [a];
-      while (q.length) {
-        const n = q.shift();
-        for (const i of out[n] || []) {
-          const t = edges[i].to;
-          if (t in prev) continue;
-          prev[t] = i;
-          if (t === b) { const path = []; for (let k = b; prev[k] != null; k = edges[prev[k]].from) path.unshift(prev[k]); return path; }
-          q.push(t);
-        }
-      }
-      return null;
-    }
+    const out = {}, inc = {};
+    edges.forEach((e, i) => { (out[e.from] = out[e.from] || []).push(i); (inc[e.to] = inc[e.to] || []).push(i); });
 
     // 節點
     const nodeEls = {};
@@ -221,38 +204,45 @@
       nodeEls[n.id] = {g, tg};
     });
 
-    // ===== EVENT ENGINE：流程狀態只在這裡改變 =====
-    const state = {phase: "IDLE", cursor: null, startedAt: null, endedAt: null, nodes: {}, log: []};
+    // ===== EVENT ENGINE V2：每個節點自己的狀態機 =====
+    // 規則：事件只作用在它指名的那一個節點；光流只代表訊號傳到下一個節點，路過 ≠ 完成。
+    // 開始條件：任一條進來的連線，其來源節點已 DONE（沒有進來連線的節點，開戰即 READY）。
+    // 戰役完成：SAVE 段的節點全部 DONE。
+    const finish = nodes.filter(n => n.stage === "SAVE").map(n => n.id);
+    const state = {started: false, startedAt: null, endedAt: null, nodes: {}, log: []};
     nodes.forEach(n => { state.nodes[n.id] = "IDLE"; });
 
     function setNode(id, s) {
       state.nodes[id] = s;
       const {g, tg} = nodeEls[id];
       g.setAttribute("class", "wr-n" + (s === "ACTIVE" ? " hot" : s === "IDLE" ? "" : " st-" + s));
-      tg.textContent = s === "WAITING" || s === "FAILED" ? s : (byId[id].tag || "");
+      tg.textContent = s === "IDLE" ? (byId[id].tag || "") : s;
     }
-    function targetFor(type, ev) {
-      if (type === "APPROVED") return state.cursor;
-      if (type === "FAILED") return ev.node || state.cursor;
-      if (ev.node) return ev.node;
-      if (emap[type]) return emap[type];
-      const first = nodes.find(n => n.stage === EVENTS[type].stage);
-      return first && first.id;
+    function refreshEdges() { // 兩端都 DONE 的連線＝這段真的走完了
+      edges.forEach(e => e.p.classList.toggle("done", state.nodes[e.from] === "DONE" && state.nodes[e.to] === "DONE"));
+    }
+    const upstreamDone = id => (inc[id] || []).some(i => state.nodes[edges[i].from] === "DONE");
+    function campaign() {
+      if (!state.started) return "IDLE";
+      const v = Object.values(state.nodes);
+      if (v.includes("FAILED")) return "FAILED";
+      if (v.includes("WAITING")) return "WAITING";
+      if (finish.length && finish.every(id => state.nodes[id] === "DONE")) return "COMPLETE";
+      return "RUNNING";
     }
     function render() {
-      const ph = state.phase;
-      const label = ph === "IDLE" ? "IDLE" : ph === "COMPLETE" ? "COMPLETE" : ph === "FAILED" ? "FAILED" : ph === "WAITING" ? "WAITING" : "RUNNING";
+      const label = campaign();
       $("status").textContent = label;
       $("hstat").className = "wr-stat s-" + label;
       stage.classList.toggle("on", label === "RUNNING");
-      const idx = PHASE_ORDER.indexOf(ph);
-      $("prog").style.width = (ph === "FAILED" ? 100 : Math.max(0, idx) / (PHASE_ORDER.length - 1) * 100) + "%";
-      $("prog").classList.toggle("fail", ph === "FAILED");
       const cnt = s => Object.values(state.nodes).filter(v => v === s).length;
-      $("counts").innerHTML = `<div class="k-PHASE">PHASE <b>${esc(ph)}</b></div>` +
-        ["ACTIVE", "DONE", "WAITING", "FAILED"].map(s => `<div class="k-${s}">${s} <b>${pad2(cnt(s))}</b></div>`).join("");
+      $("prog").style.width = (cnt("DONE") / nodes.length * 100) + "%";
+      $("prog").classList.toggle("fail", label === "FAILED");
+      $("counts").innerHTML = ["READY", "ACTIVE", "WAITING", "DONE", "FAILED"]
+        .map(s => `<div class="k-${s}">${s} <b>${pad2(cnt(s))}</b></div>`).join("") +
+        `<div class="k-TOTAL">DONE / ALL <b>${pad2(cnt("DONE"))}/${pad2(nodes.length)}</b></div>`;
       $("log").innerHTML = state.log.length ? state.log.slice(0, 8).map(e =>
-        `<div class="${e.ok ? "" : "rej"}"><span>${e.time}</span><b>${esc(e.ok ? `${e.type} · ${e.title}` : `✕ ${e.type} · ${e.reason}`)}</b></div>`).join("")
+        `<div class="${e.ok ? "" : "rej"}"><span>${e.time}</span><b>${esc(e.ok ? `${e.type} · ${e.title}${e.note ? " · " + e.note : ""}` : `✕ ${e.type} · ${e.reason}`)}</b></div>`).join("")
         : `<div class="wr-empty"><span>--:--:--</span><b>no events</b></div>`;
       updateTime();
     }
@@ -263,54 +253,52 @@
 
     function emit(ev) {
       ev = typeof ev === "string" ? {type: ev} : (ev || {});
-      const type = ev.type, def = EVENTS[type], now = new Date();
+      const type = ev.type, def = EVENTS[type], id = ev.node, now = new Date();
       const reject = reason => {
-        state.log.unshift({ok: false, type: type || "?", reason, time: clock(now)});
+        state.log.unshift({ok: false, type: type || "?", node: id, reason, time: clock(now)});
         render();
-        return {ok: false, reason, phase: state.phase};
+        return {ok: false, reason, campaign: campaign(), node: id};
       };
       if (!def) return reject(`未知事件，可用：${EVENT_TYPES.join(", ")}`);
-      if (!def.from.includes(state.phase)) return reject(`目前階段 ${state.phase} 不接受 ${type}`);
-      const target = targetFor(type, ev);
-      if (!target || !byId[target]) return reject(`找不到目標節點 ${target || ""}`.trim());
-      if (ev.node && def.stage && type !== "WAITING_APPROVAL" && byId[target].stage !== def.stage) return reject(`${target} 不在 ${def.stage}`);
 
-      let path = [];
+      let pulse = [];
       if (type === "TASK_CREATED") {
-        nodes.forEach(n => setNode(n.id, "IDLE"));
-        state.startedAt = now.getTime(); state.endedAt = null; state.cursor = null;
-      } else if (type !== "APPROVED" && type !== "FAILED") {
-        path = findPath(state.cursor, target);
-        if (path === null) return reject(`Config 沒有從 ${state.cursor} 到 ${target} 的連線`);
-      }
-
-      // 套用狀態
-      if (type === "FAILED") {
-        setNode(target, "FAILED");
-      } else if (type === "APPROVED") {
-        setNode(target, "ACTIVE");
+        nodes.forEach(n => setNode(n.id, (inc[n.id] || []).length ? "IDLE" : "READY"));
+        state.started = true; state.startedAt = now.getTime(); state.endedAt = null;
       } else {
-        if (state.cursor && state.nodes[state.cursor] !== "FAILED") setNode(state.cursor, "DONE");
-        path.slice(0, -1).forEach(i => setNode(edges[i].to, "DONE")); // 途經節點
-        setNode(target, type === "WAITING_APPROVAL" ? "WAITING" : type === "SAVED" ? "DONE" : "ACTIVE");
-        state.cursor = target;
+        if (!state.started) return reject("尚未開戰，請先送 TASK_CREATED");
+        if (!id || !byId[id]) return reject(id ? `找不到節點 ${id}` : "節點事件必須指名 node");
+        const cur = state.nodes[id], name = byId[id].title || id;
+        if (!def.from.includes(cur)) {
+          const why = cur === "IDLE" ? `上游尚未完成（需要 ${(inc[id] || []).map(i => byId[edges[i].from].title).join(" 或 ")} DONE）` : `目前是 ${cur}`;
+          return reject(`${name} ${why}，不接受 ${type}`);
+        }
+        setNode(id, def.to);
+        if (type === "STARTED") pulse = (inc[id] || []).filter(i => state.nodes[edges[i].from] === "DONE"); // 訊號從已完成的上游傳進來
+        if (def.to === "DONE") { // 自己完成了，下游符合條件的節點變 READY
+          (out[id] || []).forEach(i => {
+            const t = edges[i].to;
+            if (state.nodes[t] === "IDLE" && upstreamDone(t)) { setNode(t, "READY"); pulse.push(i); }
+          });
+        }
       }
-      state.phase = def.to;
-      if (state.phase === "COMPLETE" || state.phase === "FAILED") state.endedAt = now.getTime();
-      state.log.unshift({ok: true, type, node: target, title: byId[target].title || target, time: clock(now), note: ev.note || ""});
-      runPulse(path);
+      refreshEdges();
+      const c = campaign();
+      state.endedAt = c === "COMPLETE" ? now.getTime() : null;
+      state.log.unshift({ok: true, type, node: id || null, title: id ? byId[id].title || id : "開戰", time: clock(now), note: ev.note || ""});
+      runPulse(pulse, true);
       render();
-      return {ok: true, phase: state.phase, node: target, edges: path.map(i => [edges[i].from, edges[i].to])};
+      return {ok: true, campaign: c, node: id || null, state: id ? state.nodes[id] : null, edges: pulse.map(i => [edges[i].from, edges[i].to])};
     }
 
-    // 一次性光流：只沿這次事件的路徑跑一次，跑完就停
+    // 一次性光流：只在這次事件影響的單一段連線跑一次，跑完就停（只是訊號，不代表完成）
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const pulses = [];
     let raf = 0;
-    function runPulse(path) {
-      if (reduce || !path.length) return;
+    function runPulse(list, together) {
+      if (reduce || !list.length) return;
       const t = performance.now();
-      path.forEach((i, k) => pulses.push({e: edges[i], start: t + k * PULSE_GAP}));
+      list.forEach((i, k) => pulses.push({e: edges[i], start: t + (together ? 0 : k * PULSE_GAP)}));
       if (!raf) raf = requestAnimationFrame(animate);
     }
     function animate(now) {

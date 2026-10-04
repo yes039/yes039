@@ -69,13 +69,13 @@ body{padding-inline:16px;padding-block:12px 16px;font-family:"JetBrains Mono",ui
       const r = WarRoom.emit(ev);
       evout.className = r.ok ? "" : "no";
       evout.textContent = r.ok
-        ? `✓ ${type} → ${r.node}　階段：${r.phase}${r.edges.length ? "　光流：" + r.edges.map(e => e.join("→")).join("、") : ""}`
+        ? `✓ ${type}${r.node ? " → " + r.node + " = " + r.state : ""}　戰役：${r.campaign}${r.edges.length ? "　訊號：" + r.edges.map(e => e.join("→")).join("、") : ""}`
         : `✕ ${type} 被拒絕：${r.reason}`;
     });
     evbtns.appendChild(b);
   });
   function fillNodes(cfg) {
-    evnode.innerHTML = `<option value="">自動（依 Config eventMap）</option>` +
+    evnode.innerHTML = `<option value="">（不指名：只有 TASK_CREATED 可用）</option>` +
       (cfg.nodes || []).map(n => `<option value="${n.id}">${n.stage} · ${n.title}</option>`).join("");
     evout.className = ""; evout.textContent = "已裝填 " + (cfg.name || cfg.id) + "。尚未送出事件，流程靜止中。";
   }

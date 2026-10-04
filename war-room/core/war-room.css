@@ -59,9 +59,13 @@
 .wr-n .tag{fill:var(--wr-muted);font:8px var(--wr-mono);letter-spacing:.08em}
 .wr-n .s{fill:var(--wr-accent);font:600 9.5px var(--wr-mono),var(--wr-cjk);letter-spacing:.06em}
 .wr-n.hot .box{stroke:var(--wr-warm);fill:#2a1216}
-/* 事件驅動的執行期狀態：ACTIVE 用 .hot，DONE 用暗暖色框 */
-.wr-n.st-DONE .box{stroke:#b04a4a}
-.wr-n.st-DONE .ico{fill:#b8604e}
+/* V2 節點狀態：IDLE 預設暗框；READY 虛線；ACTIVE 用 .hot；DONE 實心暖框＋右上 DONE 字樣 */
+.wr-n.st-READY .box{stroke:var(--wr-fg);stroke-dasharray:5 3;stroke-opacity:.7}
+.wr-n.st-READY .tag{fill:var(--wr-fg)}
+.wr-n.st-DONE .box{stroke:var(--wr-warm);fill:#23120f}
+.wr-n.st-DONE .tag{fill:var(--wr-warm)}
+.wr-n.hot .tag{fill:var(--wr-accent)}
+.wr-wire.done{stroke:#a3473f;stroke-width:1.6}
 /* SKIPPED / ALERT：保留樣式，V0.1 沒有事件會觸發 */
 .wr-n.st-SKIPPED{opacity:.5}
 .wr-n.st-SKIPPED .box{stroke:var(--wr-skipped);stroke-dasharray:4 3}
@@ -97,7 +101,8 @@
 .wr-st .wr-cnt{display:block}
 .wr-st .wr-cnt div{font-size:8.5px;line-height:21px;display:flex;justify-content:space-between;color:var(--wr-muted)}
 .wr-st div b{font-weight:600}
-.wr-st .k-PHASE b{color:var(--wr-fg)}.wr-st .k-ACTIVE b{color:var(--wr-accent)}.wr-st .k-DONE b{color:var(--wr-warm)}
+.wr-st .k-READY b{color:var(--wr-fg)}.wr-st .k-ACTIVE b{color:var(--wr-accent)}.wr-st .k-DONE b{color:var(--wr-warm)}
+.wr-st .k-TOTAL{border-top:1px solid var(--wr-line);margin-top:4px}.wr-st .k-TOTAL b{color:var(--wr-fg)}
 .wr-st .k-WAITING b{color:var(--wr-waiting)}.wr-st .k-FAILED b{color:var(--wr-failed)}
 .wr-mock{color:var(--wr-waiting);font-weight:400;letter-spacing:.06em;margin-left:4px}
 .wr-ft{display:flex;justify-content:space-between;padding:8px 14px 10px;font-size:8px;color:var(--wr-muted);letter-spacing:.08em}

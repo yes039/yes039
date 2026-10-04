@@ -18,38 +18,45 @@ war-room/
 ## 母體固定的部分
 
 - **7 段流程**：`INPUT → DISCOVER → JUDGE → ROUTE → RUN → VERIFY → SAVE`。每段一列，節點由母體自動平均排版，Config 不寫座標。
-- **節點狀態只由 Event 改變**：`IDLE`、`ACTIVE`、`DONE`、`WAITING`、`FAILED`。（`SKIPPED`／`ALERT` 樣式保留，V0.1 沒有事件會觸發。）
+- **每個節點有自己的狀態，只由指名它的 Event 改變**：`IDLE`、`READY`、`ACTIVE`、`WAITING`、`DONE`、`FAILED`。
 - **連線**：同一段內是側向連線，往下游是垂直曲線，回到上游的連線從右側繞回去。
 - **底部 7 格面板**：EVENT LOG 與 STATUS 只反映真實事件；SIGNALS、DECISIONS、HEAT MAP、REACH 是標示 `MOCK` 的展示數據，不讀也不寫流程狀態。ROSTER 是 Config 靜態文字。
 - **驗證**：Config 寫錯時（例如 stage 名稱打錯、連線指向不存在的節點、每段超過 6 個節點），畫面直接列出錯誤，不會畫出半套。
 
-## Event Engine V0.1
+## Event Engine V2
 
-**沒有 Event，流程不前進。** 唯一入口：
+三條鐵律：**每個節點有自己的狀態；路過 ≠ 完成；異常可以原地恢復。**
 
 ```js
-WarRoom.emit({type: "RUNNING", node: "make", note: "選填"})   // node 選填，省略時用 Config 的 eventMap
-// 回傳 {ok: true, phase, node, edges} 或 {ok: false, reason, phase}
-WarRoom.getState()   // {phase, cursor, startedAt, endedAt, nodes: {id: state}, log: [...]}
+WarRoom.emit({type: "TASK_CREATED"})                                  // 開戰：全部重置
+WarRoom.emit({type: "WAITING", node: "mat", note: "素材不足，等補件"})   // 其餘事件都必須指名 node
+// 接受 → {ok: true, campaign, node, state, edges}；拒絕 → {ok: false, reason, campaign, node}
+WarRoom.getState()   // {started, startedAt, endedAt, nodes: {id: state}, log: [...]}
 ```
 
-| 事件 | 只在這些階段接受 | 之後階段 | 目標節點 |
-|---|---|---|---|
-| TASK_CREATED | IDLE / COMPLETE / FAILED | CREATED | INPUT（重置全部節點） |
-| SIGNAL_FOUND | CREATED | SIGNAL | DISCOVER |
-| JUDGED | SIGNAL | JUDGED | JUDGE |
-| ROUTED | JUDGED | ROUTED | ROUTE |
-| RUNNING | ROUTED / RUNNING | RUNNING | RUN |
-| WAITING_APPROVAL | RUNNING | WAITING | 核可節點（eventMap 指定，可在任一段） |
-| APPROVED | WAITING | APPROVED | 正在等待的節點 |
-| VERIFIED | APPROVED | VERIFIED | VERIFY |
-| SAVED | VERIFIED | COMPLETE | SAVE |
-| FAILED | CREATED～VERIFIED | FAILED | 目前節點，或事件指定的節點 |
+| 狀態 | 意思 |
+|---|---|
+| IDLE | 上游尚未完成，還不能開始 |
+| READY | 任一條進來的連線，其來源節點已 DONE（沒有進來連線的節點開戰即 READY） |
+| ACTIVE | 進行中 |
+| WAITING | 卡住等外部（補件、審核），原地等待 |
+| DONE | 只有收到自己的 `DONE` 或 `APPROVED` 才會 DONE |
+| FAILED | 失敗，可以原地再 `STARTED` 重試 |
 
-每次接受事件：沿 Config 連線找出從目前節點到目標節點的路徑 → 只在這條路徑跑一次光流 → 途經節點標 DONE、目標節點標 ACTIVE／WAITING／FAILED → 寫入 EVENT LOG → 更新右上 STATUS、進度條與底部 STATUS 計數。
-不符合順序的事件會被拒絕，狀態不變，EVENT LOG 留一筆 ✕ 紀錄。
+| 事件 | 只接受節點目前是 | 之後 |
+|---|---|---|
+| TASK_CREATED | （不指名節點） | 全部 IDLE，沒有上游的節點 READY |
+| STARTED | READY、FAILED | ACTIVE |
+| WAITING | ACTIVE | WAITING |
+| RESUMED | WAITING | ACTIVE |
+| APPROVED | WAITING | DONE（人工核可＝完成） |
+| DONE | ACTIVE | DONE；下游符合條件的節點變 READY |
+| FAILED | ACTIVE、WAITING | FAILED |
 
-`index.html` 的 **TEST CONSOLE** 可以人工逐一送出這 10 種事件。
+- 光流只跑「這次事件影響的那一段連線」一次，只代表訊號傳遞，不改變任何節點狀態。
+- 戰役狀態（右上 STATUS）：有 FAILED → FAILED；有 WAITING → WAITING；SAVE 段節點全部 DONE → COMPLETE；其他 → RUNNING。
+- 不合法的事件被拒絕，狀態不變，EVENT LOG 留一筆 ✕ 與原因。
+- `index.html` 的 TEST CONSOLE 可以人工指名節點、逐一送出事件。
 
 ## 新增一支部隊
 
@@ -69,8 +76,8 @@ WarRoom.getState()   // {phase, cursor, startedAt, endedAt, nodes: {id: state}, 
 | `loopLabel` | 麵包屑右側，例如 `ONE LOOP / 7D` |
 | `stageLabels` | 7 段的在地名稱，例如 `{INPUT: "素材"}`（可省略） |
 | `nodes` | `{id, stage, title, tag?, sub?}`；`stage` 必須是 7 段之一。**不可寫 `state`**，狀態只能由 Event 決定 |
-| `edges` | `[from, to]`；事件光流沿這些連線找路徑 |
-| `eventMap` | 哪個節點接哪種事件，例如 `{RUNNING: "make", WAITING_APPROVAL: "h4"}`。省略的事件預設用該段第一個節點。APPROVED／FAILED 不需設定 |
+| `edges` | `[from, to]`；同時也是「誰要等誰完成」的依據 |
+| `eventMap` | V0.1 欄位，V2 不再使用（事件一律指名節點）；寫了不會報錯 |
 | `panels` | 各面板標題與文字：`log`、`signals.labels`（最多 7 個）、`decisions.caption/a/b`、`heat`、`reach.caption/loops/foot`、`roster.items`（最多 4 個 `[名稱, 說明]`）、`status` |
 | `footer` | `[左, 右]` 頁尾文字 |
 
