@@ -13,5 +13,6 @@
   {"seq":12,"at":"2026-10-04T12:35:40.798Z","type":"STARTED","by":"Claude","node":"approve","note":"人工核可：整理核可稿與驗收表送 Shen"},
   {"seq":13,"at":"2026-10-04T12:35:40.836Z","type":"WAITING","by":"Claude","node":"approve","note":"核可稿 v1 送 Shen 核可","evidence":"campaigns/B001/04-PO文-核可稿.md v1、05-驗收表.md"},
   {"seq":14,"at":"2026-10-04T12:38:01.382Z","type":"RESUMED","by":"Shen","node":"approve","note":"退回：①高度拉到一人帶 AI 軍隊開創新局、非舊瓶裝新酒 ②瞎子摸象是多 Agent 真正的管理問題 ③戰役概念：每場戰役重新點兵配器佈陣","evidence":"Shen 退回原文：campaigns/B001/06-核可紀錄.md 第 1 次"},
-  {"seq":15,"at":"2026-10-04T12:38:47.576Z","type":"WAITING","by":"Claude","node":"approve","note":"核可稿 v2 送 Shen 第 2 次核可","evidence":"campaigns/B001/04-PO文-核可稿-v2.md、05-驗收表-v2.md（commit 4b521cc）：三項退回已處理，V1–V8 PASS"}
+  {"seq":15,"at":"2026-10-04T12:38:47.576Z","type":"WAITING","by":"Claude","node":"approve","note":"核可稿 v2 送 Shen 第 2 次核可","evidence":"campaigns/B001/04-PO文-核可稿-v2.md、05-驗收表-v2.md（commit 4b521cc）：三項退回已處理，V1–V8 PASS"},
+  {"seq":16,"at":"2026-10-04T12:43:25.607Z","type":"RESUMED","by":"Shen","node":"approve","note":"退回：太專業，一般人看不懂，要用故事說","evidence":"Shen 退回原文：campaigns/B001/06-核可紀錄.md 第 2 次"}
 ]
