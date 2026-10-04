@@ -4,5 +4,7 @@
   {"seq":3,"at":"2026-10-04T12:33:25.176Z","type":"DONE","by":"Claude","node":"order","evidence":"campaigns/B001/01-軍令單.md（commit 1b29ae2）；Shen 核可原話：「現在軍令核可。」"},
   {"seq":4,"at":"2026-10-04T12:33:25.210Z","type":"STARTED","by":"Claude","node":"intel","note":"情報：從 repo 真實紀錄整理可引用素材"},
   {"seq":5,"at":"2026-10-04T12:34:05.248Z","type":"DONE","by":"Claude","node":"intel","evidence":"campaigns/B001/02-情報.md（commit 5ca20bb）：7 條事實＋概念素材＋禁用清單"},
-  {"seq":6,"at":"2026-10-04T12:34:05.284Z","type":"STARTED","by":"Claude","node":"angle","note":"定向：決定方向、大綱、開頭"}
+  {"seq":6,"at":"2026-10-04T12:34:05.284Z","type":"STARTED","by":"Claude","node":"angle","note":"定向：決定方向、大綱、開頭"},
+  {"seq":7,"at":"2026-10-04T12:34:26.640Z","type":"DONE","by":"Claude","node":"angle","evidence":"campaigns/B001/03-定向.md（commit 7a2c22a）；方向由 Claude 決定，未另請 Shen 選，留待人工核可把關"},
+  {"seq":8,"at":"2026-10-04T12:34:26.683Z","type":"STARTED","by":"Claude","node":"draft","note":"撰寫：依大綱寫 PO 文全文"}
 ]
