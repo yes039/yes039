@@ -68,6 +68,7 @@
       else if (ids.has(n.id)) errs.push(`節點 id 重複：${n.id}`);
       ids.add(n.id);
       if (!STAGES.includes(n.stage)) errs.push(`節點 ${n.id} 的 stage「${n.stage}」不在 ${STAGES.join(" / ")}`);
+      if (n.type != null && n.type !== "action" && n.type !== "resource") errs.push(`節點 ${n.id} 的 type「${n.type}」只能是 action 或 resource`);
       if ("state" in n) errs.push(`節點 ${n.id} 寫了 state：狀態只能由 Event 決定，Config 不可寫`);
       perStage[n.stage] = (perStage[n.stage] || 0) + 1;
     });
@@ -208,20 +209,26 @@
     // 規則：事件只作用在它指名的那一個節點；光流只代表訊號傳到下一個節點，路過 ≠ 完成。
     // 開始條件：任一條進來的連線，其來源節點已 DONE（沒有進來連線的節點，開戰即 READY）。
     // 戰役完成：SAVE 段的節點全部 DONE。
-    const finish = nodes.filter(n => n.stage === "SAVE").map(n => n.id);
+    // 節點類型：action（作戰節點，走狀態機）／resource（資源節點：外部資料或記憶，不需要完成）
+    const isRes = id => byId[id].type === "resource";
+    const actions = nodes.filter(n => !isRes(n.id));
+    const actInc = id => (inc[id] || []).filter(i => !isRes(edges[i].from)); // 開始條件只看作戰節點
+    const finish = actions.filter(n => n.stage === "SAVE").map(n => n.id);
     const state = {started: false, startedAt: null, endedAt: null, nodes: {}, log: []};
-    nodes.forEach(n => { state.nodes[n.id] = "IDLE"; });
+    nodes.forEach(n => { state.nodes[n.id] = isRes(n.id) ? "RESOURCE" : "IDLE"; });
 
     function setNode(id, s) {
       state.nodes[id] = s;
       const {g, tg} = nodeEls[id];
       g.setAttribute("class", "wr-n" + (s === "ACTIVE" ? " hot" : s === "IDLE" ? "" : " st-" + s));
+      if (s === "RESOURCE") { tg.textContent = "RESOURCE"; return; }
       tg.textContent = s === "IDLE" ? (byId[id].tag || "") : s;
     }
-    function refreshEdges() { // 兩端都 DONE 的連線＝這段真的走完了
-      edges.forEach(e => e.p.classList.toggle("done", state.nodes[e.from] === "DONE" && state.nodes[e.to] === "DONE"));
+    function refreshEdges() { // 兩端都完成的連線＝這段真的走完了（資源端視為已就緒）
+      const ok = id => isRes(id) || state.nodes[id] === "DONE";
+      edges.forEach(e => e.p.classList.toggle("done", ok(e.from) && ok(e.to) && !(isRes(e.from) && isRes(e.to))));
     }
-    const upstreamDone = id => (inc[id] || []).some(i => state.nodes[edges[i].from] === "DONE");
+    const upstreamDone = id => actInc(id).some(i => state.nodes[edges[i].from] === "DONE");
     function campaign() {
       if (!state.started) return "IDLE";
       const v = Object.values(state.nodes);
@@ -236,11 +243,11 @@
       $("hstat").className = "wr-stat s-" + label;
       stage.classList.toggle("on", label === "RUNNING");
       const cnt = s => Object.values(state.nodes).filter(v => v === s).length;
-      $("prog").style.width = (cnt("DONE") / nodes.length * 100) + "%";
+      $("prog").style.width = (cnt("DONE") / actions.length * 100) + "%";
       $("prog").classList.toggle("fail", label === "FAILED");
       $("counts").innerHTML = ["READY", "ACTIVE", "WAITING", "DONE", "FAILED"]
         .map(s => `<div class="k-${s}">${s} <b>${pad2(cnt(s))}</b></div>`).join("") +
-        `<div class="k-TOTAL">DONE / ALL <b>${pad2(cnt("DONE"))}/${pad2(nodes.length)}</b></div>`;
+        `<div class="k-TOTAL">DONE / ALL <b>${pad2(cnt("DONE"))}/${pad2(actions.length)}</b></div>`;
       $("log").innerHTML = state.log.length ? state.log.slice(0, 8).map(e =>
         `<div class="${e.ok ? "" : "rej"}"><span>${e.time}</span><b>${esc(e.ok ? `${e.type} · ${e.title}${e.note ? " · " + e.note : ""}` : `✕ ${e.type} · ${e.reason}`)}</b></div>`).join("")
         : `<div class="wr-empty"><span>--:--:--</span><b>no events</b></div>`;
@@ -263,14 +270,15 @@
 
       let pulse = [];
       if (type === "TASK_CREATED") {
-        nodes.forEach(n => setNode(n.id, (inc[n.id] || []).length ? "IDLE" : "READY"));
+        nodes.forEach(n => setNode(n.id, isRes(n.id) ? "RESOURCE" : actInc(n.id).length ? "IDLE" : "READY"));
         state.started = true; state.startedAt = now.getTime(); state.endedAt = null;
       } else {
         if (!state.started) return reject("尚未開戰，請先送 TASK_CREATED");
         if (!id || !byId[id]) return reject(id ? `找不到節點 ${id}` : "節點事件必須指名 node");
         const cur = state.nodes[id], name = byId[id].title || id;
+        if (isRes(id)) return reject(`${name} 是資源節點，不接受作戰事件`);
         if (!def.from.includes(cur)) {
-          const why = cur === "IDLE" ? `上游尚未完成（需要 ${(inc[id] || []).map(i => byId[edges[i].from].title).join(" 或 ")} DONE）` : `目前是 ${cur}`;
+          const why = cur === "IDLE" ? `上游尚未完成（需要 ${actInc(id).map(i => byId[edges[i].from].title).join(" 或 ")} DONE）` : `目前是 ${cur}`;
           return reject(`${name} ${why}，不接受 ${type}`);
         }
         setNode(id, def.to);
@@ -278,7 +286,8 @@
         if (def.to === "DONE") { // 自己完成了，下游符合條件的節點變 READY
           (out[id] || []).forEach(i => {
             const t = edges[i].to;
-            if (state.nodes[t] === "IDLE" && upstreamDone(t)) { setNode(t, "READY"); pulse.push(i); }
+            if (isRes(t)) pulse.push(i); // 資料寫回資源節點：只有訊號，資源本身不變
+            else if (state.nodes[t] === "IDLE" && upstreamDone(t)) { setNode(t, "READY"); pulse.push(i); }
           });
         }
       }

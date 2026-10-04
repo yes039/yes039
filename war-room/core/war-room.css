@@ -66,6 +66,10 @@
 .wr-n.st-DONE .tag{fill:var(--wr-warm)}
 .wr-n.hot .tag{fill:var(--wr-accent)}
 .wr-wire.done{stroke:#a3473f;stroke-width:1.6}
+/* 資源節點：點狀框、暗色，右上顯示 RESOURCE；不走狀態機 */
+.wr-n.st-RESOURCE .box{stroke:var(--wr-muted);stroke-dasharray:1.5 3}
+.wr-n.st-RESOURCE .ico{fill:var(--wr-muted)}
+.wr-n.st-RESOURCE .tag{fill:var(--wr-muted)}
 /* SKIPPED / ALERT：保留樣式，V0.1 沒有事件會觸發 */
 .wr-n.st-SKIPPED{opacity:.5}
 .wr-n.st-SKIPPED .box{stroke:var(--wr-skipped);stroke-dasharray:4 3}

@@ -22,7 +22,7 @@ WarRoom.register({
   },
   nodes: [
     {id: "goal", stage: "INPUT", title: "招生目標", tag: "GOAL", sub: "60+ 學 AI · 名額待定"},
-    {id: "hist", stage: "INPUT", title: "戰果庫", tag: "MEMORY", sub: "目前 0 筆"},
+    {id: "hist", stage: "INPUT", type: "resource", title: "戰果庫", tag: "MEMORY", sub: "目前 0 筆"},
     {id: "aud", stage: "DISCOVER", title: "受眾", tag: "WHO", sub: "60+ 長輩 / 子女"},
     {id: "strat", stage: "DISCOVER", title: "策略", tag: "HOW", sub: "我也做得到"},
     {id: "plan", stage: "JUDGE", title: "企劃", tag: "PLAN", sub: "作戰令 · 30s 片"},

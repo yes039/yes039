@@ -23,7 +23,7 @@ war-room/
 - **底部 7 格面板**：EVENT LOG 與 STATUS 只反映真實事件；SIGNALS、DECISIONS、HEAT MAP、REACH 是標示 `MOCK` 的展示數據，不讀也不寫流程狀態。ROSTER 是 Config 靜態文字。
 - **驗證**：Config 寫錯時（例如 stage 名稱打錯、連線指向不存在的節點、每段超過 6 個節點），畫面直接列出錯誤，不會畫出半套。
 
-## Event Engine V2
+## Event Engine V2（stable candidate）
 
 三條鐵律：**每個節點有自己的狀態；路過 ≠ 完成；異常可以原地恢復。**
 
@@ -53,8 +53,11 @@ WarRoom.getState()   // {started, startedAt, endedAt, nodes: {id: state}, log: [
 | DONE | ACTIVE | DONE；下游符合條件的節點變 READY |
 | FAILED | ACTIVE、WAITING | FAILED |
 
+- **節點類型**：`action`（預設，作戰節點，走上面的狀態機）／`resource`（資源節點：外部資料或記憶，例如戰果庫）。
+  資源節點固定顯示 `RESOURCE`（點狀框），不接受作戰事件、不算進 DONE / ALL、不是戰役完成的條件，也不算「開始條件」的上游；
+  連到資源節點的線（例如「寫回戰果庫 → 戰果庫」）只在上游 DONE 時跑一次寫回訊號。
 - 光流只跑「這次事件影響的那一段連線」一次，只代表訊號傳遞，不改變任何節點狀態。
-- 戰役狀態（右上 STATUS）：有 FAILED → FAILED；有 WAITING → WAITING；SAVE 段節點全部 DONE → COMPLETE；其他 → RUNNING。
+- 戰役狀態（右上 STATUS）：有 FAILED → FAILED；有 WAITING → WAITING；SAVE 段的作戰節點全部 DONE → COMPLETE；其他 → RUNNING。
 - 不合法的事件被拒絕，狀態不變，EVENT LOG 留一筆 ✕ 與原因。
 - `index.html` 的 TEST CONSOLE 可以人工指名節點、逐一送出事件。
 
@@ -75,7 +78,7 @@ WarRoom.getState()   // {started, startedAt, endedAt, nodes: {id: state}, log: [
 | `header.stats` | 最多 3 格 `{label, value}`。TIME 與 STATUS 由母體提供 |
 | `loopLabel` | 麵包屑右側，例如 `ONE LOOP / 7D` |
 | `stageLabels` | 7 段的在地名稱，例如 `{INPUT: "素材"}`（可省略） |
-| `nodes` | `{id, stage, title, tag?, sub?}`；`stage` 必須是 7 段之一。**不可寫 `state`**，狀態只能由 Event 決定 |
+| `nodes` | `{id, stage, title, type?, tag?, sub?}`；`type` 為 `action`（預設）或 `resource`；`stage` 必須是 7 段之一。**不可寫 `state`**，狀態只能由 Event 決定 |
 | `edges` | `[from, to]`；同時也是「誰要等誰完成」的依據 |
 | `eventMap` | V0.1 欄位，V2 不再使用（事件一律指名節點）；寫了不會報錯 |
 | `panels` | 各面板標題與文字：`log`、`signals.labels`（最多 7 個）、`decisions.caption/a/b`、`heat`、`reach.caption/loops/foot`、`roster.items`（最多 4 個 `[名稱, 說明]`）、`status` |
