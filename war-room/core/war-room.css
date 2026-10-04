@@ -28,11 +28,14 @@
 .wr-live{color:var(--wr-accent);font-size:12px;letter-spacing:.08em;padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wr-stat span{display:block;font-size:9px;color:var(--wr-muted);letter-spacing:.1em;white-space:nowrap}
 .wr-stat b{display:block;margin-top:8px;font-size:14px;font-weight:600;white-space:nowrap}
-.wr-stat.hot b{color:var(--wr-accent)}
-.wr-dot{width:7px;height:7px;border-radius:50%;background:var(--wr-accent);margin-top:6px;animation:wr-blink 1.2s steps(2) infinite}
+.wr-stat.s-IDLE b{color:var(--wr-muted)}.wr-stat.s-RUNNING b{color:var(--wr-accent)}.wr-stat.s-WAITING b{color:var(--wr-waiting)}
+.wr-stat.s-FAILED b{color:var(--wr-failed)}.wr-stat.s-COMPLETE b{color:var(--wr-warm)}
+.wr-dot{width:7px;height:7px;border-radius:50%;background:var(--wr-muted);margin-top:6px}
+.wr-stage.on .wr-dot{background:var(--wr-accent);animation:wr-blink 1.2s steps(2) infinite}
 @keyframes wr-blink{50%{opacity:.15}}
 .wr-prog{height:3px;margin:0 14px;background:var(--wr-line);position:relative}
 .wr-prog i{position:absolute;inset:0 auto 0 0;width:0;background:var(--wr-accent);transition:width .8s}
+.wr-prog i.fail{background:var(--wr-failed)}
 .wr-crumb{display:flex;justify-content:space-between;gap:12px;padding:12px 14px 0;font-size:10px;letter-spacing:.06em}
 .wr-crumb span i{font-style:normal;color:var(--wr-muted)}
 .wr-crumb em{font-style:normal;color:var(--wr-warm);white-space:nowrap}
@@ -47,6 +50,8 @@
 .wr-wire.dead{stroke-dasharray:4 4;opacity:.7}
 .wr-streak{fill:none;stroke:var(--wr-accent);stroke-width:2.2;stroke-linecap:round}
 .wr-pt{fill:#fff}
+.wr-pt.fixed{opacity:.45}
+.wr-pt.mv{opacity:0}.wr-pt.mv.on{opacity:1}
 .wr-n .box{fill:var(--wr-node);stroke:#4a2329;stroke-width:1;transition:stroke .3s,fill .3s}
 .wr-n .ico{fill:var(--wr-warm)}
 .wr-n .hole{fill:var(--wr-node)}
@@ -54,13 +59,17 @@
 .wr-n .tag{fill:var(--wr-muted);font:8px var(--wr-mono);letter-spacing:.08em}
 .wr-n .s{fill:var(--wr-accent);font:600 9.5px var(--wr-mono),var(--wr-cjk);letter-spacing:.06em}
 .wr-n.hot .box{stroke:var(--wr-warm);fill:#2a1216}
+/* 事件驅動的執行期狀態：ACTIVE 用 .hot，DONE 用暗暖色框 */
+.wr-n.st-DONE .box{stroke:#b04a4a}
+.wr-n.st-DONE .ico{fill:#b8604e}
+/* SKIPPED / ALERT：保留樣式，V0.1 沒有事件會觸發 */
 .wr-n.st-SKIPPED{opacity:.5}
 .wr-n.st-SKIPPED .box{stroke:var(--wr-skipped);stroke-dasharray:4 3}
 .wr-n.st-SKIPPED .ico,.wr-n.st-SKIPPED .s{fill:var(--wr-skipped)}
 .wr-n.st-SKIPPED .tag{fill:var(--wr-skipped)}
 .wr-n.st-WAITING .box{stroke:var(--wr-waiting)}
 .wr-n.st-WAITING .ico,.wr-n.st-WAITING .tag{fill:var(--wr-waiting)}
-.wr-n.st-ALERT .box{stroke:var(--wr-alert);animation:wr-blink 1s steps(2) infinite}
+.wr-n.st-ALERT .box{stroke:var(--wr-alert)}
 .wr-n.st-ALERT .ico,.wr-n.st-ALERT .tag{fill:var(--wr-alert)}
 .wr-n.st-FAILED .box{stroke:var(--wr-failed);fill:#2a0d0f}
 .wr-n.st-FAILED .ico,.wr-n.st-FAILED .tag{fill:var(--wr-failed)}
@@ -71,7 +80,7 @@
 .wr-p{background:var(--wr-panel);border-top:3px solid var(--wr-accent);outline:1px solid var(--wr-line);padding:10px 10px 12px;height:190px;overflow:hidden;min-width:0}
 .wr-p h4{margin:0 0 12px;font-size:9px;font-weight:600;letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--wr-line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wr-log div{display:flex;gap:12px;font-size:9px;line-height:18px;white-space:nowrap;overflow:hidden}
-.wr-log span{color:var(--wr-muted)}.wr-log b{font-weight:400;color:var(--wr-accent);overflow:hidden;text-overflow:ellipsis}
+.wr-log span{color:var(--wr-muted)}.wr-log .rej b,.wr-log .wr-empty b{color:var(--wr-muted)}.wr-log b{font-weight:400;color:var(--wr-accent);overflow:hidden;text-overflow:ellipsis}
 .wr-bars div{display:flex;align-items:center;gap:8px;height:19px;font-size:9px;color:var(--wr-muted)}
 .wr-bars span{width:30px;flex:none;white-space:nowrap;overflow:hidden}
 .wr-bars i{display:block;height:8px;background:var(--wr-accent);transition:width .8s ease}
@@ -85,14 +94,16 @@
 .wr-heat i.a{background:#7a2c31}.wr-heat i.b{background:var(--wr-accent)}.wr-heat i.c{background:var(--wr-warm)}
 .wr-ros div{font-size:10px;line-height:14px;margin-bottom:9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .wr-ros b{display:block;color:var(--wr-warm);font-weight:600;margin-bottom:2px}
-.wr-st div{font-size:8.5px;line-height:21px;display:flex;justify-content:space-between;color:var(--wr-muted)}
+.wr-st .wr-cnt{display:block}
+.wr-st .wr-cnt div{font-size:8.5px;line-height:21px;display:flex;justify-content:space-between;color:var(--wr-muted)}
 .wr-st div b{font-weight:600}
-.wr-st .k-LIVE b{color:var(--wr-accent)}.wr-st .k-SKIPPED b{color:var(--wr-fg)}
-.wr-st .k-WAITING b{color:var(--wr-waiting)}.wr-st .k-ALERT b{color:var(--wr-alert)}.wr-st .k-FAILED b{color:var(--wr-failed)}
+.wr-st .k-PHASE b{color:var(--wr-fg)}.wr-st .k-ACTIVE b{color:var(--wr-accent)}.wr-st .k-DONE b{color:var(--wr-warm)}
+.wr-st .k-WAITING b{color:var(--wr-waiting)}.wr-st .k-FAILED b{color:var(--wr-failed)}
+.wr-mock{color:var(--wr-waiting);font-weight:400;letter-spacing:.06em;margin-left:4px}
 .wr-ft{display:flex;justify-content:space-between;padding:8px 14px 10px;font-size:8px;color:var(--wr-muted);letter-spacing:.08em}
 
 /* 裝填錯誤 */
 .wr-err{padding:24px;font-size:12px;line-height:1.8;color:var(--wr-failed)}
 .wr-err b{display:block;font-size:16px;margin-bottom:8px}
 
-@media (prefers-reduced-motion:reduce){.wr-dot,.wr-n.st-ALERT .box{animation:none}.wr-bars i,.wr-heat i,.wr-prog i{transition:none}}
+@media (prefers-reduced-motion:reduce){.wr-stage.on .wr-dot{animation:none}.wr-bars i,.wr-heat i,.wr-prog i{transition:none}}

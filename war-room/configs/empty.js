@@ -1,5 +1,5 @@
 /* EMPTY：母體展示 Config。
-   不屬於任何部隊，用來展示母體的 7 段骨架與 4 種節點狀態，也當新部隊的起手模板。 */
+   不屬於任何部隊，用來展示母體的 7 段骨架與事件流程，也當新部隊的起手模板。 */
 WarRoom.register({
   id: "empty",
   name: "EMPTY / 母體展示",
@@ -20,27 +20,27 @@ WarRoom.register({
     {id: "in2", stage: "INPUT", title: "SOURCE B", tag: "SOURCE", sub: "slot 02"},
     {id: "in3", stage: "INPUT", title: "MEMORY", tag: "MEMORY", sub: "slot 03"},
     {id: "dis", stage: "DISCOVER", title: "WORTH A LOOK?", sub: "-- signals"},
-    {id: "skp", stage: "DISCOVER", title: "SKIPPED", sub: "狀態示範", state: "SKIPPED"},
     {id: "jdg", stage: "JUDGE", title: "JUDGE", tag: "RULE", sub: "-- / --"},
-    {id: "wai", stage: "JUDGE", title: "GATE", sub: "狀態示範", state: "WAITING"},
     {id: "rte", stage: "ROUTE", title: "WHICH UNIT?", sub: "CHOOSE -- / --"},
     {id: "u1", stage: "RUN", title: "UNIT 01", tag: "RUN", sub: "idle"},
     {id: "u2", stage: "RUN", title: "UNIT 02", tag: "RUN", sub: "idle"},
     {id: "u3", stage: "RUN", title: "UNIT 03", tag: "RUN", sub: "idle"},
-    {id: "ver", stage: "VERIFY", title: "VERIFY OUTPUT", sub: "PASS -- / --"},
-    {id: "alr", stage: "VERIFY", title: "CHECK", sub: "狀態示範", state: "ALERT"},
-    {id: "fal", stage: "VERIFY", title: "RETRY", sub: "狀態示範", state: "FAILED"},
+    {id: "gate", stage: "VERIFY", title: "APPROVAL", tag: "GATE", sub: "human gate"},
+    {id: "ver", stage: "VERIFY", title: "VERIFY OUTPUT", tag: "CHECK", sub: "PASS -- / --"},
     {id: "sav", stage: "SAVE", title: "SAVE LIST", tag: "DISK", sub: "-- entries"},
     {id: "nxt", stage: "SAVE", title: "NEXT LOOP", tag: "NEXT", sub: "READY"},
   ],
   edges: [
-    ["in1", "dis"], ["in2", "dis"], ["in3", "dis"], ["dis", "skp"],
-    ["dis", "jdg"], ["jdg", "wai"], ["jdg", "rte"],
+    ["in1", "dis"], ["in2", "dis"], ["in3", "dis"],
+    ["dis", "jdg"], ["jdg", "rte"],
     ["rte", "u1"], ["rte", "u2"], ["rte", "u3"],
-    ["u1", "ver"], ["u2", "ver"], ["u3", "alr"], ["u3", "fal"],
-    ["ver", "sav"], ["alr", "sav"], ["sav", "nxt"], ["nxt", "dis"],
+    ["u1", "gate"], ["u2", "gate"], ["u3", "gate"],
+    ["gate", "ver"], ["ver", "sav"], ["sav", "nxt"], ["nxt", "dis"],
   ],
-  events: ["input scan", "discover signal", "judge rule", "route unit", "run task", "verify output", "save entry", "loop next"],
+  eventMap: {
+    TASK_CREATED: "in1", SIGNAL_FOUND: "dis", JUDGED: "jdg", ROUTED: "rte",
+    RUNNING: "u1", WAITING_APPROVAL: "gate", VERIFIED: "ver", SAVED: "sav",
+  },
   panels: {
     log: {title: "EVENT LOG"},
     signals: {title: "SIGNALS", labels: ["01", "02", "03", "04", "05", "06", "07"]},

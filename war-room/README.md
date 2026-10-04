@@ -18,10 +18,38 @@ war-room/
 ## 母體固定的部分
 
 - **7 段流程**：`INPUT → DISCOVER → JUDGE → ROUTE → RUN → VERIFY → SAVE`。每段一列，節點由母體自動平均排版，Config 不寫座標。
-- **4 種節點狀態**：`SKIPPED`（虛線、變暗、連線停流）、`WAITING`（黃框、連線變慢）、`ALERT`（閃爍）、`FAILED`（紅框、刪除線、連線停流）。
+- **節點狀態只由 Event 改變**：`IDLE`、`ACTIVE`、`DONE`、`WAITING`、`FAILED`。（`SKIPPED`／`ALERT` 樣式保留，V0.1 沒有事件會觸發。）
 - **連線**：同一段內是側向連線，往下游是垂直曲線，回到上游的連線從右側繞回去。
-- **底部 7 格面板**：EVENT LOG、SIGNALS、DECISIONS、HEAT MAP、REACH、ROSTER、STATUS。STATUS 由母體自動統計各狀態節點數。
+- **底部 7 格面板**：EVENT LOG 與 STATUS 只反映真實事件；SIGNALS、DECISIONS、HEAT MAP、REACH 是標示 `MOCK` 的展示數據，不讀也不寫流程狀態。ROSTER 是 Config 靜態文字。
 - **驗證**：Config 寫錯時（例如 stage 名稱打錯、連線指向不存在的節點、每段超過 6 個節點），畫面直接列出錯誤，不會畫出半套。
+
+## Event Engine V0.1
+
+**沒有 Event，流程不前進。** 唯一入口：
+
+```js
+WarRoom.emit({type: "RUNNING", node: "make", note: "選填"})   // node 選填，省略時用 Config 的 eventMap
+// 回傳 {ok: true, phase, node, edges} 或 {ok: false, reason, phase}
+WarRoom.getState()   // {phase, cursor, startedAt, endedAt, nodes: {id: state}, log: [...]}
+```
+
+| 事件 | 只在這些階段接受 | 之後階段 | 目標節點 |
+|---|---|---|---|
+| TASK_CREATED | IDLE / COMPLETE / FAILED | CREATED | INPUT（重置全部節點） |
+| SIGNAL_FOUND | CREATED | SIGNAL | DISCOVER |
+| JUDGED | SIGNAL | JUDGED | JUDGE |
+| ROUTED | JUDGED | ROUTED | ROUTE |
+| RUNNING | ROUTED / RUNNING | RUNNING | RUN |
+| WAITING_APPROVAL | RUNNING | WAITING | 核可節點（eventMap 指定，可在任一段） |
+| APPROVED | WAITING | APPROVED | 正在等待的節點 |
+| VERIFIED | APPROVED | VERIFIED | VERIFY |
+| SAVED | VERIFIED | COMPLETE | SAVE |
+| FAILED | CREATED～VERIFIED | FAILED | 目前節點，或事件指定的節點 |
+
+每次接受事件：沿 Config 連線找出從目前節點到目標節點的路徑 → 只在這條路徑跑一次光流 → 途經節點標 DONE、目標節點標 ACTIVE／WAITING／FAILED → 寫入 EVENT LOG → 更新右上 STATUS、進度條與底部 STATUS 計數。
+不符合順序的事件會被拒絕，狀態不變，EVENT LOG 留一筆 ✕ 紀錄。
+
+`index.html` 的 **TEST CONSOLE** 可以人工逐一送出這 10 種事件。
 
 ## 新增一支部隊
 
@@ -40,11 +68,10 @@ war-room/
 | `header.stats` | 最多 3 格 `{label, value}`。TIME 與 STATUS 由母體提供 |
 | `loopLabel` | 麵包屑右側，例如 `ONE LOOP / 7D` |
 | `stageLabels` | 7 段的在地名稱，例如 `{INPUT: "素材"}`（可省略） |
-| `nodes` | `{id, stage, title, tag?, sub?, state?}`；`stage` 必須是 7 段之一，`state` 必須是 4 種狀態之一 |
-| `edges` | `[from, to]` |
-| `route` | 依序亮起的節點（可省略；預設依 7 段順序，跳過 SKIPPED／FAILED） |
-| `events` | EVENT LOG 輪播文字（可省略；預設由節點名稱產生） |
+| `nodes` | `{id, stage, title, tag?, sub?}`；`stage` 必須是 7 段之一。**不可寫 `state`**，狀態只能由 Event 決定 |
+| `edges` | `[from, to]`；事件光流沿這些連線找路徑 |
+| `eventMap` | 哪個節點接哪種事件，例如 `{RUNNING: "make", WAITING_APPROVAL: "h4"}`。省略的事件預設用該段第一個節點。APPROVED／FAILED 不需設定 |
 | `panels` | 各面板標題與文字：`log`、`signals.labels`（最多 7 個）、`decisions.caption/a/b`、`heat`、`reach.caption/loops/foot`、`roster.items`（最多 4 個 `[名稱, 說明]`）、`status` |
 | `footer` | `[左, 右]` 頁尾文字 |
 
-目前面板上的數字是動畫用的隨機值，尚未接真實資料。
+舊欄位 `route`、`events` 已移除，寫了會裝填失敗（流程只能由 Event 推進）。目前沒有接任何真實資料或外部系統。
