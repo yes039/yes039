@@ -17,5 +17,6 @@
   {"seq":16,"at":"2026-10-04T12:43:25.607Z","type":"RESUMED","by":"Shen","node":"approve","note":"退回：太專業，一般人看不懂，要用故事說","evidence":"Shen 退回原文：campaigns/B001/06-核可紀錄.md 第 2 次"},
   {"seq":17,"at":"2026-10-04T12:44:13.242Z","type":"WAITING","by":"Claude","node":"approve","note":"核可稿 v3（故事版）送 Shen 第 3 次核可","evidence":"campaigns/B001/04-PO文-核可稿-v3.md、05-驗收表-v3.md（commit 957eb0a）：8 項退回要求已處理，V1–V8 PASS"},
   {"seq":18,"at":"2026-10-04T12:50:02.102Z","type":"APPROVED","by":"Shen","node":"approve","evidence":"Shen 原話：「核可」（核可稿 v3）；campaigns/B001/06-核可紀錄.md 第 3 次"},
-  {"seq":19,"at":"2026-10-04T12:50:02.137Z","type":"STARTED","by":"Claude","node":"save","note":"保存：核可版定稿、最終驗收表、完整事件紀錄、核可證據"}
+  {"seq":19,"at":"2026-10-04T12:50:02.137Z","type":"STARTED","by":"Claude","node":"save","note":"保存：核可版定稿、最終驗收表、完整事件紀錄、核可證據"},
+  {"seq":20,"at":"2026-10-04T12:50:19.303Z","type":"DONE","by":"Claude","node":"save","evidence":"commit ac1d6fb：07-核可版定稿.md、08-保存清單.md、05-驗收表-v3.md（最終驗收表）、06-核可紀錄.md、events.json"}
 ]
