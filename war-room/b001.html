@@ -1,0 +1,131 @@
+<meta charset="utf-8">
+<title>B001 戰情室</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="core/war-room.css">
+<style>
+/* B001 真實戰役頁：手機摘要＋完整兵陣，同一頁、同一個 HQ。
+   狀態只來自 campaigns/B001/events.json（每次打開都從第一筆重播），沒有演練腳本、沒有亂數面板。
+   版面沿用掌上戰情 stable candidate。 */
+:root{
+  --bg:#0f080a; --zone:#170c0f; --card:#1d0f12; --line:#3a1c21; --fg:#efdfe0; --muted:#8c6a6f;
+  --accent:#ff4f45; --warm:#ff8d6b; --wait:#e8b04a; --fail:#ff3b3b;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:dark;
+}
+body[data-tone="bright"]{ --zone:#2e2623; --card:#3a302b; --line:#5a463f; --muted:#b5a097; --warm:#ffa07a; --wait:#f5c15c; --fail:#ff5252; --accent:#ff5d4f }
+html,body{background:var(--bg);color:var(--fg)}
+body{padding-inline:16px;padding-block:14px 24px;font-family:var(--sans);font-size:15px;line-height:1.5}
+.m{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--zone);border:1px solid var(--line);border-top:3px solid var(--accent);padding:14px 14px 16px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.head h1{margin:2px 0 0;font-size:22px;line-height:1.25;font-weight:700;text-wrap:balance}
+.chip{font:700 12px var(--mono);letter-spacing:.06em;padding:3px 8px;border:1px solid currentColor;white-space:nowrap;align-self:flex-start}
+.s-RUNNING,.s-ACTIVE{color:var(--accent)} .s-WAITING{color:var(--wait)} .s-FAILED{color:var(--fail)}
+.s-COMPLETE,.s-DONE{color:var(--warm)} .s-READY{color:var(--fg)} .s-IDLE{color:var(--muted)}
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.counts div{background:var(--card);padding:6px 8px;display:flex;flex-direction:column}
+.counts span{font:600 10.5px var(--mono);letter-spacing:.08em;color:var(--muted)}
+.counts b{font:800 18px var(--mono);font-variant-numeric:tabular-nums}
+.block{background:var(--card);padding:12px;display:flex;flex-direction:column;gap:8px}
+.block h2{margin:0;font:600 11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+.block.alert{border-left:3px solid var(--wait)}
+.block.alert.fail{border-left-color:var(--fail)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.row .t{font-weight:700}
+.row small{display:block;color:var(--muted);font-size:13px;font-weight:400}
+.why{font-size:16px;font-weight:700}
+.muted{color:var(--muted);font-size:13px}
+.err{border:1px solid var(--fail);color:var(--fail);padding:12px;font-size:14px}
+.err b{display:block;margin-bottom:4px}
+.src{font:12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.toggle{font:600 14px var(--sans);color:var(--fg);background:var(--card);border:1px solid var(--line);padding:12px;cursor:pointer;width:100%}
+.toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.full{margin-inline:-16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.full-inner{width:700px;padding-inline:16px}
+.full-hint{font-size:12px;color:var(--muted);margin:0 0 6px}
+/* 真實戰役不顯示亂數面板（SIGNALS／DECISIONS／HEAT MAP／REACH）；只留 EVENT LOG、ROSTER、STATUS */
+#campRoot .wr-p:has(.wr-mock){display:none}
+#campRoot .wr-pn{grid-template-columns:1.6fr 1fr .9fr}
+#campRoot .wr-ft span:last-child{display:none}
+</style>
+<link rel="stylesheet" href="spike/mobile/tone-bright.css">
+
+<main class="m">
+  <section class="card" id="summary" aria-live="polite"><p class="muted">讀取戰役紀錄中…</p></section>
+  <button type="button" class="toggle" id="toggle" aria-expanded="false" aria-controls="full">查看完整兵陣 ▾</button>
+  <section class="full" id="full" hidden>
+    <div class="full-inner"><p class="full-hint">完整兵陣可左右滑動</p><div id="campRoot"></div></div>
+  </section>
+</main>
+
+<script src="core/war-room.js"></script>
+<script src="configs/b001-fb-post.js"></script>
+<script src="spike/v3/engine.js"></script>
+<script src="spike/v3/view.js"></script>
+<script src="spike/live/replay.js"></script>
+<script>
+(function () {
+  const RECORD = "campaigns/B001/events.json";   // 唯一的戰況來源
+  document.body.dataset.tone = "bright";
+  const cfg = WarRoom.get("b001");
+  const campRoot = document.getElementById("campRoot"), full = document.getElementById("full");
+  full.hidden = false; WarRoom.mount(campRoot, cfg); full.hidden = true;   // 可見時排版一次，再收起
+
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const ACT = ["ACTIVE", "WAITING", "FAILED", "READY"];
+  const when = iso => { const d = new Date(iso), p = n => String(n).padStart(2, "0"); return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+  let hq, events = [], errors = [];
+
+  function summary() {
+    const C = hq.campaign, st = C.state, status = C.status();
+    const name = String(cfg.header.title).replace(" / ", " ");
+    const acts = cfg.nodes.filter(n => !C.isRes(n.id)), cnt = s => acts.filter(n => st[n.id] === s).length;
+    const lastOf = id => events.slice().reverse().find(e => e.node === id);
+    let html = `<div class="head"><div><div class="eyebrow">戰役</div><h1>${esc(name)}</h1></div><span class="chip s-${status}">${status}</span></div>`;
+    if (errors.length) html += `<div class="err"><b>戰役紀錄與引擎規則不一致，畫面不可採信</b>${errors.map(esc).join("<br>")}</div>`;
+    const last = events[events.length - 1];
+    const src = `<p class="src">紀錄來源：${RECORD}・${events.length} 筆${last ? `・最新 #${last.seq} ${esc(last.type)}${last.node ? " " + esc(cfg.nodes.find(n => n.id === last.node).title) : ""}（${esc(last.by)}，${when(last.at)}）` : ""}</p>`;
+    if (!C.started) return html + `<p class="muted">尚未開戰。</p>` + src;
+    html += `<div class="counts">${["ACTIVE", "WAITING", "FAILED"].map(s => `<div><span>${s}</span><b class="s-${s}">${cnt(s)}</b></div>`).join("")}<div><span>DONE</span><b>${cnt("DONE")}/${acts.length}</b></div></div>`;
+    acts.forEach(n => {
+      if (st[n.id] !== "WAITING" && st[n.id] !== "FAILED") return;
+      const e = lastOf(n.id);
+      html += `<div class="block alert ${st[n.id] === "FAILED" ? "fail" : ""}"><h2>${st[n.id] === "WAITING" && n.id === "approve" ? "等待核可" : "卡點"}</h2><div class="row"><span class="t">${esc(n.title)}<small>${esc(e && e.by || "")}</small></span><span class="chip s-${st[n.id]}">${st[n.id]}</span></div>${e && e.note ? `<div class="why">原因：${esc(e.note)}</div>` : ""}</div>`;
+    });
+    const front = acts.filter(n => ACT.includes(st[n.id]));
+    html += `<div class="block"><h2>目前前線</h2>${front.length ? front.map(n => { const e = lastOf(n.id); return `<div class="row"><span class="t">${esc(n.title)}<small>${e ? esc(e.by) + " · " : ""}${st[n.id]}</small></span></div>`; }).join("") : `<p class="muted">${status === "COMPLETE" ? "戰役已完成。" : "沒有進行中或待接手的節點。"}</p>`}</div>`;
+    return html + src;
+  }
+  function logs() {   // EVENT LOG：每筆真實事件的實際時間、事件、節點、送出者
+    return events.slice().reverse().map(e => ({time: when(e.at), ok: true, text: `${e.type} · ${e.node ? cfg.nodes.find(n => n.id === e.node).title : "開戰"} · ${e.by}${e.note ? " · " + e.note : ""}`}));
+  }
+  function paint() {
+    document.getElementById("summary").innerHTML = summary();
+    WarRoomV3View.paintCampaign(campRoot, hq, logs());
+  }
+  async function load() {
+    try {
+      const res = await fetch(RECORD, {cache: "no-store"});
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      events = await res.json();
+      ({hq, errors} = WarRoomLive.replay(WarRoomV3, cfg, events));
+    } catch (err) {
+      events = []; hq = WarRoomV3.createHQ({campaign: cfg, units: {}});
+      errors = [`讀不到戰役紀錄（${RECORD}）：${err.message}`];
+    }
+    paint();
+  }
+  const toggle = document.getElementById("toggle");
+  toggle.addEventListener("click", () => {
+    full.hidden = !full.hidden;
+    toggle.setAttribute("aria-expanded", String(!full.hidden));
+    toggle.textContent = full.hidden ? "查看完整兵陣 ▾" : "收起完整兵陣 ▴";
+    dispatchEvent(new Event("resize"));
+    if (!full.hidden) full.scrollLeft = (full.scrollWidth - full.clientWidth) / 2;
+  });
+  window.__live = {get hq() { return hq; }, get events() { return events; }, get errors() { return errors; }, ready: load()};
+})();
+</script>
