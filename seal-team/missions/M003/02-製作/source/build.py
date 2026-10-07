@@ -72,6 +72,7 @@ def end_layer(path):
     x0 = (W - w) / 2 - 40
     d.rounded_rectangle([x0, 1660, x0 + w + 80, 1780], 60, fill=(214, 64, 28))
     d.text(((W - w) / 2, 1683), t, font=f, fill='white')
+    ctr('宜蘭市聖後街 88 號・03-935-4787', 1810, 46, (235, 225, 210))
     im.save(path)
 
 LOOK = 'eq=saturation=1.18:contrast=1.06:brightness=0.01,colorbalance=rm=0.04:bm=-0.04'
