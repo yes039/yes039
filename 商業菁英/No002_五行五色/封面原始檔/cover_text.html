@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@500;700&family=Cormorant+Garamond:wght@500;600;700&display=swap">
+<style>
+:root{--paper:#fbf6ec;--ink:#2b2320;--red:#9c1c1c;--red-deep:#6e1010;--gold:#b88a2e;--gold-soft:#e6cf98;--hero:#22150f;
+--serif:"Noto Serif TC",serif;--sans:"Noto Sans TC",sans-serif;--latin:"Cormorant Garamond",serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:941px;height:1672px;background:var(--paper);position:relative;overflow:hidden;font-family:var(--sans);color:var(--ink)}
+.abs{position:absolute}
+/* masthead */
+.tagline{left:48px;top:16px;font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.14em}
+.en{right:46px;top:12px;font-family:var(--latin);font-weight:600;font-size:17px;letter-spacing:.32em;text-align:right;line-height:1.15}
+.topline{left:48px;width:450px;top:48px;height:1px;background:var(--ink)}
+.title{left:52px;top:62px;font-family:var(--serif);font-weight:900;font-size:186px;line-height:1;letter-spacing:-.01em;color:var(--red);text-shadow:0 3px 0 rgba(0,0,0,.08)}
+.title .g{color:var(--gold);background:linear-gradient(180deg,#d9b25a,#a87a22);-webkit-background-clip:text;background-clip:text;color:transparent}
+.crown{left:505px;top:26px;width:66px}
+.row{left:52px;width:735px;top:264px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);display:flex;justify-content:space-around;font-family:var(--serif);font-weight:700;font-size:21px;letter-spacing:.55em;padding:4px 0 3px;line-height:1.4}
+.row i{font-style:normal;color:var(--gold);letter-spacing:0}
+.vline{left:805px;top:82px;width:1px;height:220px;background:var(--ink)}
+.issue{left:812px;width:110px;top:76px;text-align:center;font-family:var(--latin);color:var(--ink);line-height:1}
+.issue .y{font-size:34px;font-weight:600}
+.issue .m{font-size:84px;font-weight:600;color:var(--red-deep);margin-top:2px}
+.issue .s{font-size:16px;letter-spacing:.06em;margin-top:6px}
+.issue .no{font-size:23px;font-weight:600;margin-top:12px}
+.issue .tag{display:inline-block;margin-top:14px;background:var(--red);color:#fff;font-family:var(--serif);font-weight:700;font-size:22px;padding:7px 14px;letter-spacing:.05em}
+/* hero */
+.hero{left:0;top:316px;width:941px;height:900px;overflow:hidden;background:#3a2a20}
+.bg{left:-30px;top:-30px;width:1001px;height:960px;background:url(bg.jpg) center/cover;filter:saturate(1.1) brightness(.95)}
+.glow{left:-160px;top:-140px;width:760px;height:560px;background:radial-gradient(closest-side,rgba(255,214,140,.55),rgba(255,214,140,0))}
+.veil{left:0;top:0;width:620px;height:900px;background:radial-gradient(70% 60% at 30% 45%,rgba(15,10,8,.55),rgba(15,10,8,0))}
+.man{left:512px;top:0;width:473px;height:922px;background:url(man2.jpg) center top/cover;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 90px),linear-gradient(180deg,#000 92%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,#000 90px),linear-gradient(180deg,#000 92%,transparent);mask-composite:intersect}
+.food1{left:-20px;top:640px;width:560px;height:300px;background:url(steamer.jpg) center 40%/cover;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 26%),linear-gradient(90deg,#000 78%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(180deg,transparent 0,#000 26%),linear-gradient(90deg,#000 78%,transparent);mask-composite:intersect}
+.kicker{left:40px;top:28px;display:flex;font-family:var(--serif);font-weight:900;font-size:27px;letter-spacing:.08em;box-shadow:0 3px 12px rgba(0,0,0,.45)}
+.kicker span:first-child{background:linear-gradient(180deg,#f0d48c,#b88a2e);color:#2b1a10;padding:7px 18px}
+.kicker span+span{background:rgba(25,15,10,.85);color:#f0d48c;padding:7px 22px;border:1px solid #c99a3c}
+.big{left:30px;top:84px;font-family:var(--serif);font-weight:900;font-size:124px;line-height:1.12;letter-spacing:.01em;background:linear-gradient(180deg,#fff6d6 0%,#f0cf7a 40%,#c08f2c 75%,#8a5f18 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 1px rgba(60,30,0,.9)) drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.swoosh{left:150px;top:214px;width:380px;height:60px}
+.sub{left:36px;top:268px;font-family:var(--serif);font-weight:900;font-size:54px;line-height:1.15;color:#fff;letter-spacing:.02em;text-shadow:0 0 2px #000,0 2px 0 rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.75)}
+.line2{left:40px;top:360px;font-family:var(--serif);font-weight:900;font-size:33px;line-height:1.45;color:#fff;letter-spacing:.07em;text-shadow:0 0 2px #000,0 3px 10px rgba(0,0,0,.85)}
+.line2 em{font-style:normal;color:#ffd77a}
+.rule1{left:40px;top:466px;width:450px;height:2px;background:linear-gradient(90deg,#f0cf7a,rgba(240,207,122,0))}
+.line3{left:40px;top:482px;font-family:var(--serif);font-weight:900;font-size:27px;color:#fff;letter-spacing:.06em;text-shadow:0 0 2px #000,0 2px 8px rgba(0,0,0,.85)}
+.line3 span{color:#f0cf7a;margin:0 8px}
+.line4{left:40px;top:530px;font-family:var(--serif);font-weight:900;font-size:25px;color:#fff;letter-spacing:.05em;text-shadow:0 0 2px #000,0 2px 8px rgba(0,0,0,.85)}
+.sw{left:42px;top:584px;display:flex;gap:12px}
+.sw span{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.6)}
+/* focus */
+.ftab{left:26px;top:1228px;background:linear-gradient(90deg,#8c1515,#a52222);color:#fff;font-family:var(--serif);font-weight:900;font-size:25px;padding:6px 44px 6px 22px;letter-spacing:.06em;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,0 100%)}
+.cards{left:26px;top:1284px;width:889px;display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.card{padding:4px 12px 0;border-right:1px solid #d9c9a8;height:278px;display:flex;flex-direction:column}
+.card:last-child{border-right:0}
+.card .h{display:flex;gap:10px;align-items:flex-start;min-height:62px}
+.card .n{font-family:var(--latin);font-weight:700;font-size:42px;line-height:.9;color:var(--red)}
+.card .t{font-family:var(--serif);font-weight:900;font-size:22px;line-height:1.25;padding-top:2px}
+.card p{font-family:var(--serif);font-weight:500;font-size:16.5px;line-height:1.5;color:#3d322c;margin-top:4px;letter-spacing:.02em}
+.card .ph{margin-top:auto;height:142px;background-size:cover;background-position:center;border:3px solid #fff;box-shadow:0 0 0 1px #d9c9a8}
+.bar{left:0;top:1572px;width:941px;height:100px;background:linear-gradient(180deg,#8f1717,#6e1010);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;padding:0 22px}
+.bar div{display:flex;gap:14px;align-items:center;color:#f3dfb4;font-family:var(--serif);font-size:17px;line-height:1.45;border-right:1px solid rgba(243,223,180,.35);padding-left:18px;height:62px}
+.bar div:last-child{border-right:0}
+.bar b{display:block;color:#fff;font-size:19px}
+.bar svg{width:46px;height:46px;flex:none;stroke:#f3dfb4;fill:none;stroke-width:1.8}
+</style></head><body>
+<div class="abs tagline">掌握趨勢 · 連結產業 · 成就菁英</div>
+<div class="abs topline"></div>
+<div class="abs en">BUSINESS ELITE<br>E-NEWSLETTER</div>
+<svg class="abs crown" viewBox="0 0 66 44"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d888"/><stop offset="1" stop-color="#a87a22"/></linearGradient></defs><path d="M6 36 L2 10 L18 22 L33 2 L48 22 L64 10 L60 36 Z" fill="url(#cg)"/><rect x="6" y="37" width="54" height="6" rx="2" fill="url(#cg)"/><circle cx="2" cy="10" r="3" fill="#f3d888"/><circle cx="33" cy="3" r="3.5" fill="#f3d888"/><circle cx="64" cy="10" r="3" fill="#f3d888"/></svg>
+<div class="abs title">商業<span class="g">菁</span>英</div>
+<div class="abs vline"></div>
+<div class="abs issue"><div class="y" style="visibility:hidden">2026</div><div class="m" style="visibility:hidden">10</div><div class="s" style="visibility:hidden">OCT. 2026</div><div class="no" style="visibility:hidden">No.002</div><div class="tag">電子報</div></div>
+<div class="abs row"><span>產業</span><i>×</i><span>創新</span><i>×</i><span>人才</span><i>×</i><span>健康</span><i>×</i><span>永續</span></div>
+
+<div class="abs hero">
+  <div class="abs bg"></div>
+  <div class="abs glow"></div>
+  <div class="abs veil"></div>
+  <div class="abs food1"></div>
+  <div class="abs man"></div>
+  <div class="abs kicker"><span>封面人物</span><span>五行穀物商業應用</span></div>
+  <div class="abs big">五行五色</div>
+  <svg class="abs swoosh" viewBox="0 0 380 60"><defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#f6dc95" stop-opacity="0"/><stop offset=".35" stop-color="#f6dc95"/><stop offset="1" stop-color="#c9952f" stop-opacity=".2"/></linearGradient></defs><path d="M0 44 C120 30 250 18 380 4 C260 26 140 40 20 52 Z" fill="url(#sg)"/></svg>
+  <div class="abs sub">一粉三用・創造商機</div>
+  <div class="abs line2">從天然穀物到<em>多元商業場景</em>，<br>打造可複製的<em>產品新價值</em></div>
+  <div class="abs rule1"></div>
+  <div class="abs line3">饅頭<span>｜</span>麵包<span>｜</span>麵條<span>｜</span>六大通路</div>
+  <div class="abs line4">以文化為入口，開拓穀物麵食新市場</div>
+  <div class="abs sw"><span style="background:#ece4d2"></span><span style="background:#b8323f"></span><span style="background:#e0a72a"></span><span style="background:#2f2b2b"></span><span style="background:#8aa44a"></span></div>
+</div>
+
+<div class="abs ftab">本期焦點　›</div>
+<div class="abs cards">
+  <div class="card"><div class="h"><span class="n">01</span><span class="t">五行五色<br>新商機</span></div><p>文化 × 穀物 × 設計<br>最好懂的產品故事</p><div class="ph" style="background-image:url(powders.jpg)"></div></div>
+  <div class="card"><div class="h"><span class="n">02</span><span class="t">一粉三用</span></div><p>一個配方三條產品線<br>饅頭・麵包・麵條</p><div class="ph" style="background-image:url(bread.jpg)"></div></div>
+  <div class="card"><div class="h"><span class="n">03</span><span class="t">六大商業<br>場景</span></div><p>餐飲・烘焙・禮盒<br>零售・批發・異業</p><div class="ph" style="background-image:url(s1.jpg)"></div></div>
+  <div class="card"><div class="h"><span class="n">04</span><span class="t">菁英觀點</span></div><p>養生不等於功效<br>合規才能走得遠</p><div class="ph" style="background-image:url(giftbox.jpg)"></div></div>
+</div>
+<div class="abs bar">
+  <div><svg viewBox="0 0 30 30"><path d="M4 26h22M7 24v-6M13 24v-10M19 24v-7M25 24V8M6 15l7-6 6 4 7-8"/></svg><span><b>產業趨勢</b>洞見市場機會</span></div>
+  <div><svg viewBox="0 0 30 30"><circle cx="15" cy="12" r="7"/><path d="M11 22h8M12 26h6M15 1v2M3 12h2M25 12h2M6 4l1.5 1.5M24 4l-1.5 1.5"/></svg><span><b>菁英專訪</b>看見標竿人物</span></div>
+  <div><svg viewBox="0 0 30 30"><circle cx="15" cy="9" r="4"/><circle cx="6" cy="12" r="3"/><circle cx="24" cy="12" r="3"/><path d="M7 26c0-5 3-9 8-9s8 4 8 9M1 24c0-4 2-6 5-6M29 24c0-4-2-6-5-6"/></svg><span><b>案例解析</b>學習實戰經驗</span></div>
+  <div><svg viewBox="0 0 30 30"><path d="M7 3h12l5 5v19H7zM19 3v5h5M11 14h9M11 18h9M11 22h6"/></svg><span><b>專題企劃</b>掌握未來脈動</span></div>
+</div>
+</body></html>

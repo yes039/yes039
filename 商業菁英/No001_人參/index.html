@@ -1,0 +1,323 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>商業菁英 No.001</title>
+<link rel="preload" as="image" href="cover.jpg" fetchpriority="high">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&display=swap">
+<style>
+/* Layout: 8 portrait magazine pages stacked on a dark desk; each page a cream sheet with the cover's red / gold masthead language */
+:root{
+  --desk:#2a2220;
+  --paper:#fbf6ec;
+  --paper-2:#f3ead8;
+  --ink:#2b2320;
+  --ink-soft:#6a5b52;
+  --red:#9c1c1c;
+  --red-deep:#6e1010;
+  --gold:#b88a2e;
+  --gold-soft:#e6cf98;
+  --rule:#d9c9a8;
+  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-latin:"Cormorant Garamond","Times New Roman",serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--desk);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.85;margin:0;padding:32px 16px 64px}
+.note{max-width:820px;margin:0 auto 20px;color:var(--gold-soft);font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.note b{color:#fff;font-weight:500}
+.tbc{background:linear-gradient(transparent 62%,rgba(184,138,46,.28) 62%)}
+.pages{display:flex;flex-direction:column;gap:36px;align-items:center}
+.page{position:relative;width:100%;max-width:820px;background:var(--paper);box-shadow:0 18px 40px rgba(0,0,0,.45);padding:56px 60px 70px;overflow:hidden}
+@media (min-width:860px){.page{min-height:1160px}}
+@media (max-width:600px){.page{padding:36px 22px 60px}}
+.folio{position:absolute;left:60px;right:60px;bottom:24px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:.18em;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:10px}
+@media (max-width:600px){.folio{left:22px;right:22px}}
+.folio .pn{font-family:var(--f-latin);font-size:15px;color:var(--red);letter-spacing:0}
+.kicker{display:inline-flex;align-items:stretch;font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.12em}
+.kicker span:first-child{background:var(--red);color:#fff;padding:4px 12px}
+.kicker span+span{border:1px solid var(--red);color:var(--red);padding:3px 12px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;color:var(--ink)}
+h2{font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.3;margin-top:18px}
+h2 em{font-style:normal;color:var(--red)}
+h3{font-size:20px;font-weight:700;line-height:1.5}
+p{margin:0}
+.lede{font-family:var(--f-display);font-size:17px;line-height:1.9;color:var(--ink-soft);margin-top:18px;max-width:40em}
+.rule-gold{height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-soft) 60%,transparent);margin:26px 0}
+.cols{column-count:2;column-gap:36px;column-rule:1px solid var(--rule)}
+@media (max-width:640px){.cols{column-count:1}}
+.cols p{margin-bottom:1em;text-align:justify}
+.cols p:first-child::first-letter{font-family:var(--f-display);font-weight:900;font-size:3.4em;float:left;line-height:1;margin:.05em .12em 0 0;color:var(--red)}
+
+/* cover */
+.cover{padding:0;background:var(--paper)}
+.cover img{display:block;width:100%;height:auto}
+
+/* contents */
+.toc{display:grid;gap:0;margin-top:28px}
+.toc a{display:grid;grid-template-columns:72px 1fr auto;gap:18px;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--rule);color:inherit;text-decoration:none}
+.toc a:hover h3{color:var(--red)}
+.toc a:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.toc .no{font-family:var(--f-latin);font-size:40px;color:var(--red);line-height:1}
+.toc p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-top:4px}
+.toc .pg{font-family:var(--f-latin);font-size:18px;color:var(--gold)}
+.editor{margin-top:34px;background:var(--paper-2);padding:26px 28px;display:grid;gap:10px}
+.editor h3{font-size:17px;color:var(--red)}
+.editor .sig{text-align:right;font-family:var(--f-display);color:var(--ink-soft);font-size:14px}
+
+/* profile */
+.profile{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:40px;margin-top:30px}
+@media (max-width:680px){.profile{grid-template-columns:1fr}}
+.portrait{aspect-ratio:3/4;max-width:100%;background:url("portrait.jpg") center top/cover no-repeat;border:6px solid #fff;box-shadow:0 0 0 1px var(--rule)}
+.name{font-family:var(--f-display);font-size:40px;font-weight:900;letter-spacing:.08em;margin-top:6px}
+.name small{display:block;font-size:14px;font-weight:500;letter-spacing:.3em;color:var(--gold);margin-bottom:4px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin-top:20px;font-size:14px}
+.facts dt{color:var(--red);font-weight:700;letter-spacing:.1em}
+.facts dd{margin:0}
+.timeline{margin-top:30px;border-left:2px solid var(--gold);padding-left:22px;display:grid;gap:16px}
+.timeline div{position:relative}
+.timeline div::before{content:"";position:absolute;left:-28px;top:9px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--red)}
+.timeline b{font-family:var(--f-display);font-size:15px;color:var(--red);margin-right:8px}
+
+/* interview */
+.qa{display:grid;gap:22px;margin-top:8px}
+.q{font-family:var(--f-display);font-weight:700;font-size:16.5px;color:var(--red);display:flex;gap:10px}
+.q::before{content:"Q";font-family:var(--f-latin);font-size:24px;line-height:1;color:var(--gold)}
+.a{padding-left:24px;text-align:justify}
+.a strong{color:var(--ink);font-weight:700}
+.pull{margin:30px 0;padding:24px 0;border-block:2px solid var(--red);font-family:var(--f-display);font-size:clamp(20px,3.2vw,26px);font-weight:700;line-height:1.6;color:var(--red-deep);text-align:center;text-wrap:balance}
+.pull cite{display:block;font-style:normal;font-size:13px;letter-spacing:.2em;color:var(--gold);margin-top:10px;font-weight:500}
+
+/* product map */
+.lines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:30px}
+@media (max-width:680px){.lines{grid-template-columns:1fr}}
+.line{border-top:4px solid var(--red);background:var(--paper-2);padding:22px 20px;display:grid;gap:10px;align-content:start}
+.line .tag{font-size:12px;letter-spacing:.2em;color:var(--gold);font-weight:700}
+.line ul{margin:0;padding-left:1.1em;font-size:14px;line-height:1.75}
+.chain{margin-top:36px;overflow-x:auto}
+.chain ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));min-width:600px}
+.chain li{position:relative;padding:14px 12px 14px 22px;background:var(--red);color:#fff;font-size:13px;line-height:1.5;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%,14px 50%)}
+.chain li:nth-child(even){background:var(--red-deep)}
+.chain li b{display:block;font-family:var(--f-display);font-size:15px;color:var(--gold-soft)}
+.box{margin-top:30px;border:1px solid var(--gold);padding:20px 24px;font-size:14px}
+.box h3{font-size:16px;color:var(--red);margin-bottom:6px}
+
+/* ten years */
+.trends{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 36px;margin-top:30px}
+@media (max-width:640px){.trends{grid-template-columns:1fr}}
+.trend h3{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:10px}
+.trend h3 span{font-family:var(--f-latin);color:var(--gold);font-size:22px}
+.trend p{font-size:14.5px;text-align:justify}
+.advice{margin-top:36px;background:var(--red);color:#fff;padding:28px 30px}
+.advice h3{color:var(--gold-soft);font-size:18px}
+.advice ol{margin:12px 0 0;padding-left:1.3em;display:grid;gap:8px}
+
+/* back */
+.back{background:var(--red-deep);color:#f6ead2;display:flex;flex-direction:column}
+.back h2{color:#fff}
+.back .lede{color:var(--gold-soft)}
+.back .folio{color:var(--gold-soft);border-color:rgba(230,207,152,.3)}
+.back .folio .pn{color:var(--gold-soft)}
+.next{margin-top:30px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:640px){.next{grid-template-columns:1fr}}
+.next div{border:1px solid rgba(230,207,152,.45);padding:18px}
+.next b{display:block;font-family:var(--f-display);color:#fff;font-size:16px;margin-bottom:6px}
+.next p{font-size:13.5px;line-height:1.7}
+.colophon{margin-top:auto;padding-top:40px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 30px;font-size:12.5px;color:var(--gold-soft)}
+@media (max-width:640px){.colophon{grid-template-columns:1fr}}
+.masthead-mini{font-family:var(--f-display);font-weight:900;font-size:56px;letter-spacing:.1em;color:#fff;line-height:1.1;margin-top:40px}
+.masthead-mini small{display:block;font-family:var(--f-latin);font-size:14px;letter-spacing:.4em;color:var(--gold-soft);font-weight:500}
+.disclaimer{font-size:11.5px;color:var(--ink-soft);margin-top:24px;line-height:1.6}
+</style>
+
+
+<main class="pages">
+
+<!-- P1 Cover -->
+<section class="page cover" aria-label="封面">
+  <img src="cover.jpg" width="941" height="1672" fetchpriority="high" style="aspect-ratio:941/1672;background:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAArABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDrJ5tU/tOZUtwLbLBHAUnO3IPPqeOadZSakbW3+1B0cP8AvAQo4yOOPqfyrg9XeKfanniIrKrNGvZBw3/AueB6A1Xm0+3GpqILjdAdoI3DPLc49OO9ZJKTs2aSnZaI9Ctry9iLf2ltjLTqsZ2ZBU54+UdenWiuc1H7EYbZ1061hdJCMrkfLjnPrz9aK3p0OePMmY1sQoT5ZLUwbiW8tLySJGdkDnvuB/L/AHj+dbvgqESXMlxdQSyZZfLLjKqcnn8zVCYI9oBcozNDlhLHw2PQ9Ace44pbHxHe2c72qujorhhLcOqrtx0Bznt2HauWnW6SOmVF7o7Z9Ltf7JezvFSaNVdmdwMhjk59sf0orGXXLO4tnj+1Z85OSjb/AC8+2OR2orf6wlszF0W90Sx6lpx1G4WTT0SVN42lVOeTz071DLq9ktm7nTV+VgoJCgAYJxnHt05rz17iYBMSuPlU/e70qXM53EyscJxk5xzXOm+p6H1V9z0ldT0NDawyQxK83l/ujAMncOCeKK81NxPhv3r9+9FCkV9Tb6n/2Q==) center/cover" alt="商業菁英 2026 年 10 月 No.001 封面：人參走進現代生活，封面人物陳辭修博士">
+</section>
+
+<!-- P2 Contents + editor -->
+<section class="page" id="p2">
+  <div class="kicker"><span>本期目錄</span><span>CONTENTS</span></div>
+  <h2>一株人參，<em>連起傳統與未來</em></h2>
+  <p class="lede">本期封面人物陳辭修博士，把人參從藥櫃裡的珍稀補品，帶進現代人的餐桌、茶杯與日常。我們從產業、產品與人生三個角度，記錄他的思考。</p>
+  <nav class="toc" aria-label="本期內容">
+    <a href="#p3"><span class="no">01</span><div><h3>封面人物｜陳辭修博士</h3><p>藥學、產業與管理交會的人參之路</p></div><span class="pg">P.03</span></a>
+    <a href="#p4"><span class="no">02</span><div><h3>菁英專訪（上）大健康產業新商機</h3><p>食材 × 科技 × 生活應用，引領下一波消費浪潮</p></div><span class="pg">P.04</span></a>
+    <a href="#p5"><span class="no">03</span><div><h3>菁英專訪（下）從傳統到現代</h3><p>人參產業的創新升級與全球市場佈局</p></div><span class="pg">P.05</span></a>
+    <a href="#p6"><span class="no">04</span><div><h3>案例解析｜三條產品線的價值設計</h3><p>人參飲品、藥膳料理、生活化延伸商品</p></div><span class="pg">P.06</span></a>
+    <a href="#p7"><span class="no">05</span><div><h3>專題企劃｜健康產業的下一個十年</h3><p>品牌 × 通路 × 體驗，打造永續成長引擎</p></div><span class="pg">P.07</span></a>
+    <a href="#p8"><span class="no">06</span><div><h3>菁英觀點｜下期預告</h3><p>健康 × 美味 × 科技，開創大健康新生活</p></div><span class="pg">P.08</span></a>
+  </nav>
+  <div class="editor">
+    <h3>編者的話</h3>
+    <p>「健康」已從生病後的補救，變成每天都要經營的生活方式。這股轉變讓許多傳統產業重新被看見，人參正是其中之一。它有千年的使用歷史，也背負著「昂貴、難入口、只適合長輩」的刻板印象。陳辭修博士這些年做的事，就是把這些印象一一拆掉。希望這期內容，能讓正在思考轉型的經營者，找到一些可以帶走的方法。</p>
+    <p class="sig">《商業菁英》總編輯</p>
+  </div>
+  <div class="folio"><span>商業菁英 BUSINESS ELITE · OCT. 2026</span><span class="pn">02</span></div>
+</section>
+
+<!-- P3 Profile -->
+<section class="page" id="p3">
+  <div class="kicker"><span>封面人物</span><span>人參大健康產業</span></div>
+  <div class="profile">
+    <div class="portrait" role="img" aria-label="陳辭修博士肖像"></div>
+    <div>
+      <p class="name"><small>COVER STORY</small>陳辭修 博士</p>
+      <p class="lede" style="margin-top:10px">「人參不該只躺在禮盒裡。它應該出現在你早上的那杯茶、晚上的那碗湯。」</p>
+      <dl class="facts">
+        <dt>現任</dt><dd>臺北醫學大學 教授<br>財團法人皮膚科學發展文教基金會 董事</dd>
+        <dt>學歷</dt><dd>交通大學 科技管理研究所 博士<br>臺灣科技大學 EMBA<br>中國醫藥學院 藥學系 學士</dd>
+        <dt>著作</dt><dd>《每日一句正能量》、《做，就對了！》、《衝突危機管理》等</dd>
+        <dt>理念</dt><dd>道地食材、科學驗證、生活應用</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="rule-gold"></div>
+  <div class="cols">
+    <p>陳辭修博士的履歷橫跨藥學、產業與管理三個領域。他藥學系出身，曾在跨國藥廠台灣諾華、荷商史克美占負責公共事務，並擔任發言人；之後轉任順天本草、華健醫藥生技總經理，經營中草藥與生技事業。</p>
+    <p>取得交通大學科技管理博士後，他進入臺北醫學大學任教，帶入藥材檢驗與藥材條碼溯源的研究計畫，也輔導傳統藥局以漢方調理走向複合式經營。他觀察到，市場上的中草藥與人參產品落差極大，消費者只能看價格、看包裝，「這對好的產品不公平，對消費者更不公平。」</p>
+    <p>他相信，傳統產業要走進現代，第一步不是行銷，而是讓品質可以被看見、被比較。這套想法後來成為「膳行天下」與「太和博士」品牌的骨架，以出版、課程、產品、複合加盟四條線同步推進。</p>
+    <p>從人參飲品、藥膳料理到生活化延伸商品，他想做的是同一件事：把傳統食材翻譯成現代人每天用得上的產品。談起這一切，他最常說的仍是那句話：「先把東西做好，其他的才有意義。」</p>
+  </div>
+  <div class="timeline" aria-label="經歷">
+    <div><b>經歷</b>台灣諾華股份有限公司 公共事務經理</div>
+    <div><b>經歷</b>荷商史克美占 公共事務部處長兼發言人</div>
+    <div><b>經歷</b>華健醫藥生技公司 總經理</div>
+    <div><b>經歷</b>順天本草股份有限公司 總經理</div>
+    <div><b>現任</b>臺北醫學大學 教授、皮膚科學發展文教基金會 董事</div>
+  </div>
+  <div class="folio"><span>封面人物 COVER STORY</span><span class="pn">03</span></div>
+</section>
+
+<!-- P4 Interview 1 -->
+<section class="page" id="p4">
+  <div class="kicker"><span>菁英專訪</span><span>大健康產業新商機</span></div>
+  <h2>健康不是補救，<em>是每天的選擇</em></h2>
+  <p class="lede">食材 × 科技 × 生活應用。陳辭修博士談消費者的改變，以及傳統食材如何搭上這波浪潮。</p>
+  <div class="rule-gold"></div>
+  <div class="qa">
+    <div><p class="q">您怎麼看這幾年的「大健康」熱潮？</p>
+    <p class="a">最大的改變是<strong>年齡層</strong>。以前會買人參的，多半是五十歲以上、買來送禮或進補的人。現在三十多歲的上班族開始主動找，他們熬夜、壓力大，想要的是「每天可以吃一點、不麻煩」的保養方式。需求從節慶型，變成日常型。這對產業是根本性的改變。</p></div>
+    <div><p class="q">日常型需求，對產品設計有什麼影響？</p>
+    <p class="a">三件事：好入口、好攜帶、價格可以天天負擔。傳統的切片、整支人參，消費者不知道怎麼煮，也煮不出穩定的味道。所以我們把萃取、調味和包裝都重新設計，讓一包參茶打開就能喝，口感和一般茶飲接近，<strong>但成分是有數據的</strong>。</p></div>
+    <div><p class="q">「有數據」為什麼重要？</p>
+    <p class="a">年輕消費者會查資料、會比較。他們不吃「祖傳祕方」那一套，會問你原料從哪裡來、種幾年、檢驗報告在哪。願意把這些攤開來的品牌，才拿得到他們的信任。我們每一批原料都有產地與檢驗紀錄，這在十年前是成本，現在是競爭力。</p></div>
+  </div>
+  <blockquote class="pull">「傳統產業要走進現代，第一步不是行銷，<br>而是讓品質可以被看見。」<cite>— 陳辭修 博士</cite></blockquote>
+  <div class="qa">
+    <div><p class="q">科技在其中扮演什麼角色？</p>
+    <p class="a">從田間到工廠都有。產地端我們記錄土壤、氣候與栽培年限；加工端用溫控蒸製和低溫濃縮，減少有效成分流失；品管端以分析儀器檢測皂苷含量。科技讓「道地」這兩個字，不再只是一種說法，而是一組可以驗證的標準。</p></div>
+  </div>
+  <div class="folio"><span>菁英專訪 INTERVIEW · 上</span><span class="pn">04</span></div>
+</section>
+
+<!-- P5 Interview 2 -->
+<section class="page" id="p5">
+  <div class="kicker"><span>菁英專訪</span><span>從傳統到現代</span></div>
+  <h2>老藥材的<em>新身分</em></h2>
+  <p class="lede">人參產業的創新升級與全球市場佈局。陳辭修博士談轉型過程中最難的決定。</p>
+  <div class="rule-gold"></div>
+  <div class="qa">
+    <div><p class="q">轉型過程中，遇過最大的阻力是什麼？</p>
+    <p class="a">是內部的觀念。老師傅認為人參就該整支賣、賣得越貴越好；做即飲產品，在他們眼中是把好東西「做便宜了」。我花了很長時間溝通，最後說服大家的是一個事實：<strong>整支人參一年賣給幾千個人，一瓶參茶一年可以讓幾十萬人第一次喝到人參</strong>。市場變大，好原料才有更穩定的出路，農民也才願意繼續種。</p></div>
+    <div><p class="q">怎麼讓年輕人接受人參的味道？</p>
+    <p class="a">不刻意掩蓋，而是搭配。人參本身帶一點甘苦，我們搭紅棗、枸杞、桂圓這些華人熟悉的食材，讓它變得溫潤；也嘗試和咖啡、氣泡飲結合。口味可以創新，但原料的分量和品質不打折扣。藥膳料理也是同樣的思路：和餐廳合作推出人參雞湯、參棗粥，讓人參先成為一道「好吃的菜」。</p></div>
+    <div><p class="q">海外市場怎麼佈局？</p>
+    <p class="a">第一步鎖定華人社群，他們對人參有文化認同，教育成本低。海外華人市場是我們下一步的重點。但海外最大的門檻是法規，每個國家對食品成分、標示、宣稱的規定都不同，我們會先把合規做完，再談行銷。急著擴張、在法規上出錯，代價往往是整個品牌。</p></div>
+    <div><p class="q">對其他想轉型的傳統產業，有什麼建議？</p>
+    <p class="a">守住核心，改變形式。你的核心是什麼？對我們來說是原料品質與專業知識，這兩樣不能動。但包裝、口味、通路、溝通方式，都應該跟著消費者走。很多老品牌倒下，不是東西不好，是消費者找不到、也聽不懂。</p></div>
+  </div>
+  <div class="folio"><span>菁英專訪 INTERVIEW · 下</span><span class="pn">05</span></div>
+</section>
+
+<!-- P6 Products -->
+<section class="page" id="p6">
+  <div class="kicker"><span>案例解析</span><span>產品價值設計</span></div>
+  <h2>三條產品線，<em>三種生活場景</em></h2>
+  <p class="lede">同一株人參，依照使用時機與對象，被設計成三種完全不同的產品。這是陳辭修博士「多元產品新價值」的具體做法。</p>
+  <div class="lines">
+    <article class="line">
+      <span class="tag">LINE 01 · 每天</span>
+      <h3>人參飲品</h3>
+      <p>瞄準上班族的早晨與午後，取代一杯手搖飲。</p>
+      <ul><li>即飲參茶、濃縮參液隨身包</li><li>紅棗、枸杞等複方口味</li><li>超商、電商訂閱為主要通路</li></ul>
+    </article>
+    <article class="line">
+      <span class="tag">LINE 02 · 每週</span>
+      <h3>藥膳料理</h3>
+      <p>瞄準家庭餐桌，把燉補變成一道家常菜。</p>
+      <ul><li>人參雞湯、參棗粥調理包</li><li>與餐廳合作季節限定菜單</li><li>加熱即食，免去燉煮時間</li></ul>
+    </article>
+    <article class="line">
+      <span class="tag">LINE 03 · 送禮與嘗鮮</span>
+      <h3>生活化延伸商品</h3>
+      <p>瞄準年輕族群與伴手禮市場，降低第一次接觸的門檻。</p>
+      <ul><li>人參糖片、參片零食</li><li>節慶禮盒與聯名包裝</li><li>觀光工廠與體驗課程</li></ul>
+    </article>
+  </div>
+  <div class="chain">
+    <h3 style="margin-bottom:14px">從產地到餐桌的價值鏈</h3>
+    <ol>
+      <li><b>契作產地</b>記錄栽培年限與田間管理</li>
+      <li><b>採收篩選</b>依根齡、大小分級</li>
+      <li><b>蒸製乾燥</b>溫控製程製成紅參</li>
+      <li><b>萃取濃縮</b>低溫濃縮保留成分</li>
+      <li><b>檢驗上市</b>逐批檢測、可追溯</li>
+    </ol>
+  </div>
+  <div class="box">
+    <h3>經營者筆記</h3>
+    <p>三條產品線共用同一套原料與品管系統，前端卻各自對應不同的價格帶與通路。高單價禮盒維持品牌形象，平價飲品擴大接觸面，料理產品則提高回購頻率。這是傳統原料型企業做「產品組合」時，很值得參考的分工方式。</p>
+  </div>
+  <div class="folio"><span>案例解析 CASE STUDY</span><span class="pn">06</span></div>
+</section>
+
+<!-- P7 Next ten years -->
+<section class="page" id="p7">
+  <div class="kicker"><span>專題企劃</span><span>健康產業的下一個十年</span></div>
+  <h2>品牌 × 通路 × 體驗，<em>永續成長的引擎</em></h2>
+  <p class="lede">陳辭修博士眼中，未來十年決定健康品牌勝負的四個關鍵。</p>
+  <div class="trends">
+    <div class="trend"><h3><span>i.</span>透明成為門檻</h3><p>產地、栽培年限、檢驗數據將從加分項變成基本要求。能提供完整追溯資訊的品牌，才能進入主流通路與海外市場。</p></div>
+    <div class="trend"><h3><span>ii.</span>通路走向分眾</h3><p>超商負責觸及，電商訂閱負責回購，實體門市與觀光工廠負責體驗。同一個品牌，需要在不同通路講不同的故事。</p></div>
+    <div class="trend"><h3><span>iii.</span>體驗帶動信任</h3><p>讓消費者看見製程、親手做一道藥膳，比任何廣告都有說服力。體驗是把一次性買家變成長期顧客的關鍵。</p></div>
+    <div class="trend"><h3><span>iv.</span>永續回到源頭</h3><p>人參從種植到採收需要多年，土地需要休養。與農戶建立長期契作、合理分配利潤，才能確保十年後還有好原料。</p></div>
+  </div>
+  <blockquote class="pull">「人參要種六年才能收成。<br>做這一行，本來就要用十年的眼光看事情。」<cite>— 陳辭修 博士</cite></blockquote>
+  <div class="advice">
+    <h3>給經營者的三個提醒</h3>
+    <ol>
+      <li>先盤點自己不能改變的核心，再決定可以大膽改變的形式。</li>
+      <li>把品質數據化，讓它成為能對外溝通的語言。</li>
+      <li>擴張前先做好法規與合規，品牌信任一旦受損，很難修復。</li>
+    </ol>
+  </div>
+  <div class="folio"><span>專題企劃 SPECIAL REPORT</span><span class="pn">07</span></div>
+</section>
+
+<!-- P8 Back -->
+<section class="page back" id="p8">
+  <div class="kicker"><span>菁英觀點</span><span style="color:var(--gold-soft);border-color:var(--gold-soft)">EDITOR'S VIEW</span></div>
+  <h2>健康 × 美味 × 科技，開創大健康新生活</h2>
+  <p class="lede">陳辭修博士的故事提醒我們：傳統不是包袱，而是還沒被好好翻譯的資產。找到核心、用數據說話、用生活場景打開市場，任何產業都有機會走進下一個十年。</p>
+  <div class="next">
+    <div><b>下期預告</b><p>No.002〈五行五色〉：天然穀物預拌粉，一粉三用・創造商機。</p></div>
+    <div><b>企業專訪邀約</b><p>歡迎產業先進推薦受訪對象，分享轉型與創新經驗。</p></div>
+    <div><b>訂閱電子報</b><p>不定期出刊，掌握產業趨勢、菁英專訪與案例解析。</p></div>
+  </div>
+  <p class="masthead-mini"><small>BUSINESS ELITE E-NEWSLETTER</small>商業菁英</p>
+  <div class="colophon">
+    <span>2026 年 10 月 · No.001</span>
+    <span>掌握趨勢 · 連結產業 · 成就菁英</span>
+    <span>發行：商業菁英編輯部</span>
+    <span>聯絡信箱：9658811@gmail.com</span>
+  </div>
+  <p class="disclaimer" style="color:var(--gold-soft)">本刊內容僅供產業資訊交流，所提及之食品不具醫療效能，不能取代正規醫療。如有健康疑慮，請諮詢醫師。</p>
+  <div class="folio"><span>商業菁英 BUSINESS ELITE</span><span class="pn">08</span></div>
+</section>
+
+</main>
+
+</body></html>
