@@ -2,7 +2,7 @@
 
 - 成片：[02-製作/普宜精舍20週年-梁皇寶懺法會-68s-9x16.mp4](02-製作/普宜精舍20週年-梁皇寶懺法會-68s-9x16.mp4)（1080×1920、30fps、H.264＋AAC、約 -16 LUFS）
 - 封面：[02-製作/封面.jpg](02-製作/封面.jpg)
-- 配樂（片長版）：[02-製作/配樂-現場錄音-去雜音.m4a](02-製作/配樂-現場錄音-去雜音.m4a)；完整 118 秒去雜音版：[02-製作/現場錄音-去雜音-完整118s.m4a](02-製作/現場錄音-去雜音-完整118s.m4a)
+- 配樂：[02-製作/配樂-古箏尺八-68s.m4a](02-製作/配樂-古箏尺八-68s.m4a)（原創編曲，無版權疑慮）
 - 素材：[00-素材/](00-素材/)（現場照片 10 張＋現場錄音原檔）
 
 ## 分鏡
@@ -24,15 +24,17 @@
 ## 製作方式
 
 - 畫面：Python＋Pillow 逐格合成，照片緩慢推拉平移、鏡頭間 0.8 秒溶接，看板類以完整畫框呈現；字型 Noto Serif CJK TC。
-- 音樂：**使用現場錄音**（原檔 118 秒，取 0–68 秒，開頭淡入 0.5 秒、片尾 64.5 秒起淡出）。
-  去雜音（`source/denoise.py`＋ffmpeg）：
-  1. 70 Hz 以下低頻轟聲切除（約 -9 dB）。
-  2. 突發雜音修補：偵測中高頻能量突增的幀（碰撞、爆音、手機摩擦，例如 53 秒、62.9–64 秒），以前後 0.6 秒的中位頻譜取代，突波降 9–12 dB。
-  3. ffmpeg `afftdn` 自適應溫和降噪＋13.5 kHz 以上嘶聲收斂，最後統一響度 -16 LUFS。
-  - 音樂全程連續、沒有純雜音片段可取樣，所以降噪刻意保守，以免音樂出現水聲或變悶。
+- 音樂（第三版，目前片中使用）：`source/score.py` 原創編曲，60 BPM（1 拍＝1 秒，段落對齊鏡頭切點），D 大調五聲音階。
+  古箏分解和弦＋尺八主旋律＋弦樂／暖音墊＋大提琴低音；大雄寶殿段加木魚，開場、緣起段、片尾各一聲管鐘（引磬），花供養段加鐘琴點綴。
+  以 FluidSynth＋FluidR3 GM 音色渲染，-16 LUFS。成品音檔：`02-製作/配樂-古箏尺八-68s.m4a`。
+- 第二版（現場錄音去雜音）效果不理想已不採用，檔案與 `source/denoise.py` 保留備查。
 - 先前的合成配樂 `source/music.py` 保留作為備用。
 
 ```bash
+pip install mido && apt-get install -y fluidsynth fluid-soundfont-gm
+python3 source/score.py score.mid
+fluidsynth -ni -g 0.6 -r 48000 -o synth.reverb.room-size=0.85 -o synth.reverb.level=0.7 -F music.wav /usr/share/sounds/sf2/FluidR3_GM.sf2 score.mid
+# （以下為第二版現場錄音流程，保留備查）
 python3 source/denoise.py ../00-素材/現場錄音-原始.m4a stage1.wav
 ffmpeg -i stage1.wav -af "afftdn=nr=10:nf=-50:tn=1,lowpass=f=13500:poles=2" music.wav
 python3 source/render.py ../00-素材 music.wav out.mp4   # 在 02-製作/source 內執行
