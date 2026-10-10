@@ -1,0 +1,22 @@
+<style>
+@page{size:440px 790px;margin:0}
+html,body{background:#fbf6ec!important}
+body{padding:0!important;font-size:16px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pages{display:block!important;gap:0!important}
+.page{width:440px!important;max-width:440px!important;min-height:0!important;box-shadow:none!important;padding:30px 22px 34px!important;break-before:page;page-break-before:always;overflow:visible!important}
+.page:first-child{break-before:auto}
+.page.cover{padding:0!important}
+.folio{display:none!important}
+.cols{column-count:1!important}
+.profile,.split,.lines,.three,.trends,.next,.tiers,.dodont,.colophon{grid-template-columns:1fr!important}
+.elements{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.scenes{grid-template-columns:1fr!important}
+.biz{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.inset{float:none!important;width:100%!important;margin:0 0 16px!important}
+th{white-space:normal!important}
+.chain ol{grid-template-columns:1fr!important;min-width:0!important;gap:4px}
+.chain li{clip-path:none!important;padding:10px 14px!important}
+.toc a{grid-template-columns:44px 1fr auto!important;gap:10px!important}
+.back{min-height:0!important}
+.qa,.cols p,.a,p,li,td{orphans:2;widows:2}
+</style>
