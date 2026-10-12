@@ -11,6 +11,7 @@
 | C. 武器配置表 | [武器配置表.md](武器配置表.md) |
 | D. MVP Runtime | 本檔下半部 |
 | E. 第一場實戰 | [missions/M001/README.md](missions/M001/README.md) |
+| 武器評估 | [武器評估/MPT-001-候選影音武器評估報告.md](武器評估/MPT-001-候選影音武器評估報告.md)（MoneyPrinterTurbo，判定：B 收藏觀察） |
 
 ---
 
