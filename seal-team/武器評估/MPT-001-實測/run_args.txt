@@ -1,0 +1,17 @@
+--video-subject 小店老闆如何用AI做短影音
+--video-language zh-TW
+--video-terms small shop owner,smartphone filming food,cooking close up,typing on laptop,editing video on phone,happy customers restaurant
+--video-source pexels
+--video-aspect 9:16
+--video-concat-mode sequential
+--match-materials-to-script
+--video-clip-duration 3
+--voice-name no-voice
+--bgm-type custom
+--bgm-file mpt001-original-bgm.mp3
+--bgm-volume 0.6
+--subtitle-enabled
+--font-name wqy-zenhei.ttc
+--font-size 64
+--subtitle-position bottom
+--video-count 1
