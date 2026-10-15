@@ -2,6 +2,7 @@
 export const STATE_LABEL = {
   value: '', incomplete: '資料不完整', zero: '已確認為零', not_connected: '尚未接入',
   not_computed: '暫不計算', not_provided: '平台未提供', below_threshold: '低於統計門檻', unverified: '待查證',
+  not_entered: '尚未登錄',
 };
 
 const nf = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 });
@@ -23,5 +24,6 @@ export function ymd(iso) {
 export function rangeText(r) {
   if (!r) return '';
   if (r.period === 'all') return `全部期間（至 ${ymd(r.to)}）`;
-  return `${r.label}｜${ymd(r.from)}–${md(r.to)}${r.inProgress ? '（進行中）' : ''}`;
+  const end = r.fullTo && r.fullTo !== r.to ? r.fullTo : r.to;
+  return `${r.label}｜${ymd(r.from)}–${md(end)}${r.inProgress ? '（進行中）' : ''}`;
 }

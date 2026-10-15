@@ -4,40 +4,38 @@ import { setup } from './helpers.js';
 
 const P = 'period=r30';
 
-test('總覽：跨專案只加總平台定義的廣告數字，轉換率用合計分子分母', async () => {
-  const { call, drv } = await setup();
-  const { status, data } = await call('GET', '/overview?' + P);
+test('首頁：同時回傳 A 日常發文與 B 付費專案，專案成果不跨專案加總', async () => {
+  const { call } = await setup();
+  const { status, data } = await call('GET', '/home?period=week');
   assert.equal(status, 200);
-  assert.equal(data.range.from, '2026-09-15');
-  assert.equal(data.range.to, '2026-10-14');
-  const t = data.totals.find((x) => x.currency === 'TWD');
-  const sums = drv.all("SELECT SUM(spend) s, SUM(impressions) i, SUM(link_clicks) c FROM ad_daily WHERE date BETWEEN '2026-09-15' AND '2026-10-14'", [])[0];
-  assert.equal(Math.round(t.spend.v), Math.round(sums.s));
-  assert.equal(t.ctr.v, sums.c / sums.i);
-  // 第二波缺 10/12，總花費標示資料不完整
-  assert.equal(t.spend.s, 'incomplete');
+  assert.deepEqual([data.range.from, data.range.to, data.range.fullTo], ['2026-10-12', '2026-10-14', '2026-10-18']);
+  assert.deepEqual(data.organic.bySubject.map((s) => s.label), ['個人帳號', '粉專', '自有社團', '他人社團']);
+  const sum = (k) => data.organic.bySubject.reduce((a, s) => a + s.counts[k], 0);
+  for (const k of ['planned', 'published', 'pending', 'overdue', 'cancelled']) assert.equal(sum(k), data.organic.total.counts[k], k);
   assert.equal(data.projects.length, 2);
-  // 成果不跨專案加總：總覽 totals 沒有成果欄位
-  assert.equal(t.lead, undefined);
+  assert.equal(data.totals, undefined); // 不提供跨專案成果合計
+  const kinds = new Set(data.todos.map((t) => t.kind));
+  for (const k of ['內容', '回覆', '資料', '廣告異常']) assert.ok(kinds.has(k), '待辦缺少類型 ' + k);
+  for (const t of data.todos) assert.ok('owner' in t && 'due' in t && 'status' in t && t.link, '待辦欄位不齊：' + t.title);
+  assert.ok(data.todos.filter((t) => t.kind === '回覆').every((t) => t.manual), '待回覆數量是人工登錄');
 });
 
-test('專案隔離：成員只看得到自己的專案，其他專案回 404', async () => {
+test('專案隔離：成員只看得到自己的專案；日常發文只開放系統管理者', async () => {
   const { call } = await setup();
   const list = await call('GET', '/projects', null, 'viewer@test.local');
   assert.deepEqual(list.data.map((p) => p.code), ['TJSN']);
-  const ov = await call('GET', '/overview?' + P, null, 'viewer@test.local');
-  assert.equal(ov.data.projects.length, 1);
-  assert.ok(ov.data.anomalies.every((a) => a.project === 'TJSN'));
-  const other = await call('GET', '/projects/test-proj-yxz?' + P, null, 'viewer@test.local');
-  assert.equal(other.status, 404);
-  const stranger = await call('GET', '/projects', null, 'nobody@test.local');
-  assert.equal(stranger.data.length, 0);
-  // 檢視者不能寫入
-  const w = await call('POST', '/projects/test-proj-jsn/todos', { title: 'x' }, 'viewer@test.local');
-  assert.equal(w.status, 403);
-  // 非管理者不能新增專案
-  const np = await call('POST', '/projects', { code: 'ABC', claim_prefix: 'A', name: 'x' }, 'viewer@test.local');
-  assert.equal(np.status, 403);
+  const h = await call('GET', '/home?period=week', null, 'viewer@test.local');
+  assert.equal(h.data.projects.length, 1);
+  assert.equal(h.data.organic, null);
+  assert.ok(h.data.todos.every((a) => a.project === 'TJSN'));
+  assert.equal((await call('GET', '/organic?period=week', null, 'viewer@test.local')).status, 403);
+  assert.equal((await call('GET', '/posts/test-post-1', null, 'viewer@test.local')).status, 403);
+  const pj = await call('GET', '/projects/test-proj-jsn?period=week', null, 'viewer@test.local');
+  assert.equal(pj.data.relatedPosts.posts.length, 0); // 專案成員看不到自然貼文明細
+  assert.equal((await call('GET', '/projects/test-proj-yxz?period=week', null, 'viewer@test.local')).status, 404);
+  assert.equal((await call('GET', '/projects', null, 'nobody@test.local')).data.length, 0);
+  assert.equal((await call('POST', '/projects/test-proj-jsn/todos', { title: 'x' }, 'viewer@test.local')).status, 403);
+  assert.equal((await call('POST', '/projects', { code: 'ABC', claim_prefix: 'A', name: 'x' }, 'viewer@test.local')).status, 403);
 });
 
 test('數字狀態：資料不完整、尚未接入、暫不計算、已確認為零各自呈現', async () => {
@@ -160,7 +158,8 @@ test('人工登錄：成果標記資料來源，付費素材才能登錄廣告�
   const p = (await call('POST', '/projects', { code: 'ABC', claim_prefix: 'A', name: '自有課程' })).data.id;
   const c = (await call('POST', `/projects/${p}/campaigns`, { code: 'ABC-2610-01', name: 'x', start_date: '2026-10-10', end_date: '2026-10-20' })).data.id;
   const free = (await call('POST', `/campaigns/${c}/creatives`, { code: 'ABC-2610-01-TX01-v1', channel: 'fb_post' })).data.id;
-  const paid = (await call('POST', `/campaigns/${c}/creatives`, { code: 'ABC-2610-01-IM01-v1', channel: 'fb_ad' })).data.id;
+  assert.equal((await call('POST', `/campaigns/${c}/creatives`, { code: 'ABC-2610-01-IM01-v1', channel: 'fb_ad', status: '進行中' })).status, 400); // 未核可不能投放
+  const paid = (await call('POST', `/campaigns/${c}/creatives`, { code: 'ABC-2610-01-IM01-v1', channel: 'fb_ad', prod_status: '已核可', status: '進行中' })).data.id;
   let before = (await call('GET', `/projects/${p}?period=r30`)).data;
   assert.equal(before.metrics.lead.s, 'not_connected');
   assert.equal(before.metrics.spend.s, 'not_connected');

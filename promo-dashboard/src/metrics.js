@@ -15,16 +15,18 @@ export const STATE_LABEL = {
   not_provided: '平台未提供',
   below_threshold: '低於統計門檻',
   unverified: '待查證',
+  not_entered: '尚未登錄',
 };
 
-export const OUTCOME_TYPES = ['claim', 'lead', 'valid_lead', 'enroll', 'payment', 'refund'];
-export const SOURCE_OF_TYPE = { claim: 'claim', lead: 'lead', valid_lead: 'lead', enroll: 'enroll', payment: 'payment', refund: 'payment' };
+export const OUTCOME_TYPES = ['inquiry', 'claim', 'lead', 'valid_lead', 'enroll', 'payment', 'refund'];
+export const SOURCE_OF_TYPE = { inquiry: 'inquiry', claim: 'claim', lead: 'lead', valid_lead: 'lead', enroll: 'enroll', payment: 'payment', refund: 'payment' };
 export const SOURCE_KINDS = {
-  ads: 'FB 廣告數字', claim: '電子書／內容領取', lead: '名單', enroll: '報名', payment: '付款與退款',
+  ads: 'FB 廣告數字', inquiry: '詢問', claim: '電子書／內容領取', lead: '名單', enroll: '報名', payment: '付款與退款',
 };
 
 export function defaultMetrics() {
   return [
+    { key: 'inquiry', label: '詢問', enabled: true, def: '可確認來自本專案廣告或連結的私訊、留言詢問' },
     { key: 'claim', label: '電子書領取', enabled: true, def: '' },
     { key: 'lead', label: '名單', enabled: true, def: '' },
     { key: 'valid_lead', label: '有效名單', enabled: true, def: '待定義' },
@@ -54,7 +56,9 @@ export function ratio(num, den) {
   if (den.v === 0) return val(null, 'not_computed', '分母為 0');
   const v = num.v / den.v;
   const inc = [num, den].find((x) => x.s === 'incomplete');
-  return inc ? val(v, 'incomplete', inc.r) : val(v);
+  const out = inc ? val(v, 'incomplete', inc.r) : val(v);
+  out.n = num.v; out.d = den.v; // 給畫面顯示「分子 ÷ 分母」
+  return out;
 }
 
 export function metricDefs(project) {
@@ -74,26 +78,22 @@ export function primaryOutcome(defs) {
  * ads：此範圍內、期間內的廣告列；conv：此範圍內、期間內的成果列
  * paidCampaignIds：此範圍內有付費渠道的活動 id（用來判斷廣告資料是否缺日）
  */
-export function computeScope(ctx, { ads, conv, paidCampaignIds, hasPaid, adDatesByCampaign }) {
-  const { defs, sources, range, today } = ctx;
+export function computeScope(ctx, { ads, conv, hasPaid, expected = [], keyField = 'campaign_id' }) {
+  const { defs, sources, range } = ctx;
   const out = {};
-  const yesterday = addDays(today, -1);
+  const noDays = range.to < range.from;
 
   // ---- 廣告數字 ----
+  // expected：這個範圍應該有廣告資料的 { key, date }（key 為活動、素材或投放紀錄 id）
   const adsSource = sources.ads;
   let adState = null;
   if (!hasPaid && ads.length === 0) adState = val(null, 'not_computed', '無付費渠道');
+  else if (noDays) adState = val(null, 'not_computed', '本期還沒有已結束的日子');
   else if (!adsSource?.connected) adState = val(null, 'not_connected', adsSource?.note || 'FB 廣告數字尚未匯入');
   let missing = [];
   if (!adState) {
-    for (const c of ctx.campaigns) {
-      if (!paidCampaignIds.has(c.id) || !c.start_date) continue;
-      const ov = overlap(range.from, range.to, c.start_date, (c.end_date && c.end_date < yesterday) ? c.end_date : yesterday);
-      if (!ov) continue;
-      const have = adDatesByCampaign.get(c.id) || new Set();
-      for (const d of datesInRange(ov.from, ov.to)) if (!have.has(d)) missing.push(d);
-    }
-    missing = [...new Set(missing)].sort();
+    const have = new Set(ads.map((r) => r[keyField] + '|' + r.date));
+    missing = [...new Set(expected.filter((e) => !have.has(e.key + '|' + e.date)).map((e) => e.date))].sort();
   }
   const adIncomplete = missing.length ? `缺 ${missing.length} 天廣告資料（${missing.slice(0, 3).map(fmtMD).join('、')}${missing.length > 3 ? '…' : ''}）` : '';
   const sum = (k) => ads.reduce((a, r) => a + Number(r[k] || 0), 0);
@@ -110,6 +110,7 @@ export function computeScope(ctx, { ads, conv, paidCampaignIds, hasPaid, adDates
     if (!def || !def.enabled) { out[t] = val(null, 'not_computed', '本專案未定義此指標'); continue; }
     const src = sources[SOURCE_OF_TYPE[t]];
     if (!src?.connected) { out[t] = val(null, 'not_connected', src?.note || `${SOURCE_KINDS[SOURCE_OF_TYPE[t]]}尚未接入`); continue; }
+    if (noDays) { out[t] = val(null, 'not_computed', '本期還沒有已結束的日子'); continue; }
     const rows = conv.filter((r) => r.type === t);
     let n;
     if (t === 'payment' || t === 'refund') n = rows.reduce((a, r) => a + Number(r.qty || 1), 0);
@@ -141,68 +142,85 @@ export function computeScope(ctx, { ads, conv, paidCampaignIds, hasPaid, adDates
   return out;
 }
 
-/** 依目標成本與最小樣本，給出「持續／觀察／調整」建議（只對付費範圍） */
-export function judge(m, settings, targetCpl, hasPaid) {
-  if (!hasPaid) return { label: '—', reason: '免費渠道不計成本' };
+/**
+ * 依目標成本與最小樣本，給出「持續／觀察／調整」建議（只對付費範圍）。
+ * 關鍵資料（花費、點擊、主要成果）不完整時一律不給「持續」，並列出依據。
+ */
+export function judge(m, settings, targetCpl, hasPaid, defs) {
+  if (!hasPaid) return { label: '—', reason: '免費渠道不計成本', basis: [] };
   const s = { ...DEFAULT_SETTINGS, ...settings };
-  if (m.spend.v == null || m.link_clicks.v == null) return { label: '觀察', reason: '廣告數字未齊' };
-  if (m.link_clicks.v < s.minClicks && m.spend.v < s.minSpend) {
-    return { label: '觀察', reason: `樣本不足（點擊 < ${s.minClicks} 且花費 < ${s.minSpend}）` };
+  const label = (k) => defs?.[k]?.label || { spend: '花費', link_clicks: '連結點擊' }[k] || k;
+  const keys = ['spend', 'link_clicks', m.primaryKey].filter(Boolean);
+  const basis = keys.map((k) => `${label(k)}：${m[k].v == null ? STATE_LABEL[m[k].s] : Math.round(m[k].v).toLocaleString('zh-TW')}${m[k].s === 'incomplete' ? '（資料不完整）' : ''}`);
+  const missing = keys.filter((k) => m[k].v == null);
+  if (missing.length) return { label: '觀察', reason: `${missing.map(label).join('、')}${STATE_LABEL[m[missing[0]].s]}，暫不判斷`, basis };
+  const inc = keys.filter((k) => m[k].s === 'incomplete');
+  if (m.spend.v < s.minSpend && m.link_clicks.v < s.minClicks) {
+    return { label: '觀察', reason: `樣本不足（點擊 < ${s.minClicks} 且花費 < ${s.minSpend}）`, basis };
   }
-  const p = m.primaryKey ? m[m.primaryKey] : null;
-  if (!p || p.v == null) return { label: '觀察', reason: '成果資料未齊' };
-  if (p.v === 0) return { label: '調整', reason: '有花費但沒有成果' };
-  if (!targetCpl) return { label: '觀察', reason: '未設定目標成本' };
-  const cpl = m.spend.v / p.v;
-  if (cpl <= targetCpl) return { label: '持續', reason: `每筆成本 ${Math.round(cpl)} ≤ 目標 ${targetCpl}` };
-  if (cpl > targetCpl * s.adjustRatio) return { label: '調整', reason: `每筆成本 ${Math.round(cpl)} 高於目標 ${s.adjustRatio} 倍` };
-  return { label: '觀察', reason: `每筆成本 ${Math.round(cpl)} 略高於目標 ${targetCpl}` };
+  const p = m[m.primaryKey];
+  const cpl = p.v > 0 ? m.spend.v / p.v : null;
+  if (inc.length) {
+    // 資料不完整：只允許「觀察」或明確的「調整」（花費已遠超目標時），不給「持續」
+    if (p.v === 0 && !inc.includes(m.primaryKey)) return { label: '調整', reason: `有花費但沒有${label(m.primaryKey)}（${m[inc[0]].r}）`, basis };
+    return { label: '觀察', reason: `資料不完整（${m[inc[0]].r}），暫不判斷`, basis };
+  }
+  if (p.v === 0) return { label: '調整', reason: `有花費但沒有${label(m.primaryKey)}`, basis };
+  if (!targetCpl) return { label: '觀察', reason: '未設定目標成本', basis };
+  if (cpl <= targetCpl) return { label: '持續', reason: `每筆${label(m.primaryKey)}成本 ${Math.round(cpl)} ≤ 目標 ${targetCpl}`, basis };
+  if (cpl > targetCpl * s.adjustRatio) return { label: '調整', reason: `每筆成本 ${Math.round(cpl)} 高於目標 ${s.adjustRatio} 倍`, basis };
+  return { label: '觀察', reason: `每筆成本 ${Math.round(cpl)} 略高於目標 ${targetCpl}`, basis };
 }
 
-/** 依活動期間與今天推得的實際狀態提醒 */
-export function anomaliesFor({ project, defs, settings, campaigns, creatives, campaignMetrics, projectMetrics, adsUnmatched, unknownConv, links, sources, today, range }) {
+/**
+ * 付費專案的異常與待辦。每則：{ level, kind, title, detail, link, project, owner, due, status, manual }
+ *   kind：廣告異常／預算／內容／資料；manual＝需要人工登錄或處理才會消失
+ */
+export function anomaliesFor({ project, defs, settings, campaigns, creatives, campaignMetrics, projectMetrics, adsUnmatched, unknownConv, links, sources, today }) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const items = [];
   const todos = [];
   const yesterday = addDays(today, -1);
-  const add = (list, level, title, detail, link) => list.push({ level, title, detail, link, project: project.code });
+  const add = (list, level, kind, title, detail, link, extra = {}) =>
+    list.push({ level, kind, title, detail, link, project: project.code, project_id: project.id, owner: '', due: null, status: '待處理', manual: false, ...extra });
 
   for (const c of campaigns) {
     const m = campaignMetrics[c.id];
     const link = `#/c/${c.id}`;
-    if (c.budget && m.spend.v != null) {
-      if (m.spend.v > c.budget) add(items, 'critical', `${c.code} 花費超過預算`, `已花 ${Math.round(m.spend.v)}／預算 ${c.budget}`, link);
-      else if (m.spend.v > c.budget * 0.9) add(items, 'warning', `${c.code} 預算即將用完`, `已用 ${Math.round((m.spend.v / c.budget) * 100)}%`, link);
+    const owner = c.owner || '';
+    if (c.budget && m.spendAll != null) {
+      if (m.spendAll > c.budget) add(items, 'critical', '預算', `${c.code} 累計花費超過活動預算`, `活動累計 ${Math.round(m.spendAll)}／預算 ${c.budget}`, link, { owner, due: today });
+      else if (m.spendAll > c.budget * 0.9) add(items, 'warning', '預算', `${c.code} 活動預算即將用完`, `已用 ${Math.round((m.spendAll / c.budget) * 100)}%`, link, { owner });
     }
-    if (m.missingAdDates?.length) add(items, 'serious', `${c.code} 廣告資料缺漏`, m.spend.r, link);
-    if (c.status === '進行中' && c.end_date && c.end_date < today) add(todos, 'warning', `${c.code} 已過結束日，狀態仍為進行中`, `結束日 ${c.end_date}`, link);
+    if (m.missingAdDates?.length) add(items, 'serious', '資料', `${c.code} 廣告資料缺漏`, m.spend.r + '，請補登或重新匯入', link, { owner, manual: true });
+    if (c.status === '進行中' && c.end_date && c.end_date < today) add(todos, 'warning', '資料', `${c.code} 已過結束日，狀態仍為進行中`, `結束日 ${c.end_date}`, link, { owner, manual: true });
     const recent = m.recent;
     if (recent && recent.spend > 0 && recent.outcome === 0) {
-      add(items, 'serious', `${c.code} 近 ${s.quietDays} 天有花費、沒有${defs[m.primaryKey]?.label || '成果'}`, `近 ${s.quietDays} 天花費 ${Math.round(recent.spend)}`, link);
+      add(items, 'serious', '廣告異常', `${c.code} 近 ${s.quietDays} 天有花費、沒有${defs[m.primaryKey]?.label || '成果'}`, `近 ${s.quietDays} 天花費 ${Math.round(recent.spend)}`, link, { owner, due: today });
     }
   }
   for (const cr of creatives) {
-    if (cr.status === '進行中' && !links.some((l) => l.creative_id === cr.id) && cr.channel !== 'fb_ad') {
-      add(todos, 'warning', `${cr.code} 沒有追蹤連結`, '免費貼文與其他渠道需要追蹤連結才能辨識來源', `#/c/${cr.campaign_id}`);
-    }
-    if (cr.status === '進行中' && cr.channel === 'fb_ad' && !links.some((l) => l.creative_id === cr.id)) {
-      add(todos, 'warning', `${cr.code} 沒有追蹤連結`, '請把追蹤連結貼到廣告的網址', `#/c/${cr.campaign_id}`);
+    const link = `#/p/${project.id}/creatives`;
+    if (cr.prod_status === '製作中') add(todos, 'warning', '內容', `待製作：${cr.code}`, cr.name || '', link, { owner: cr.owner, status: '製作中' });
+    if (cr.prod_status === '待審核') add(todos, 'warning', '內容', `待審核：${cr.code}`, cr.name || '', link, { owner: cr.owner, status: '待審核' });
+    if (cr.status === '進行中' && !links.some((l) => l.creative_id === cr.id)) {
+      add(todos, 'warning', '資料', `${cr.code} 沒有追蹤連結`, cr.channel === 'fb_ad' ? '請把追蹤連結貼到廣告網址，成果才能對應到素材' : '沒有追蹤連結就無法辨識來源', link, { owner: cr.owner, manual: true });
     }
   }
-  if (adsUnmatched > 0) add(todos, 'serious', `${adsUnmatched} 筆廣告花費對應不到素材`, '廣告名稱需以素材代碼開頭；可在匯入紀錄檢查', `#/p/${project.id}/sources`);
+  if (adsUnmatched > 0) add(todos, 'serious', '資料', `${adsUnmatched} 筆廣告花費對應不到素材`, '廣告名稱需以素材代碼開頭；請到匯入紀錄檢查', `#/p/${project.id}/entry`, { manual: true });
   for (const [kind, label] of Object.entries(SOURCE_KINDS)) {
     const src = sources[kind];
     if (!src?.connected) continue;
     if (kind !== 'ads' && OUTCOME_TYPES.every((t) => SOURCE_OF_TYPE[t] !== kind || !defs[t]?.enabled)) continue;
     if (src.covered_through && src.covered_through < addDays(yesterday, -(s.staleDays - 1))) {
-      add(todos, 'warning', `${label}資料未更新`, `只更新到 ${src.covered_through}`, `#/p/${project.id}/sources`);
+      add(todos, 'warning', '資料', `${label}待更新`, `只更新到 ${fmtMD(src.covered_through)}（人工登錄或匯入）`, `#/p/${project.id}/sources`, { manual: true });
     }
   }
   for (const t of ['enroll', 'payment']) {
     const total = projectMetrics[t];
     const unk = unknownConv[t] || 0;
-    if (total?.v > 0 && unk / total.v > s.unknownShare) {
-      add(items, 'warning', `${defs[t].label}來源不明比例偏高`, `${unk}／${total.v} 筆沒有活動來源`, `#/p/${project.id}`);
+    if (defs[t]?.enabled && total?.v > 0 && unk / total.v > s.unknownShare) {
+      add(items, 'warning', '資料', `${defs[t].label}來源不明比例偏高`, `${unk}／${total.v} 筆無法確認來源`, `#/p/${project.id}`);
     }
   }
   const order = { critical: 0, serious: 1, warning: 2 };

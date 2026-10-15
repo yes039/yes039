@@ -1,6 +1,6 @@
 // 宣傳戰情室 API：所有查詢先確認使用者可看的專案，再依專案過濾
 import { getUser } from './auth.js';
-import { resolvePeriod, todayTW, addDays } from './periods.js';
+import { resolvePeriod, todayTW, addDays, overlap, datesInRange } from './periods.js';
 import {
   computeScope, judge, anomaliesFor, metricDefs, defaultMetrics, DEFAULT_SETTINGS, OUTCOME_TYPES,
   SOURCE_OF_TYPE, SOURCE_KINDS, ratio, primaryOutcome,
@@ -10,6 +10,7 @@ import {
   normalizeClaimCode, buildTrackingUrl, CHANNELS, FORMATS, toHalfWidth,
 } from './tracking.js';
 import { mapMetaRows, mapOutcomeRows, parseDate, personRef, OUTCOME_COLUMNS } from './csv.js';
+import { SUBJECTS, POST_STATUS, INTERACTION_DEF, classify, summarize, postTodos } from './organic.js';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const fail = (message, status = 400) => json({ error: message }, status);
@@ -70,13 +71,29 @@ async function loadSources(db, projectId) {
   return map;
 }
 
-/** 計算單一專案在某期間的全部指標（活動、素材、渠道、來源不明、異常、待辦） */
+/** 每則付費素材應有廣告資料的日子：依投放紀錄期間；沒有投放紀錄時依波次期間 */
+function expectedDays(cr, campaign, placements, range, yesterday) {
+  if (!cr.paid || cr.status === '規劃中') return [];
+  const periods = placements.length
+    ? placements.filter((p) => p.status !== '規劃中').map((p) => [p.start_date, p.end_date])
+    : [[campaign.start_date, campaign.end_date]];
+  const days = new Set();
+  for (const [s, e] of periods) {
+    if (!s) continue;
+    const ov = overlap(range.from, range.to, s, e && e < yesterday ? e : yesterday);
+    if (ov) for (const d of datesInRange(ov.from, ov.to)) days.add(d);
+  }
+  return [...days];
+}
+
+/** 計算單一專案在某期間的全部指標（波次、素材、投放紀錄、渠道、來源不明、異常、待辦） */
 export async function computeProject(db, project, range, today) {
   const defs = metricDefs(project);
   const settings = { ...DEFAULT_SETTINGS, ...JSON.parse(project.settings_json || '{}') };
   const sources = await loadSources(db, project.id);
   const campaigns = await all(db, 'SELECT * FROM campaigns WHERE project_id = ? ORDER BY start_date DESC, code', project.id);
-  const creatives = await all(db, 'SELECT * FROM creatives WHERE project_id = ? ORDER BY code', project.id);
+  const creatives = await all(db, 'SELECT cr.* FROM creatives cr LEFT JOIN campaigns c ON c.id = cr.campaign_id WHERE cr.project_id = ? ORDER BY c.start_date, cr.created_at, cr.code', project.id);
+  const placements = await all(db, 'SELECT * FROM placements WHERE project_id = ? ORDER BY code', project.id);
   const links = await all(db, 'SELECT * FROM tracking_links WHERE project_id = ? ORDER BY created_at', project.id);
   const yesterday = addDays(today, -1);
   const recentFrom = addDays(yesterday, -(settings.quietDays - 1));
@@ -87,79 +104,107 @@ export async function computeProject(db, project, range, today) {
   const inRange = (r) => r.date >= range.from && r.date <= range.to;
   const ads = adsAll.filter(inRange);
   const conv = convAll.filter(inRange);
+  // 累計花費（不受所選期間影響）：專案、波次、素材、投放紀錄
+  const cum = await all(db, 'SELECT campaign_id, creative_id, placement_id, SUM(spend) AS s FROM ad_daily WHERE project_id = ? GROUP BY campaign_id, creative_id, placement_id', project.id);
+  const cumBy = (field, id) => cum.filter((r) => r[field] === id).reduce((a, r) => a + r.s, 0);
+  const spentAll = cum.reduce((a, r) => a + r.s, 0);
 
-  const paidByCampaign = new Set(creatives.filter((c) => c.paid).map((c) => c.campaign_id));
-  const adDatesByCampaign = new Map();
-  for (const r of ads) {
-    if (!r.campaign_id) continue;
-    if (!adDatesByCampaign.has(r.campaign_id)) adDatesByCampaign.set(r.campaign_id, new Set());
-    adDatesByCampaign.get(r.campaign_id).add(r.date);
+  const campaignById = Object.fromEntries(campaigns.map((c) => [c.id, c]));
+  const expectedByCreative = {};
+  for (const cr of creatives) {
+    const c = campaignById[cr.campaign_id];
+    expectedByCreative[cr.id] = expectedDays(cr, c, placements.filter((p) => p.creative_id === cr.id), range, yesterday).map((date) => ({ key: cr.id, date }));
   }
-  const ctxBase = { project, defs, sources, range, today };
-  const scope = (camps, a, c, extraPaid) => computeScope({ ...ctxBase, campaigns: camps }, {
-    ads: a, conv: c, paidCampaignIds: paidByCampaign, hasPaid: extraPaid ?? camps.some((x) => paidByCampaign.has(x.id)), adDatesByCampaign,
+  const ctx = { project, defs, sources, range, today };
+  const scope = (crs, a, c) => computeScope(ctx, {
+    ads: a, conv: c, hasPaid: crs.some((x) => x.paid), expected: crs.flatMap((x) => expectedByCreative[x.id]), keyField: 'creative_id',
   });
 
-  const projectMetrics = scope(campaigns, ads, conv);
+  const projectMetrics = scope(creatives, ads, conv);
   const primary = primaryOutcome(defs);
   const campaignMetrics = {};
   const outCampaigns = [];
+  const outCreatives = [];
   for (const c of campaigns) {
-    const m = scope([c], ads.filter((r) => r.campaign_id === c.id), conv.filter((r) => r.campaign_id === c.id));
-    const recentAds = adsAll.filter((r) => r.campaign_id === c.id && r.date >= recentFrom && r.date <= yesterday);
+    const crsRaw = creatives.filter((x) => x.campaign_id === c.id);
+    const paid = crsRaw.some((x) => x.paid);
+    const m = scope(crsRaw, ads.filter((r) => r.campaign_id === c.id), conv.filter((r) => r.campaign_id === c.id));
+    m.spendAll = cumBy('campaign_id', c.id);
+    const campLive = crsRaw.some((x) => expectedByCreative[x.id].length) || ads.some((r) => r.campaign_id === c.id);
+    if (paid && !campLive) for (const k of ['spend', 'impressions', 'link_clicks', 'ctr', 'cpc', 'cost_primary', 'cost_enroll', 'return_on_spend']) m[k] = { v: null, s: 'not_computed', r: '本期未投放' };
     const src = primary ? sources[SOURCE_OF_TYPE[primary]] : null;
-    if (c.status === '進行中' && primary && src?.connected && src.covered_through >= yesterday && paidByCampaign.has(c.id)) {
+    if (c.status === '進行中' && primary && src?.connected && src.covered_through >= yesterday && paid) {
       m.recent = {
-        spend: recentAds.reduce((a, r) => a + r.spend, 0),
+        spend: adsAll.filter((r) => r.campaign_id === c.id && r.date >= recentFrom && r.date <= yesterday).reduce((a, r) => a + r.spend, 0),
         outcome: convAll.filter((r) => r.campaign_id === c.id && r.type === primary && r.date >= recentFrom && r.date <= yesterday).length,
       };
     }
     campaignMetrics[c.id] = m;
-    const crs = creatives.filter((x) => x.campaign_id === c.id).map((cr) => {
-      const cm = computeScope({ ...ctxBase, campaigns: [c] }, {
-        ads: ads.filter((r) => r.creative_id === cr.id), conv: conv.filter((r) => r.creative_id === cr.id),
-        paidCampaignIds: new Set(), hasPaid: !!cr.paid, adDatesByCampaign,
+    const crs = crsRaw.map((cr) => {
+      const cm = scope([cr], ads.filter((r) => r.creative_id === cr.id), conv.filter((r) => r.creative_id === cr.id));
+      cm.spendAll = cumBy('creative_id', cr.id);
+      const hasAds = ads.some((r) => r.creative_id === cr.id);
+      const notLive = cr.paid && !hasAds && (cr.status === '規劃中' || !expectedByCreative[cr.id].length);
+      const why = cr.status === '規劃中' ? '尚未投放' : '本期未投放';
+      if (notLive) for (const k of ['spend', 'impressions', 'link_clicks', 'ctr', 'cpc', 'cost_primary', 'cost_enroll', 'return_on_spend']) cm[k] = { v: null, s: 'not_computed', r: why };
+      const pls = placements.filter((p) => p.creative_id === cr.id).map((pl) => {
+        const exp = expectedDays(cr, c, [pl], range, yesterday).map((date) => ({ key: pl.id, date }));
+        const pm = computeScope(ctx, { ads: ads.filter((r) => r.placement_id === pl.id), conv: [], hasPaid: !!cr.paid, expected: exp, keyField: 'placement_id' });
+        for (const t of OUTCOME_TYPES) pm[t] = { v: null, s: 'not_computed', r: '成果只追蹤到素材層，不分投放紀錄' };
+        pm.spendAll = cumBy('placement_id', pl.id);
+        return { ...pl, metrics: pm };
       });
-      // 素材層不判斷缺日（缺日在活動層判斷）
-      return { ...cr, metrics: cm, judgement: judge(cm, settings, c.target_cpl, !!cr.paid), links: links.filter((l) => l.creative_id === cr.id).length };
+      const noPlacement = pls.length ? ads.filter((r) => r.creative_id === cr.id && !r.placement_id) : [];
+      const item = {
+        ...cr, campaign_code: c.code, metrics: cm, placements: pls,
+        unplacedSpend: noPlacement.reduce((a, r) => a + r.spend, 0),
+        judgement: notLive ? { label: '—', reason: why, basis: [] } : judge(cm, settings, c.target_cpl, !!cr.paid, defs), links: links.filter((l) => l.creative_id === cr.id).length,
+      };
+      outCreatives.push(item);
+      return item;
     });
-    outCampaigns.push({ ...c, paid: paidByCampaign.has(c.id), metrics: m, judgement: judge(m, settings, c.target_cpl, paidByCampaign.has(c.id)), creatives: crs });
+    outCampaigns.push({ ...c, paid, metrics: m, judgement: paid && !campLive ? { label: '—', reason: '本期未投放', basis: [] } : judge(m, settings, c.target_cpl, paid, defs), creatives: crs });
   }
+
+  // 素材依波次開始日、建立順序排列，畫面上的「素材 1、2、3」才穩定
+  const order = new Map(creatives.map((c, i) => [c.id, i]));
+  outCreatives.sort((a, b) => order.get(a.id) - order.get(b.id));
 
   // 依渠道比較（同一專案內，合計分子 ÷ 合計分母）
   const byChannel = Object.keys(CHANNELS).map((ch) => {
-    const ids = new Set(creatives.filter((c) => c.channel === ch).map((c) => c.id));
-    if (!ids.size) return null;
-    const isPaid = creatives.some((c) => c.channel === ch && c.paid);
-    const m = computeScope({ ...ctxBase, campaigns: [] }, {
-      ads: ads.filter((r) => ids.has(r.creative_id)), conv: conv.filter((r) => ids.has(r.creative_id)),
-      paidCampaignIds: new Set(), hasPaid: isPaid, adDatesByCampaign,
-    });
-    return { channel: ch, label: CHANNELS[ch], paid: isPaid, creatives: ids.size, metrics: m };
+    const crs = creatives.filter((c) => c.channel === ch);
+    if (!crs.length) return null;
+    const ids = new Set(crs.map((c) => c.id));
+    const m = scope(crs, ads.filter((r) => ids.has(r.creative_id)), conv.filter((r) => ids.has(r.creative_id)));
+    return { channel: ch, label: CHANNELS[ch], paid: crs.some((c) => c.paid), creatives: ids.size, metrics: m };
   }).filter(Boolean);
 
-  // 來源不明：沒有活動的成果
-  const unknown = {};
-  for (const t of OUTCOME_TYPES) {
-    const rows = conv.filter((r) => r.type === t && !r.campaign_id);
-    unknown[t] = rows.reduce((a, r) => a + r.qty, 0);
-    if (t === 'payment' || t === 'refund') unknown[t + '_amount'] = rows.reduce((a, r) => a + r.amount, 0);
-  }
-  // 有成果但只對到活動、沒對到素材
-  const campaignOnly = conv.filter((r) => r.campaign_id && !r.creative_id).length;
-  const adsUnmatched = ads.filter((r) => !r.campaign_id).length;
+  // 來源不明：沒有波次的成果；只對應到波次、沒對應到素材的另列，不分配給任何素材
+  const bucket = (rows) => {
+    const out = {};
+    for (const t of OUTCOME_TYPES) {
+      const rs = rows.filter((r) => r.type === t);
+      out[t] = rs.reduce((a, r) => a + r.qty, 0);
+      if (t === 'payment' || t === 'refund') out[t + '_amount'] = rs.reduce((a, r) => a + r.amount, 0);
+    }
+    return out;
+  };
+  const unknown = bucket(conv.filter((r) => !r.campaign_id));
+  const campaignOnly = bucket(conv.filter((r) => r.campaign_id && !r.creative_id));
+  const adsUnmatched = ads.filter((r) => !r.creative_id).length;
   const { anomalies, autoTodos } = anomaliesFor({
     project, defs, settings, campaigns, creatives, campaignMetrics, projectMetrics, adsUnmatched,
     unknownConv: unknown, links, sources, today, range,
   });
-  const manualTodos = await all(db, 'SELECT * FROM todos WHERE project_id = ? AND done = 0 ORDER BY due IS NULL, due', project.id);
-  const spentAll = await first(db, 'SELECT COALESCE(SUM(spend),0) AS s FROM ad_daily WHERE project_id = ?', project.id);
-
+  const manualTodos = await all(db, "SELECT * FROM todos WHERE project_id = ? AND done = 0 ORDER BY due IS NULL, due", project.id);
+  const periodDates = campaigns.filter((c) => c.start_date);
   return {
     project: { ...project, metrics: defs, settings },
-    sources, campaigns: outCampaigns, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched,
-    anomalies, todos: [...autoTodos, ...manualTodos.map((t) => ({ ...t, level: 'manual', manual: true, project: project.code }))],
-    budget: { total: project.budget, spentAll: spentAll.s },
+    sources, campaigns: outCampaigns, creatives: outCreatives, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched,
+    anomalies,
+    todos: [...autoTodos, ...manualTodos.map((t) => ({ ...t, level: 'manual', kind: '人工待辦', manual: true, project: project.code, project_id: project.id, link: `#/p/${project.id}/sources` }))],
+    budget: { total: project.budget, spentAll },
+    flight: periodDates.length ? { from: periodDates.map((c) => c.start_date).sort()[0], to: periodDates.map((c) => c.end_date || c.start_date).sort().at(-1) } : null,
   };
 }
 
@@ -175,30 +220,54 @@ function sumAcross(list) {
   return v === 0 ? { v: 0, s: 'zero', r: '資料完整，數值為零' } : { v, s: 'value', r: '' };
 }
 
-async function overview(db, user, range, today) {
+async function organicData(db, range, today, filters = {}) {
+  const outlets = await all(db, 'SELECT * FROM outlets ORDER BY type, name');
+  const outletsById = Object.fromEntries(outlets.map((o) => [o.id, o]));
+  // 期間內預定或發布的貼文，加上預定在近期（待辦用）的貼文
+  const posts = await all(db, `SELECT * FROM posts WHERE (planned_date BETWEEN ? AND ?) OR (published_date BETWEEN ? AND ?) OR (status IN ('待製作','待審核','待發布') AND planned_date <= ?)
+    OR (status = '已發布' AND published_date >= ?) OR pending_replies > 0 ORDER BY COALESCE(published_date, planned_date)`,
+  range.from, range.fullTo, range.from, range.fullTo, addDays(today, 7), addDays(today, -14));
+  const projects = await all(db, 'SELECT id, code, name FROM projects');
+  const projById = Object.fromEntries(projects.map((p) => [p.id, p]));
+  const decorate = (p) => ({ ...p, outlet: outletsById[p.outlet_id], project: p.project_id ? projById[p.project_id] : null, flags: classify(p, range, today) });
+  let scoped = posts.map(decorate);
+  const todos = postTodos(posts, outletsById, today);
+  if (filters.type) scoped = scoped.filter((p) => p.outlet?.type === filters.type);
+  if (filters.outlet) scoped = scoped.filter((p) => p.outlet_id === filters.outlet);
+  if (filters.project === 'none') scoped = scoped.filter((p) => !p.project_id);
+  else if (filters.project) scoped = scoped.filter((p) => p.project_id === filters.project);
+  const inPeriod = scoped.filter((p) => p.flags.planned || p.flags.published || p.flags.cancelled);
+  const bySubject = Object.entries(SUBJECTS).map(([type, label]) => ({
+    type, label, outlets: outlets.filter((o) => o.type === type).length,
+    ...summarize(inPeriod.filter((p) => p.outlet?.type === type), range, today),
+  }));
+  const byOutlet = outlets.filter((o) => !filters.type || o.type === filters.type).map((o) => ({ ...o, label: SUBJECTS[o.type], ...summarize(inPeriod.filter((p) => p.outlet_id === o.id), range, today) }));
+  return { outlets, bySubject, byOutlet, total: summarize(inPeriod, range, today), posts: inPeriod, todos, definition: INTERACTION_DEF };
+}
+
+async function home(db, user, range, today) {
   const projects = await visibleProjects(db, user);
   const results = [];
   for (const p of projects) results.push(await computeProject(db, p, range, today));
-  const byCurrency = {};
-  for (const r of results) (byCurrency[r.project.currency] ||= []).push(r);
-  const totals = Object.entries(byCurrency).map(([currency, rs]) => {
-    const t = { currency, projects: rs.length };
-    for (const k of ['spend', 'impressions', 'link_clicks']) t[k] = sumAcross(rs.map((r) => r.metrics[k]));
-    t.ctr = ratio(t.link_clicks, t.impressions);
-    t.cpc = ratio(t.spend, t.link_clicks);
-    return t;
-  });
+  const organic = user.isAdmin ? await organicData(db, range, today) : null;
+  const manualOrganic = user.isAdmin ? await all(db, 'SELECT * FROM todos WHERE project_id IS NULL AND done = 0 ORDER BY due IS NULL, due') : [];
+  const levelOrder = { critical: 0, serious: 1, warning: 2, manual: 3 };
+  const todos = [
+    ...(organic ? organic.todos : []),
+    ...manualOrganic.map((t) => ({ ...t, level: 'manual', kind: '人工待辦', manual: true, project: '日常發文', link: '#/organic' })),
+    ...results.flatMap((r) => [...r.anomalies, ...r.todos]),
+  ].sort((a, b) => (levelOrder[a.level] ?? 9) - (levelOrder[b.level] ?? 9) || String(a.due || '9').localeCompare(String(b.due || '9')));
   return {
     range, today, user,
-    totals,
-    activeCampaigns: results.reduce((a, r) => a + r.campaigns.filter((c) => c.status === '進行中').length, 0),
+    organic: organic && { bySubject: organic.bySubject, total: organic.total, definition: organic.definition, outlets: organic.outlets.length },
     projects: results.map((r) => ({
-      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources,
-      active: r.campaigns.filter((c) => c.status === '進行中').map((c) => ({ id: c.id, code: c.code, name: c.name, offer: c.offer, audience: c.audience, destination: c.destination, judgement: c.judgement, paid: c.paid })),
+      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources, flight: r.flight,
+      active: r.campaigns.filter((c) => c.status === '進行中').map((c) => ({ id: c.id, code: c.code, name: c.name, offer: c.offer, judgement: c.judgement })),
+      paidCreatives: r.creatives.filter((c) => c.paid).length,
+      missingAdDates: r.metrics.missingAdDates,
       anomalies: r.anomalies.length, todos: r.todos.length,
     })),
-    anomalies: results.flatMap((r) => r.anomalies),
-    todos: results.flatMap((r) => r.todos),
+    todos,
   };
 }
 
@@ -214,10 +283,11 @@ async function createProject(db, user, b) {
   if (await first(db, 'SELECT id FROM projects WHERE claim_prefix = ?', prefix)) throw new HttpError('領取碼字首已被其他專案使用');
   const id = uid();
   const t = now();
-  await run(db, `INSERT INTO projects (id, code, claim_prefix, name, kind, partner, owner, goal, budget, currency, status, metrics_json, settings_json, data_scope, is_test, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, code, prefix, str(b.name, 100), str(b.kind || '合作', 20), str(b.partner, 100), str(b.owner, 100), str(b.goal, 1000),
+  await run(db, `INSERT INTO projects (id, code, claim_prefix, name, kind, partner, owner, goal, budget, currency, status, metrics_json, settings_json, data_scope,
+    audience, course_info, course_dates, price_info, target_enroll, is_test, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, code, prefix, str(b.name, 100), str(b.kind || '合作', 20), str(b.partner, 100), str(b.owner, 100), str(b.goal, 1000),
   int(b.budget, '專案預算'), 'TWD', str(b.status || '規劃中', 10), JSON.stringify(sanitizeMetrics(b.metrics) || defaultMetrics()), JSON.stringify(sanitizeSettings(b.settings)),
-  str(b.data_scope, 1000), b.is_test ? 1 : 0, t, t);
+  str(b.data_scope, 1000), str(b.audience, 500), str(b.course_info, 1000), str(b.course_dates, 200), str(b.price_info, 300), int(b.target_enroll, '招生目標'), b.is_test ? 1 : 0, t, t);
   await audit(db, user.email, 'project.create', id, { code });
   return { id };
 }
@@ -241,10 +311,14 @@ function sanitizeSettings(s) {
 
 async function updateProject(db, user, p, b) {
   const metrics = sanitizeMetrics(b.metrics) || JSON.parse(p.metrics_json);
-  await run(db, `UPDATE projects SET name=?, kind=?, partner=?, owner=?, goal=?, budget=?, status=?, metrics_json=?, settings_json=?, data_scope=?, updated_at=? WHERE id=?`,
-    str(b.name ?? p.name, 100) || p.name, str(b.kind ?? p.kind, 20), str(b.partner ?? p.partner, 100), str(b.owner ?? p.owner, 100), str(b.goal ?? p.goal, 1000),
-    'budget' in b ? int(b.budget, '專案預算') : p.budget, str(b.status ?? p.status, 10), JSON.stringify(metrics),
-    JSON.stringify(b.settings ? sanitizeSettings(b.settings) : JSON.parse(p.settings_json || '{}')), str(b.data_scope ?? p.data_scope, 1000), now(), p.id);
+  const keep = (k, max) => str(b[k] ?? p[k], max);
+  await run(db, `UPDATE projects SET name=?, kind=?, partner=?, owner=?, goal=?, budget=?, status=?, metrics_json=?, settings_json=?, data_scope=?,
+    audience=?, course_info=?, course_dates=?, price_info=?, target_enroll=?, updated_at=? WHERE id=?`,
+    keep('name', 100) || p.name, keep('kind', 20), keep('partner', 100), keep('owner', 100), keep('goal', 1000),
+    'budget' in b ? int(b.budget, '專案預算') : p.budget, keep('status', 10), JSON.stringify(metrics),
+    JSON.stringify(b.settings ? sanitizeSettings(b.settings) : JSON.parse(p.settings_json || '{}')), keep('data_scope', 1000),
+    keep('audience', 500), keep('course_info', 1000), keep('course_dates', 200), keep('price_info', 300),
+    'target_enroll' in b ? int(b.target_enroll, '招生目標') : p.target_enroll, now(), p.id);
   await audit(db, user.email, 'project.update', p.id, { fields: Object.keys(b) });
 }
 
@@ -282,15 +356,22 @@ async function saveCreative(db, user, c, b, existing) {
   }
   const format = code.slice(c.code.length + 1, c.code.length + 3);
   const paid = channel === 'fb_ad' ? 1 : (b.paid ? 1 : 0);
-  const vals = [str(b.name ?? existing?.name, 200), channel, paid, format in FORMATS ? format : '', str(b.status || existing?.status || '規劃中', 10), str(b.platform_ref ?? existing?.platform_ref, 200)];
+  const preview = str(b.preview_url ?? existing?.preview_url, 200000);
+  if (preview && !/^https:\/\//.test(preview) && !/^data:image\/(png|jpeg|gif|webp|svg\+xml)[;,]/.test(preview)) throw new HttpError('預覽需為 https 網址或圖片');
+  const prod = b.prod_status ?? existing?.prod_status ?? '製作中';
+  if (!['製作中', '待審核', '已核可'].includes(prod)) throw new HttpError('製作狀態不正確');
+  const keep = (k, max) => str(b[k] ?? existing?.[k], max);
+  const vals = [keep('name', 200), channel, paid, format in FORMATS ? format : '', str(b.status || existing?.status || '規劃中', 10), keep('platform_ref', 200),
+    prod, keep('owner', 100), keep('headline', 200), keep('copy_text', 3000), keep('cta', 50), keep('appeal', 300), keep('destination', 300), preview];
+  if (prod !== '已核可' && ['進行中'].includes(vals[4])) throw new HttpError('素材未核可前不能設為投放中');
   if (existing) {
-    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
+    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, prod_status=?, owner=?, headline=?, copy_text=?, cta=?, appeal=?, destination=?, preview_url=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
     await audit(db, user.email, 'creative.update', c.project_id, { code });
     return { id: existing.id };
   }
   const id = uid();
-  await run(db, 'INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-    id, c.project_id, c.id, code, ...vals, now(), now());
+  await run(db, `INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.project_id, c.id, code, ...vals, now(), now());
   await audit(db, user.email, 'creative.create', c.project_id, { code });
   return { id };
 }
@@ -306,7 +387,9 @@ async function lookups(db, p) {
   const campaigns = await all(db, 'SELECT * FROM campaigns WHERE project_id = ?', p.id);
   const creatives = await all(db, 'SELECT * FROM creatives WHERE project_id = ?', p.id);
   const codes = await all(db, 'SELECT * FROM claim_codes WHERE project_id = ?', p.id);
+  const placements = await all(db, 'SELECT * FROM placements WHERE project_id = ?', p.id);
   return {
+    placementsByCode: new Map(placements.map((x) => [x.code, x])),
     defs: metricDefs(p),
     campaignsByCode: new Map(campaigns.map((c) => [c.code, c])),
     creativesByCode: new Map(creatives.map((c) => [c.code, c])),
@@ -320,7 +403,7 @@ async function importPreview(db, p, b, env) {
   if (text.length > 2_000_000) throw new HttpError('檔案太大（上限約 2MB）');
   const lk = await lookups(db, p);
   if (kind === 'ads') {
-    const { rows, errors } = mapMetaRows(text, lk.creativesByCode);
+    const { rows, errors } = mapMetaRows(text, lk.creativesByCode, lk.placementsByCode);
     for (const r of rows) {
       if (r.status !== 'ok' && r.status !== 'unmatched') continue;
       const ex = await first(db, 'SELECT id FROM ad_daily WHERE project_id = ? AND date = ? AND ad_name = ?', p.id, r.date, r.adName);
@@ -358,10 +441,10 @@ async function importCommit(db, user, p, b, env) {
     if (r.status === 'error' || r.status === 'skip') continue;
     if (!maxDate || r.date > maxDate) maxDate = r.date;
     if (preview.kind === 'ads') {
-      stmts.push(db.prepare(`INSERT INTO ad_daily (id, project_id, date, campaign_id, creative_id, ad_name, spend, impressions, link_clicks, source, batch_id, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,'csv',?,?) ON CONFLICT(project_id, date, ad_name) DO UPDATE SET spend=excluded.spend, impressions=excluded.impressions,
-        link_clicks=excluded.link_clicks, campaign_id=excluded.campaign_id, creative_id=excluded.creative_id, batch_id=excluded.batch_id`)
-        .bind(uid(), p.id, r.date, r.campaign_id, r.creative_id, r.adName, r.spend, r.impressions, r.link_clicks, batch, now()));
+      stmts.push(db.prepare(`INSERT INTO ad_daily (id, project_id, date, campaign_id, creative_id, placement_id, ad_name, spend, impressions, link_clicks, source, batch_id, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,'csv',?,?) ON CONFLICT(project_id, date, ad_name) DO UPDATE SET spend=excluded.spend, impressions=excluded.impressions,
+        link_clicks=excluded.link_clicks, campaign_id=excluded.campaign_id, creative_id=excluded.creative_id, placement_id=excluded.placement_id, batch_id=excluded.batch_id`)
+        .bind(uid(), p.id, r.date, r.campaign_id, r.creative_id, r.placement_id || null, r.adName, r.spend, r.impressions, r.link_clicks, batch, now()));
     } else if (r.action === 'update') {
       stmts.push(db.prepare(`UPDATE conversions SET date=?, campaign_id=?, creative_id=?, claim_code=?, qty=?, amount=?, person_ref=?, note=?, batch_id=?, source='csv'
         WHERE project_id=? AND type=? AND external_ref=?`).bind(r.date, r.campaign_id, r.creative_id, r.claim_code, r.qty, r.amount, r.person_ref, r.note, batch, p.id, r.type, r.external_ref));
@@ -401,6 +484,85 @@ async function exportCsv(db, p, range, today) {
   return '﻿' + lines.map((l) => l.map(esc).join(',')).join('\r\n');
 }
 
+// ---------- 日常發文 ----------
+function requireAdmin(user) {
+  if (!user.isAdmin) throw new HttpError('日常發文只開放系統管理者', 403);
+}
+const optInt = (v, field) => (v === '' || v == null ? null : int(v, field));
+
+async function savePost(db, user, b, existing) {
+  requireAdmin(user);
+  const keep = (k, max) => str(b[k] ?? existing?.[k], max);
+  const outletId = b.outlet_id ?? existing?.outlet_id;
+  if (!outletId || !(await first(db, 'SELECT id FROM outlets WHERE id = ?', outletId))) throw new HttpError('請選擇發布位置');
+  const title = keep('title', 200);
+  if (!title) throw new HttpError('主題必填');
+  const status = b.status ?? existing?.status ?? '待製作';
+  if (!POST_STATUS.includes(status)) throw new HttpError('狀態不正確');
+  const planned = date(b.planned_date ?? existing?.planned_date, '預定日期');
+  const published = date(b.published_date ?? existing?.published_date, '實際發布日期');
+  if (status === '已發布' && !published) throw new HttpError('狀態為已發布時，請填實際發布日期');
+  if (published && status !== '已發布') throw new HttpError('填了實際發布日期，狀態需為「已發布」');
+  if (!planned && !published) throw new HttpError('預定日期或實際發布日期至少填一個');
+  let projectId = 'project_id' in b ? (b.project_id || null) : existing?.project_id ?? null;
+  if (projectId && !(await first(db, 'SELECT id FROM projects WHERE id = ?', projectId))) throw new HttpError('支援專案不存在');
+  let topicId = 'topic_id' in b ? (b.topic_id || null) : existing?.topic_id ?? null;
+  if (str(b.new_topic)) {
+    topicId = uid();
+    await run(db, 'INSERT INTO topics (id, title, note, is_test, created_at) VALUES (?,?,?,0,?)', topicId, str(b.new_topic, 200), '', now());
+  }
+  const url = keep('url', 500);
+  if (url && !/^https:\/\//.test(url)) throw new HttpError('貼文連結需為 https 網址');
+  const m = {};
+  let metricsChanged = false;
+  for (const k of ['likes', 'comments', 'shares', 'inquiries', 'conversions', 'pending_replies']) {
+    m[k] = k in b ? optInt(b[k], k) : existing?.[k] ?? null;
+    if (k in b && m[k] !== (existing?.[k] ?? null)) metricsChanged = true;
+  }
+  const hasMetric = ['likes', 'comments', 'shares'].some((k) => m[k] != null);
+  if (hasMetric && status !== '已發布') throw new HttpError('尚未發布的貼文不能登錄互動數字');
+  let asOf = b.metrics_as_of ?? existing?.metrics_as_of ?? null;
+  if (asOf) asOf = String(asOf).replace('T', ' ').slice(0, 16);
+  if (hasMetric && !asOf) throw new HttpError('登錄互動數字時請填「統計截至」時間');
+  const vals = [b.topic_id === undefined && !str(b.new_topic) ? existing?.topic_id ?? null : topicId, outletId, projectId, planned, published, title,
+    keep('content', 5000), keep('asset', 500), keep('owner', 100), status, url, keep('purpose', 300), keep('destination', 300),
+    m.likes, m.comments, m.shares, m.inquiries, m.conversions, m.pending_replies,
+    hasMetric ? (keep('metrics_source', 50) || '人工登錄') : keep('metrics_source', 50), asOf,
+    metricsChanged ? now() : existing?.metrics_updated_at ?? null];
+  if (existing) {
+    await run(db, `UPDATE posts SET topic_id=?, outlet_id=?, project_id=?, planned_date=?, published_date=?, title=?, content=?, asset=?, owner=?, status=?, url=?, purpose=?, destination=?,
+      likes=?, comments=?, shares=?, inquiries=?, conversions=?, pending_replies=?, metrics_source=?, metrics_as_of=?, metrics_updated_at=?, updated_at=? WHERE id=?`, ...vals, now(), existing.id);
+    await audit(db, user.email, 'post.update', projectId, { id: existing.id });
+    return { id: existing.id };
+  }
+  const id = uid();
+  await run(db, `INSERT INTO posts (id, topic_id, outlet_id, project_id, planned_date, published_date, title, content, asset, owner, status, url, purpose, destination,
+    likes, comments, shares, inquiries, conversions, pending_replies, metrics_source, metrics_as_of, metrics_updated_at, is_test, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)`, id, ...vals, now(), now());
+  await audit(db, user.email, 'post.create', projectId, { id });
+  return { id };
+}
+
+async function savePlacement(db, user, cr, b, existing) {
+  const code = existing ? existing.code : str(b.code);
+  if (!existing) {
+    if (!code.startsWith(cr.code + '-A') || !/^\d{2}$/.test(code.slice(cr.code.length + 2)) || code.endsWith('-A00')) throw new HttpError(`投放紀錄代碼需為 ${cr.code}-A01 這種格式`);
+    if (await first(db, 'SELECT id FROM placements WHERE code = ?', code)) throw new HttpError('投放紀錄代碼已存在');
+  }
+  const start = date(b.start_date ?? existing?.start_date, '開始日');
+  const end = date(b.end_date ?? existing?.end_date, '結束日');
+  if (start && end && end < start) throw new HttpError('結束日不能早於開始日');
+  const vals = [str(b.audience ?? existing?.audience, 300), str(b.setting ?? existing?.setting, 300), start, end, str(b.status || existing?.status || '規劃中', 10)];
+  if (existing) {
+    await run(db, 'UPDATE placements SET audience=?, setting=?, start_date=?, end_date=?, status=? WHERE id=?', ...vals, existing.id);
+    return { id: existing.id };
+  }
+  const id = uid();
+  await run(db, 'INSERT INTO placements (id, project_id, creative_id, code, audience, setting, start_date, end_date, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)', id, cr.project_id, cr.id, code, ...vals, now());
+  await audit(db, user.email, 'placement.create', cr.project_id, { code });
+  return { id };
+}
+
 // ---------- 路由 ----------
 export async function handleApi(request, env) {
   const db = env.DB;
@@ -410,7 +572,8 @@ export async function handleApi(request, env) {
   const user = await getUser(request, env);
   if (user.error) return fail(user.error, user.status);
   const today = env.TODAY || todayTW();
-  const range = resolvePeriod({ period: url.searchParams.get('period') || 'r30', end: url.searchParams.get('end'), m: url.searchParams.get('m'), today });
+  const qp = (k) => url.searchParams.get(k);
+  const range = resolvePeriod({ period: qp('period') || 'week', end: qp('end'), m: qp('m'), from: qp('from'), to: qp('to'), today });
   let body = {};
   if (method !== 'GET' && method !== 'DELETE') {
     try { body = await request.json(); } catch { return fail('資料格式錯誤'); }
@@ -418,7 +581,46 @@ export async function handleApi(request, env) {
   const seg = path.split('/').filter(Boolean);
   try {
     if (method === 'GET' && path === '/me') return json(user);
-    if (method === 'GET' && path === '/overview') return json(await overview(db, user, range, today));
+    if (method === 'GET' && (path === '/home' || path === '/overview')) return json(await home(db, user, range, today));
+    if (method === 'GET' && path === '/organic') {
+      requireAdmin(user);
+      const d = await organicData(db, range, today, { type: qp('type'), outlet: qp('outlet'), project: qp('project') });
+      const topics = await all(db, 'SELECT * FROM topics ORDER BY created_at DESC');
+      const projects = (await visibleProjects(db, user)).map((p) => ({ id: p.id, code: p.code, name: p.name }));
+      return json({ ...d, todos: undefined, range, today, topics, projects, subjects: SUBJECTS });
+    }
+    if (path === '/posts' && method === 'POST') return json(await savePost(db, user, body), 201);
+    if (seg[0] === 'posts' && seg[1]) {
+      requireAdmin(user);
+      const post = await first(db, 'SELECT * FROM posts WHERE id = ?', seg[1]);
+      if (!post) throw new HttpError('找不到貼文', 404);
+      if (method === 'PUT') return json(await savePost(db, user, body, post));
+      if (method === 'GET') {
+        const outlet = await first(db, 'SELECT * FROM outlets WHERE id = ?', post.outlet_id);
+        const topic = post.topic_id ? await first(db, 'SELECT * FROM topics WHERE id = ?', post.topic_id) : null;
+        const siblings = post.topic_id ? await all(db, `SELECT p.id, p.status, p.planned_date, p.published_date, p.likes, p.comments, p.shares, o.name AS outlet_name, o.type AS outlet_type
+          FROM posts p JOIN outlets o ON o.id = p.outlet_id WHERE p.topic_id = ? AND p.id <> ? ORDER BY COALESCE(p.published_date, p.planned_date)`, post.topic_id, post.id) : [];
+        const project = post.project_id ? await first(db, 'SELECT id, code, name FROM projects WHERE id = ?', post.project_id) : null;
+        const outlets = await all(db, 'SELECT * FROM outlets ORDER BY type, name');
+        const topics = await all(db, 'SELECT * FROM topics ORDER BY created_at DESC');
+        const projects = (await visibleProjects(db, user)).map((p) => ({ id: p.id, code: p.code, name: p.name }));
+        return json({ post, outlet, topic, siblings, project, outlets, topics, projects, subjects: SUBJECTS, today, definition: INTERACTION_DEF });
+      }
+    }
+    if (path === '/outlets' && method === 'POST') {
+      requireAdmin(user);
+      if (!(body.type in SUBJECTS)) throw new HttpError('發布主體不正確');
+      if (!str(body.name)) throw new HttpError('名稱必填');
+      const id = uid();
+      await run(db, 'INSERT INTO outlets (id, type, name, url, owner, active, is_test, created_at) VALUES (?,?,?,?,?,1,0,?)', id, body.type, str(body.name, 100), str(body.url, 300), str(body.owner, 100), now());
+      return json({ id }, 201);
+    }
+    if (path === '/todos' && method === 'POST') {
+      requireAdmin(user);
+      if (!str(body.title)) throw new HttpError('待辦內容必填');
+      await run(db, 'INSERT INTO todos (id, project_id, title, owner, due, status, done, created_by, created_at) VALUES (?,NULL,?,?,?,?,0,?,?)', uid(), str(body.title, 200), str(body.owner, 100), date(body.due, '期限'), '待處理', user.email, now());
+      return json({ ok: true }, 201);
+    }
     if (path === '/projects') {
       if (method === 'GET') return json((await visibleProjects(db, user)).map((p) => ({ id: p.id, code: p.code, name: p.name, is_test: p.is_test, status: p.status })));
       if (method === 'POST') return json(await createProject(db, user, body), 201);
@@ -435,6 +637,11 @@ export async function handleApi(request, env) {
           r.claimCodes = await all(db, 'SELECT * FROM claim_codes WHERE project_id = ? ORDER BY code', p.id);
           r.links = await all(db, 'SELECT * FROM tracking_links WHERE project_id = ? ORDER BY created_at', p.id);
           r.range = range; r.today = today;
+          // 支援本專案的自然貼文（與付費廣告分開呈現、不相加）
+          const rel = await all(db, `SELECT p.*, o.name AS outlet_name, o.type AS outlet_type FROM posts p JOIN outlets o ON o.id = p.outlet_id WHERE p.project_id = ?
+            AND ((p.planned_date BETWEEN ? AND ?) OR (p.published_date BETWEEN ? AND ?)) ORDER BY COALESCE(p.published_date, p.planned_date)`, p.id, range.from, range.fullTo, range.from, range.fullTo);
+          r.relatedPosts = { posts: rel.map((x) => ({ ...x, flags: classify(x, range, today) })), summary: summarize(rel, range, today), definition: INTERACTION_DEF, visible: user.isAdmin };
+          if (!user.isAdmin) r.relatedPosts.posts = [];
           return json(r);
         }
         if (method === 'PUT') { await updateProject(db, user, p, body); return json({ ok: true }); }
@@ -449,12 +656,18 @@ export async function handleApi(request, env) {
       }
       if (sub === 'campaigns' && method === 'POST') return json(await saveCampaign(db, user, p, body), 201);
       if (sub === 'ad-daily' && method === 'POST') {
-        const cr = await first(db, 'SELECT * FROM creatives WHERE id = ? AND project_id = ?', body.creative_id, p.id);
+        let cr = await first(db, 'SELECT * FROM creatives WHERE id = ? AND project_id = ?', body.creative_id, p.id);
+        let pl = null;
+        if (body.placement_id) {
+          pl = await first(db, 'SELECT * FROM placements WHERE id = ? AND project_id = ?', body.placement_id, p.id);
+          if (!pl) throw new HttpError('投放紀錄不屬於本專案');
+          cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', pl.creative_id);
+        }
         if (!cr || !cr.paid) throw new HttpError('請選擇本專案的付費素材');
         const d = date(body.date, '日期', false);
-        await run(db, `INSERT INTO ad_daily (id, project_id, date, campaign_id, creative_id, ad_name, spend, impressions, link_clicks, source, created_at) VALUES (?,?,?,?,?,?,?,?,?,'manual',?)
+        await run(db, `INSERT INTO ad_daily (id, project_id, date, campaign_id, creative_id, placement_id, ad_name, spend, impressions, link_clicks, source, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?)
           ON CONFLICT(project_id, date, ad_name) DO UPDATE SET spend=excluded.spend, impressions=excluded.impressions, link_clicks=excluded.link_clicks`,
-        uid(), p.id, d, cr.campaign_id, cr.id, cr.code + '｜人工登錄', int(body.spend, '花費', { allowNull: false }), int(body.impressions, '曝光', { allowNull: false }), int(body.link_clicks, '連結點擊', { allowNull: false }), now());
+        uid(), p.id, d, cr.campaign_id, cr.id, pl?.id || null, (pl ? pl.code : cr.code) + '｜人工登錄', int(body.spend, '花費', { allowNull: false }), int(body.impressions, '曝光', { allowNull: false }), int(body.link_clicks, '連結點擊', { allowNull: false }), now());
         await markSource(db, p.id, 'ads', body.coveredThrough ? date(body.coveredThrough, '資料更新到') : d);
         await audit(db, user.email, 'ad_daily.manual', p.id, { date: d, creative: cr.code });
         return json({ ok: true }, 201);
@@ -496,7 +709,7 @@ export async function handleApi(request, env) {
       }
       if (sub === 'todos' && method === 'POST') {
         if (!str(body.title)) throw new HttpError('待辦內容必填');
-        await run(db, 'INSERT INTO todos (id, project_id, title, due, done, created_by, created_at) VALUES (?,?,?,?,0,?,?)', uid(), p.id, str(body.title, 200), date(body.due, '期限'), user.email, now());
+        await run(db, 'INSERT INTO todos (id, project_id, title, owner, due, status, done, created_by, created_at) VALUES (?,?,?,?,?,?,0,?,?)', uid(), p.id, str(body.title, 200), str(body.owner, 100), date(body.due, '期限'), '待處理', user.email, now());
         return json({ ok: true }, 201);
       }
       if (sub === 'export.csv' && method === 'GET') {
@@ -550,6 +763,19 @@ export async function handleApi(request, env) {
         return json({ code }, 201);
       }
     }
+    if (seg[0] === 'creatives' && seg[1] && seg[2] === 'placements' && method === 'POST') {
+      const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', seg[1]);
+      if (!cr) throw new HttpError('找不到素材', 404);
+      await projectFor(db, user, cr.project_id, true);
+      return json(await savePlacement(db, user, cr, body), 201);
+    }
+    if (seg[0] === 'placements' && seg[1] && method === 'PUT') {
+      const pl = await first(db, 'SELECT * FROM placements WHERE id = ?', seg[1]);
+      if (!pl) throw new HttpError('找不到投放紀錄', 404);
+      const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', pl.creative_id);
+      await projectFor(db, user, pl.project_id, true);
+      return json(await savePlacement(db, user, cr, body, pl));
+    }
     if (seg[0] === 'creatives' && seg[1] && method === 'PUT') {
       const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', seg[1]);
       if (!cr) throw new HttpError('找不到素材', 404);
@@ -559,8 +785,9 @@ export async function handleApi(request, env) {
     if (seg[0] === 'todos' && seg[1] && method === 'PUT') {
       const t = await first(db, 'SELECT * FROM todos WHERE id = ?', seg[1]);
       if (!t) throw new HttpError('找不到待辦', 404);
-      await projectFor(db, user, t.project_id, true);
-      await run(db, 'UPDATE todos SET done = ? WHERE id = ?', body.done ? 1 : 0, t.id);
+      if (t.project_id) await projectFor(db, user, t.project_id, true); else requireAdmin(user);
+      const status = body.done ? '完成' : (['待處理', '處理中', '完成'].includes(body.status) ? body.status : t.status);
+      await run(db, 'UPDATE todos SET done = ?, status = ? WHERE id = ?', status === '完成' ? 1 : 0, status, t.id);
       return json({ ok: true });
     }
     for (const [name, table] of [['links', 'tracking_links'], ['claim-codes', 'claim_codes'], ['accounts', 'accounts']]) {

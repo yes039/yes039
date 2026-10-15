@@ -21,25 +21,36 @@ export function lastDayOfMonth(ym) {
 }
 
 /**
- * period：r7（近 7 天）、r30（近 30 天）、month（曆月，需 m=YYYY-MM）、all（全部期間）
- * 近 N 天結束日預設為昨天；曆月尚未結束時算到昨天並標示進行中。
+ * period：week（本週，週一至週日）、month（曆月，m=YYYY-MM，預設本月）、r7、r30（近 N 天）、custom（from、to）、all
+ * 回傳兩個結束日：
+ *   to     ＝ 已發生資料的結束日（不超過昨天；廣告與成果用這個）
+ *   fullTo ＝ 期間完整結束日（可能在未來；發文排程的「預計」用這個）
  */
-export function resolvePeriod({ period = 'r30', end, m, today }) {
+export function resolvePeriod({ period = 'week', end, m, from: cFrom, to: cTo, today }) {
   const yesterday = addDays(today, -1);
+  const cap = (d) => (d > yesterday ? yesterday : d);
   if (period === 'r7' || period === 'r30') {
     const n = period === 'r7' ? 7 : 30;
     const to = end && end <= yesterday ? end : yesterday;
-    return { period, from: addDays(to, -(n - 1)), to, label: `近 ${n} 天`, inProgress: false };
+    return { period, from: addDays(to, -(n - 1)), to, fullTo: to, label: `近 ${n} 天`, inProgress: false };
+  }
+  if (period === 'week') {
+    const wd = (new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7; // 週一＝0
+    const from = addDays(today, -wd);
+    const fullTo = addDays(from, 6);
+    return { period, from, to: cap(fullTo), fullTo, label: '本週', inProgress: true, noDataYet: from > yesterday };
   }
   if (period === 'month') {
     const ym = /^\d{4}-\d{2}$/.test(m || '') ? m : today.slice(0, 7);
     const from = ym + '-01';
-    const last = lastDayOfMonth(ym);
-    const inProgress = last >= today;
-    const to = inProgress ? yesterday : last;
-    return { period, from, to: to < from ? from : to, label: `曆月 ${ym}`, inProgress, empty: to < from };
+    const fullTo = lastDayOfMonth(ym);
+    const inProgress = fullTo >= today;
+    return { period, m: ym, from, to: cap(fullTo), fullTo, label: ym === today.slice(0, 7) ? `本月 ${ym}` : `曆月 ${ym}`, inProgress, noDataYet: from > yesterday };
   }
-  return { period: 'all', from: '2000-01-01', to: yesterday, label: '全部期間', inProgress: false };
+  if (period === 'custom' && /^\d{4}-\d{2}-\d{2}$/.test(cFrom || '') && /^\d{4}-\d{2}-\d{2}$/.test(cTo || '') && cFrom <= cTo) {
+    return { period, from: cFrom, to: cap(cTo), fullTo: cTo, label: '自訂', inProgress: cTo >= today, noDataYet: cFrom > yesterday };
+  }
+  return { period: 'all', from: '2000-01-01', to: yesterday, fullTo: '2099-12-31', label: '全部期間', inProgress: false };
 }
 
 export function datesInRange(from, to) {

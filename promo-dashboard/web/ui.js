@@ -40,7 +40,7 @@ export function V({ m, f = 'int', compact, showNA }) {
     return html`<span class="val">${text}${compact ? html`<span class="mark-inc" title=${m.r} aria-label=${'資料不完整：' + m.r}>!</span>` : html` <span class="state s-incomplete sm" title=${m.r}>資料不完整</span>`}</span>`;
   }
   if (m.s === 'zero') return compact ? html`<span class="val" title="已確認為零：資料完整，數值為零">${text}</span>` : html`<span class="val" title=${m.r}>${text} <span class="state s-zero sm">已確認為零</span></span>`;
-  return html`<span class="val">${text}</span>`;
+  return html`<span class="val" title=${m.n != null ? `計算：${fmt.int(m.n)} ÷ ${fmt.int(m.d)}` : null}>${text}</span>`;
 }
 
 export function Kpi({ label, m, f, sub, children }) {

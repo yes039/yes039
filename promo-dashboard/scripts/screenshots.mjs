@@ -12,15 +12,15 @@ mkdirSync(out, { recursive: true });
 
 const pages = [
   ['01-總覽', '#/'],
-  ['02-專案-活動', '#/p/test-proj-jsn/campaigns'],
-  ['03-專案-比較', '#/p/test-proj-jsn/compare'],
-  ['04-活動明細', '#/c/test-c2'],
-  ['05-登錄與匯入', '#/p/test-proj-jsn/entry'],
-  ['06-代碼與連結', '#/p/test-proj-jsn/tracking'],
-  ['07-資料來源', '#/p/test-proj-jsn/sources'],
-  ['08-玉欣珍專案', '#/p/test-proj-yxz/campaigns'],
-  ['09-專案設定', '#/p/test-proj-jsn/settings'],
-];
+  ['02-發文日曆', '#/organic?view=calendar'],
+  ['03-貼文清單-粉專', '#/organic?view=list&type=page'],
+  ['04-單篇貼文', '#/post/test-post-11'],
+  ['05-專案總覽', '#/p/test-proj-jsn/overview'],
+  ['06-廣告素材比較', '#/p/test-proj-jsn/creatives'],
+  ['07-投放波次', '#/p/test-proj-jsn/campaigns'],
+  ['08-登錄與匯入', '#/p/test-proj-jsn/entry'],
+  ['09-玉欣珍專案', '#/p/test-proj-yxz/overview'],
+]
 const viewports = [['桌機', { width: 1440, height: 900 }, 1], ['手機', { width: 390, height: 844 }, 2]];
 
 const browser = await chromium.launch();

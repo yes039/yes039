@@ -1,5 +1,5 @@
-// 介面操作測試：新增專案 → 活動 → 素材 → 追蹤連結 → 領取碼 → 人工登錄 → CSV 匯入 → 切換專案
-// 用法：node scripts/e2e.mjs [網址]（需先啟動 dev server）
+// 介面操作測試（v0.2）：首頁兩區 → 日曆進單篇 → 新增貼文（不掛專案、掛專案）→ 專案總覽 → 素材比較 → 新增素材與投放紀錄 → 切換期間
+// 用法：node scripts/e2e.mjs [網址]（需先啟動 dev server 或開啟預覽檔）
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 
@@ -8,100 +8,123 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch { ({ chromium } = require('/opt/node-tools/node_modules/playwright')); }
 const base = process.argv[2] || 'http://localhost:8787/';
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => errors.push(e.message));
 const step = (s) => console.log('✓ ' + s);
+const num = (t) => Number(String(t).replace(/[^\d]/g, ''));
 
-await page.goto(base + '#/new');
-await page.fill('#f-code', 'ETE');
-await page.fill('#f-claim_prefix', 'E');
-await page.fill('#f-name', '【測試】E2E 自有課程');
-await page.selectOption('#f-kind', '自有課程');
-await page.fill('#f-budget', '10000');
-await page.check('#f-is_test');
-await page.uncheck('#m_on_enroll');
-await page.click('button:has-text("建立專案")');
-await page.waitForURL(/#\/p\/.+\/settings/);
-await page.waitForSelector('h1:has-text("E2E 自有課程")');
-step('新增專案，並取消「報名」指標');
+for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手機', { width: 390, height: 844 }]]) {
+  console.log(`— ${vname} —`);
+  const page = await browser.newPage({ viewport });
+  page.on('pageerror', (e) => errors.push(`${vname}：${e.message}`));
+  await page.goto(base + '#/');
+  await page.evaluate(() => { try { localStorage.clear(); } catch {} });
+  await page.reload();
+  await page.waitForSelector('#h-a');
+  await page.waitForSelector('#h-b');
+  const rows = await page.locator('table.organic tbody tr').count();
+  assert.equal(rows, 5); // 四個主體＋合計
+  assert.ok(await page.isVisible('.proj-card:has-text("Jason 老師合作招生")'));
+  step('首頁同時有 A 日常發文（四主體）與 B 付費廣告專案');
 
-const pid = page.url().split('#/p/')[1].split('/')[0];
-await page.goto(base + `#/p/${pid}/campaigns`);
-await page.click('button:has-text("新增活動")');
-await page.fill('#f-name', '第一波');
-await page.fill('#f-start_date', '2026-10-01');
-await page.fill('#f-end_date', '2026-10-31');
-await page.fill('#f-budget', '8000');
-await page.fill('#f-target_cpl', '200');
-await page.click('.modal button:has-text("儲存")');
-await page.waitForURL(/#\/c\//);
-await page.waitForSelector('h1:has-text("第一波")');
-const code = (await page.textContent('.sub .proj-code')).trim();
-assert.match(code, /^ETE-\d{4}-01$/);
-step('新增活動，自動帶入活動代碼 ' + code);
+  // 首頁主體列 → 該主體 → 日曆 → 單篇
+  const homePlanned = num(await page.locator('table.organic tbody tr:has-text("粉專") td').nth(1).textContent());
+  await page.click('table.organic a:has-text("粉專")');
+  await page.waitForSelector('h1:has-text("日常 FB 發文：粉專")');
+  const orgPlanned = num(await page.locator('.kpis .kpi').first().locator('.kpi-value').textContent());
+  assert.equal(orgPlanned, homePlanned);
+  step(`點「粉專」進入主體頁，預計發文 ${orgPlanned} 與首頁一致`);
+  await page.click('.seg button:has-text("發文日曆")');
+  await page.waitForSelector('.cal');
+  await page.locator('.cal-post').first().click();
+  await page.waitForSelector('.facts');
+  assert.ok(await page.isVisible('h2:has-text("成效")'));
+  step('從日曆點進單篇貼文');
+  await page.goto(base + '#/organic?view=list');
+  await page.waitForSelector('h2:has-text("貼文清單")');
+  await page.locator('table.data a[href^="#/post/"]').first().click();
+  await page.waitForSelector('h2:has-text("成效")');
+  step('從貼文清單點進單篇貼文');
 
-await page.click('button:has-text("新增素材／渠道")');
-await page.selectOption('#f-format', 'IM');
-await page.fill('#f-name', '圖片廣告');
-await page.click('.modal button:has-text("儲存")');
-await page.waitForSelector(`td:has-text("${code}-IM01-v1")`);
-step('新增 FB 廣告素材 ' + code + '-IM01-v1');
+  if (vname === '桌機') {
+    // 新增不掛專案的貼文，再新增掛專案的貼文
+    await page.goto(base + '#/organic');
+    await page.waitForSelector('h1');
+    const before = num(await page.locator('.kpis .kpi').first().locator('.kpi-value').textContent());
+    await page.click('button:has-text("新增發文")');
+    await page.fill('#f-title', '【測試】E2E 獨立貼文');
+    await page.selectOption('#f-outlet_id', { label: '粉專・【測試】AI 小店幫手粉專' });
+    const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+    await page.fill('#f-planned_date', today);
+    await page.click('.modal button:has-text("儲存")');
+    await page.waitForSelector('.facts');
+    assert.ok(await page.isVisible('.facts b:has-text("無（日常發文）")'));
+    await page.goto(base + '#/organic');
+    await page.waitForSelector('h1');
+    assert.equal(num(await page.locator('.kpis .kpi').first().locator('.kpi-value').textContent()), before + 1);
+    step('新增不掛專案的貼文，預計發文 +1');
+    await page.click('button:has-text("新增發文")');
+    await page.fill('#f-title', '【測試】E2E 支援招生貼文');
+    await page.selectOption('#f-project_id', 'test-proj-jsn');
+    await page.fill('#f-planned_date', today);
+    await page.click('.modal button:has-text("儲存")');
+    await page.waitForSelector('.facts a:has-text("TJSN")');
+    step('新增支援 Jason 專案的貼文');
+    await page.goto(base + '#/p/test-proj-jsn/overview');
+    await page.waitForSelector('h2:has-text("相關自然貼文")');
+    assert.ok(await page.isVisible('.mini-list a:has-text("E2E 支援招生貼文")'));
+    assert.ok(await page.isVisible('text=不與廣告成果相加'));
+    step('專案總覽分區顯示：專用付費廣告／相關自然貼文（不相加）');
 
-await page.click('button:has-text("產生連結")');
-await page.selectOption('#f-creative_id', { index: 1 });
-await page.fill('#f-base_url', 'https://example.com/e2e');
-await page.click('.modal button:has-text("產生")');
-await page.waitForSelector('code:has-text("utm_content=' + code.toLowerCase() + '-im01-v1")');
-step('產生追蹤連結（UTM 小寫）');
+    // 素材比較
+    await page.click('.tabs a:has-text("廣告素材比較")');
+    await page.waitForSelector('.cr-card');
+    const cards = await page.locator('.cr-card').count();
+    assert.ok(cards >= 2);
+    assert.ok(await page.isVisible('table.data td:has-text("來源不明")'));
+    step(`廣告素材比較：${cards} 份素材卡，比較表含來源不明列`);
+    await page.click('button:has-text("新增素材")');
+    await page.selectOption('#f-format', 'IM');
+    await page.fill('#f-name', 'E2E 新素材');
+    await page.fill('#f-headline', '測試標題');
+    await page.selectOption('#f-prod_status', '已核可');
+    await page.selectOption('#f-status', '進行中');
+    await page.click('.modal button:has-text("儲存")');
+    await page.waitForSelector('.cr-card:has-text("E2E 新素材")');
+    const card = page.locator('.cr-card:has-text("E2E 新素材")');
+    await card.locator('summary').click();
+    await card.locator('button:has-text("新增投放紀錄")').click();
+    await page.fill('#f-audience', '測試受眾 B');
+    await page.click('.modal button:has-text("儲存")');
+    await page.waitForSelector('.cr-card:has-text("E2E 新素材") summary:has-text("1 組")');
+    step('新增素材（已核可、投放中）並新增一筆投放紀錄');
 
-await page.click('button:has-text("新增領取碼")');
-await page.click('.modal button:has-text("儲存")');
-await page.waitForSelector('code.big:has-text("E101")');
-step('新增領取碼 E101');
+    // 切換期間：本週 → 本月 → 自訂，首頁與日常發文頁一致
+    for (const [label, sel] of [['本月', 'month'], ['近 30 天', 'r30']]) {
+      await page.goto(base + '#/');
+      await page.selectOption('#period-select', sel);
+      await page.waitForSelector(`.sub:has-text("${label === '本月' ? '本月' : '近 30 天'}")`);
+      const homeTotal = await page.locator('table.organic tr.total td').nth(1).textContent();
+      await page.goto(base + '#/organic');
+      await page.waitForSelector('h1');
+      const orgTotal = await page.locator('.kpis .kpi').first().locator('.kpi-value').textContent();
+      assert.equal(num(orgTotal), num(homeTotal), label);
+      step(`切換到「${label}」：首頁與日常發文頁預計發文都是 ${num(homeTotal)}`);
+    }
+    await page.goto(base + '#/');
+    await page.selectOption('#period-select', 'custom');
+    await page.fill('#custom-from', '2026-10-01');
+    await page.fill('#custom-to', '2026-10-20');
+    await page.waitForSelector('.sub:has-text("自訂")');
+    step('自訂期間可用');
 
-await page.goto(base + `#/p/${pid}/entry`);
-await page.fill('#f-date >> nth=0', '2026-10-01');
-await page.fill('#f-spend', '1200');
-await page.fill('#f-impressions', '15000');
-await page.fill('#f-link_clicks', '210');
-await page.click('form >> nth=0 >> button:has-text("登錄")');
-await page.waitForSelector('.ok-box:has-text("已登錄廣告數字")');
-step('人工登錄廣告數字');
-
-const csv = ['類型,日期,活動代碼,素材代碼,領取碼,數量,金額,外部編號,電話,Email,備註',
-  `名單,2026-10-02,,,E101,1,,,0911000001,,`,
-  `有效名單,2026-10-02,,,E101,1,,,0911000001,,`,
-  `報名,2026-10-03,${code},,,1,,R1,0911000001,,`,
-  `付款,2026-10-03,${code},,,1,5000,P1,0911000001,,`].join('\n');
-await page.selectOption('#import-kind', 'outcomes');
-await page.fill('#import-text', csv);
-await page.click('button:has-text("預覽與檢查")');
-await page.waitForSelector('.preview');
-assert.ok(await page.isVisible('td:has-text("本專案未定義「報名」這個指標")'));
-await page.check('#import-skip');
-await page.click('button:has-text("確認匯入")');
-await page.waitForSelector('.ok-box:has-text("新增 3")');
-step('成果 CSV 匯入：未定義的「報名」被擋下，其餘 3 列匯入');
-
-await page.selectOption('#period-select', 'm:2026-10');
-await page.goto(base + `#/p/${pid}/campaigns`);
-await page.waitForSelector('h1');
-const kpi = await page.textContent('.kpis');
-assert.ok(kpi.includes('NT$1,200'), '花費應為 1,200');
-assert.ok(!kpi.includes('報名'), '報名指標已取消，不應出現');
-step('曆月 2026-10：花費 NT$1,200，報名指標不顯示');
-
-await page.selectOption('#project-switch', 'test-proj-yxz');
-await page.waitForSelector('h1:has-text("玉欣珍會員活化")');
-assert.ok((await page.textContent('.kpis')).includes('本專案尚未定義成果指標'));
-step('切換到玉欣珍專案：成果顯示「本專案尚未定義」，不混入其他專案');
-
-await page.selectOption('#project-switch', '');
-await page.waitForSelector('h1:has-text("宣傳總覽")');
-assert.equal(await page.locator('.proj-card').count(), 3);
-step('回到總覽：3 個專案各自一張卡');
-
+    // 專案切換
+    await page.selectOption('#project-switch', 'test-proj-yxz');
+    await page.waitForSelector('h1:has-text("玉欣珍會員活化")');
+    assert.ok(await page.isVisible('text=本專案尚未定義成果指標'));
+    step('切換到玉欣珍專案：成果顯示「本專案尚未定義」');
+  }
+  await page.close();
+}
 await browser.close();
 if (errors.length) { console.error('瀏覽器錯誤：', errors); process.exit(1); }
 console.log('介面操作測試全部通過');

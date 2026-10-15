@@ -1,6 +1,8 @@
 -- 宣傳戰情室 資料表（Cloudflare D1 / SQLite）
--- 四層：專案 → 活動 → 素材／渠道；總覽由各專案彙總。
--- 每張業務資料表都帶 project_id，查詢一律先依專案過濾，不跨專案混算。
+-- 主體是我們在 FB 的整體宣傳，分兩條線：
+--   A. 日常 FB 發文：發布位置（outlets）→ 發布紀錄（posts），同題材（topics）可發到多個位置
+--   B. 付費廣告專案：專案 → 投放波次（campaigns）→ 廣告素材（creatives）→ 投放紀錄（placements）
+-- 日常貼文可選填支援的專案；專案業務資料都帶 project_id，不跨專案混算。
 
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
@@ -17,6 +19,11 @@ CREATE TABLE IF NOT EXISTS projects (
   metrics_json TEXT NOT NULL,           -- 本專案的成果指標定義（各專案自訂）
   settings_json TEXT NOT NULL DEFAULT '{}', -- 判斷門檻等
   data_scope TEXT NOT NULL DEFAULT '',  -- 資料使用範圍
+  audience TEXT NOT NULL DEFAULT '',    -- 招生或推廣對象
+  course_info TEXT NOT NULL DEFAULT '', -- 課程／產品資訊
+  course_dates TEXT NOT NULL DEFAULT '',-- 開課或活動日期
+  price_info TEXT NOT NULL DEFAULT '',  -- 價格與優惠
+  target_enroll INTEGER,                -- 招生目標人數
   is_test INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -75,7 +82,15 @@ CREATE TABLE IF NOT EXISTS creatives (
   channel TEXT NOT NULL,                -- fb_ad／fb_post／line／qr／partner／other
   paid INTEGER NOT NULL DEFAULT 0,
   format TEXT NOT NULL DEFAULT '',
-  status TEXT NOT NULL DEFAULT '規劃中',
+  status TEXT NOT NULL DEFAULT '規劃中',   -- 投放狀態：規劃中／進行中／暫停／已結束
+  prod_status TEXT NOT NULL DEFAULT '製作中', -- 製作與審核：製作中／待審核／已核可
+  owner TEXT NOT NULL DEFAULT '',
+  headline TEXT NOT NULL DEFAULT '',
+  copy_text TEXT NOT NULL DEFAULT '',
+  cta TEXT NOT NULL DEFAULT '',
+  appeal TEXT NOT NULL DEFAULT '',      -- 訴求
+  destination TEXT NOT NULL DEFAULT '', -- 導向位置
+  preview_url TEXT NOT NULL DEFAULT '', -- 圖片或影片預覽（網址或測試用 data URI）
   platform_ref TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -108,6 +123,21 @@ CREATE TABLE IF NOT EXISTS claim_codes (
   UNIQUE (project_id, code)
 );
 
+-- 投放紀錄：同一素材用在不同受眾或設定時各一筆，可彙總回素材
+CREATE TABLE IF NOT EXISTS placements (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  creative_id TEXT NOT NULL,
+  code TEXT NOT NULL UNIQUE,            -- 素材代碼-A01
+  audience TEXT NOT NULL DEFAULT '',
+  setting TEXT NOT NULL DEFAULT '',     -- 版位、出價等設定說明
+  start_date TEXT,
+  end_date TEXT,
+  status TEXT NOT NULL DEFAULT '規劃中',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS placements_creative ON placements (creative_id);
+
 -- 廣告每日數字（Meta 匯出 CSV 或人工登錄）
 CREATE TABLE IF NOT EXISTS ad_daily (
   id TEXT PRIMARY KEY,
@@ -115,6 +145,7 @@ CREATE TABLE IF NOT EXISTS ad_daily (
   date TEXT NOT NULL,
   campaign_id TEXT,                     -- 對應不到時為 NULL，列為待辦
   creative_id TEXT,
+  placement_id TEXT,
   ad_name TEXT NOT NULL DEFAULT '',
   spend REAL NOT NULL DEFAULT 0,
   impressions INTEGER NOT NULL DEFAULT 0,
@@ -131,7 +162,7 @@ CREATE INDEX IF NOT EXISTS ad_daily_project_date ON ad_daily (project_id, date);
 CREATE TABLE IF NOT EXISTS conversions (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
-  type TEXT NOT NULL,                   -- claim／lead／valid_lead／enroll／payment／refund
+  type TEXT NOT NULL,                   -- inquiry／claim／lead／valid_lead／enroll／payment／refund
   date TEXT NOT NULL,
   campaign_id TEXT,                     -- NULL ＝ 來源不明
   creative_id TEXT,
@@ -151,7 +182,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS conversions_external ON conversions (project_i
 -- 各專案的資料來源狀態
 CREATE TABLE IF NOT EXISTS sources (
   project_id TEXT NOT NULL,
-  kind TEXT NOT NULL,                   -- ads／claim／lead／enroll／payment
+  kind TEXT NOT NULL,                   -- ads／inquiry／claim／lead／enroll／payment
   connected INTEGER NOT NULL DEFAULT 0,
   covered_through TEXT,                 -- 資料已更新到哪一天（含）
   updated_at TEXT,
@@ -175,9 +206,11 @@ CREATE TABLE IF NOT EXISTS imports (
 
 CREATE TABLE IF NOT EXISTS todos (
   id TEXT PRIMARY KEY,
-  project_id TEXT NOT NULL,
+  project_id TEXT,                      -- NULL＝不屬於任何專案（例如日常發文）
   title TEXT NOT NULL,
+  owner TEXT NOT NULL DEFAULT '',
   due TEXT,
+  status TEXT NOT NULL DEFAULT '待處理', -- 待處理／處理中／完成
   done INTEGER NOT NULL DEFAULT 0,
   created_by TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
@@ -191,3 +224,57 @@ CREATE TABLE IF NOT EXISTS audit_log (
   detail TEXT NOT NULL DEFAULT '',
   at TEXT NOT NULL
 );
+
+-- ===== A. 日常 FB 發文 =====
+-- 發布位置：四種發布主體下的具體帳號或社團
+CREATE TABLE IF NOT EXISTS outlets (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,                   -- personal 個人帳號／page 粉專／own_group 自有社團／other_group 他人社團
+  name TEXT NOT NULL,
+  url TEXT NOT NULL DEFAULT '',
+  owner TEXT NOT NULL DEFAULT '',
+  active INTEGER NOT NULL DEFAULT 1,
+  is_test INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+-- 共同題材：同一題材發到不同位置時串起來
+CREATE TABLE IF NOT EXISTS topics (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  is_test INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+-- 發布紀錄：一個位置一筆；發文數依這張表的實際筆數計算
+CREATE TABLE IF NOT EXISTS posts (
+  id TEXT PRIMARY KEY,
+  topic_id TEXT,
+  outlet_id TEXT NOT NULL,
+  project_id TEXT,                      -- 支援的專案（選填）
+  planned_date TEXT,
+  published_date TEXT,
+  title TEXT NOT NULL,                  -- 主題
+  content TEXT NOT NULL DEFAULT '',     -- 內容／素材說明
+  asset TEXT NOT NULL DEFAULT '',
+  owner TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT '待製作', -- 待製作／待審核／待發布／已發布／取消
+  url TEXT NOT NULL DEFAULT '',
+  purpose TEXT NOT NULL DEFAULT '',     -- 發文目的
+  destination TEXT NOT NULL DEFAULT '', -- 引流去向
+  likes INTEGER,                        -- NULL＝尚未登錄
+  comments INTEGER,
+  shares INTEGER,
+  inquiries INTEGER,                    -- 可確認來源的詢問
+  conversions INTEGER,                  -- 可確認來源的轉換
+  pending_replies INTEGER,              -- 待回覆的留言或詢問
+  metrics_source TEXT NOT NULL DEFAULT '', -- 人工登錄／匯出檔／API（待串接）
+  metrics_as_of TEXT,                   -- 統計截至時間
+  metrics_updated_at TEXT,
+  is_test INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS posts_planned ON posts (planned_date);
+CREATE INDEX IF NOT EXISTS posts_published ON posts (published_date);

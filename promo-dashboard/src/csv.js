@@ -76,7 +76,7 @@ export const META_ALIASES = {
  * Meta 廣告 CSV → 每日每則廣告一列。
  * creativesByCode：本專案的素材（code → creative）
  */
-export function mapMetaRows(text, creativesByCode) {
+export function mapMetaRows(text, creativesByCode, placementsByCode = new Map()) {
   const table = parseCsv(text);
   if (table.length < 2) return { rows: [], errors: ['檔案沒有資料列'] };
   const header = table[0];
@@ -109,7 +109,10 @@ export function mapMetaRows(text, creativesByCode) {
       rows.push({ ...base, status: 'unmatched', message: code ? `素材代碼 ${code} 不屬於本專案或尚未建立` : '廣告名稱開頭沒有素材代碼', creative_id: null, campaign_id: null });
       return;
     }
-    rows.push({ ...base, status: 'ok', creative_id: cr.id, campaign_id: cr.campaign_id, creativeCode: code });
+    const pm = new RegExp('^' + code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-A\\d{2}').exec(adName);
+    const pl = pm ? placementsByCode.get(pm[0]) : null;
+    if (pm && !pl) return rows.push({ ...base, status: 'error', message: `投放紀錄 ${pm[0]} 尚未建立` });
+    rows.push({ ...base, status: 'ok', creative_id: cr.id, campaign_id: cr.campaign_id, placement_id: pl?.id || null, creativeCode: code, placementCode: pl?.code || '' });
   });
   return { rows, errors: [] };
 }
