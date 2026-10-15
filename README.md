@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🍳 M003 宜大鐵板燒 FB 廣告（即夢素材包）：[seal-team/missions/M003/](seal-team/missions/M003/)
