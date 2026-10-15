@@ -5,7 +5,7 @@ import { DailyBars, Funnel, InlineBar } from './charts.js';
 import { fmt, md, ymd, rangeText } from './format.js';
 import { CHANNELS, FORMATS, UTM_SOURCES, UTM_MEDIUMS, suggestCampaignCode, suggestCreativeCode, suggestClaimCode } from '../src/tracking.js';
 import { SOURCE_KINDS, OUTCOME_TYPES } from '../src/metrics.js';
-import { outcomeKeys, sourceUsed, freshText, TodoTable, OrganicSummary } from './shared.js';
+import { outcomeKeys, sourceUsed, freshText, TodoTable, OrganicSummary, OutcomeGroups, NO_PAID_LABEL } from './shared.js';
 
 const STATUS = ['規劃中', '進行中', '暫停', '已結束'];
 const KINDS = ['合作', '自有課程', '客戶', '自有品牌'];
@@ -23,7 +23,7 @@ export function ProjectPage({ id, tab = 'overview', q, me, reloadNav }) {
         <div>
           <div class="crumb"><a href="#/">宣傳總覽</a> ／ 專案</div>
           <h1>${p.name}</h1>
-          <p class="sub"><span class="proj-code">${p.code}</span>・${p.kind}${p.partner ? '・' + p.partner : ''}・負責人 ${p.owner || '待填'}・<${Badge} kind="status">${p.status}</${Badge}></p>
+          <p class="sub"><span class="proj-code">${p.code}</span>・${p.kind}${p.partner ? '・' + p.partner : ''}・負責人 ${p.owner || '待填'}・<${Badge} kind="status">${p.status}</${Badge}>${!d.creatives.some((c) => c.paid) ? html` <span class="pstat st-todo">${NO_PAID_LABEL}</span>` : null}</p>
           <p class="sub">${rangeText(d.range)}・廣告與成果統計到 ${md(d.range.to)}</p>
         </div>
         ${window.__PREVIEW__ ? null : html`<a class="btn ghost small" href=${`/api/projects/${id}/export.csv?${q}`} download>匯出本專案 CSV</a>`}
@@ -44,11 +44,11 @@ function MetricKpis({ m, project }) {
   const keys = outcomeKeys(project);
   const pk = m.primaryKey;
   return html`<section class="kpis" aria-label="關鍵數字">
-    <${Kpi} label="本期花費" m=${m.spend} f="money" sub=${m.spendAll != null ? '累計 ' + fmt.money(m.spendAll) : null} />
+    <${Kpi} label="本期花費" m=${m.spend} f="money" sub=${m.spendCum ? html`累計 <${V} m=${m.spendCum} f="money" compact incLabel="已知小計" />` : null} />
     <${Kpi} label="曝光" m=${m.impressions} />
     <${Kpi} label="連結點擊" m=${m.link_clicks} sub=${html`點擊率 <${V} m=${m.ctr} f="pct" compact />（點擊 ÷ 曝光）`} />
     ${keys.map((k) => html`<${Kpi} label=${project.metrics[k].label} m=${m[k]}
-      sub=${k === pk ? html`每筆成本 <${V} m=${m.cost_primary} f="money" compact />` : k === 'enroll' ? html`每筆報名成本 <${V} m=${m.cost_enroll} f="money" compact />` : null} />`)}
+      sub=${k === pk ? html`付費廣告 <${V} m=${m.paid[k]} compact />・每筆成本 <${V} m=${m.cost_primary} f="money" compact why />` : k === 'enroll' ? html`付費廣告 <${V} m=${m.paid.enroll} compact />・每筆成本 <${V} m=${m.cost_enroll} f="money" compact why />` : null} />`)}
     ${project.metrics.payment?.enabled ? html`<${Kpi} label="付款淨額" m=${m.net_amount} f="money" sub=${html`付款 <${V} m=${m.payment} compact /> 筆・退款 <${V} m=${m.refund_amount} f="money" compact />`} />` : null}
     ${!keys.length ? html`<${Kpi} label="成果指標" m=${{ v: null, s: 'not_computed', r: '本專案尚未定義成果指標，請到「專案設定」定義' }} />` : null}
   </section>`;
@@ -65,17 +65,17 @@ function ProjectCampaigns({ d, reload }) {
       ${d.campaigns.length ? html`<div class="tbl"><table class="data">
         <thead><tr><th>波次</th><th>狀態</th><th>期間</th><th class="num">本期花費</th><th class="num">點擊</th>
           ${keys.map((k) => html`<th class="num">${p.metrics[k].label}</th>`)}
-          ${d.metrics.primaryKey ? html`<th class="num">每筆${p.metrics[d.metrics.primaryKey].label}成本</th>` : null}
+          ${d.metrics.primaryKey ? html`<th class="num">付費廣告每筆${p.metrics[d.metrics.primaryKey].label}成本</th>` : null}
           ${p.metrics.payment?.enabled ? html`<th class="num">付款淨額</th>` : null}<th>判斷</th></tr></thead>
         <tbody>
           ${d.campaigns.map((c) => html`<tr>
             <td><a href=${'#/c/' + c.id}><b>${c.name}</b></a><div class="muted small">${c.code}・${c.offer || '推廣內容待填'}</div></td>
             <td><${Badge} kind="status">${c.status}</${Badge}></td>
             <td class="nowrap small">${c.start_date ? md(c.start_date) + '–' + md(c.end_date) : '待填'}</td>
-            <td class="num"><${V} m=${c.metrics.spend} f="money" compact /><${InlineBar} v=${c.metrics.spend.v} max=${maxSpend} /><div class="muted small">波次累計 ${fmt.money(c.metrics.spendAll || 0)}${c.budget ? '／預算 ' + fmt.money(c.budget) : ''}</div></td>
+            <td class="num"><${V} m=${c.metrics.spend} f="money" compact /><${InlineBar} v=${c.metrics.spend.v} max=${maxSpend} /><div class="muted small">波次累計 <${V} m=${c.metrics.spendCum} f="money" compact incLabel="已知小計" />${c.budget ? '／預算 ' + fmt.money(c.budget) : ''}</div></td>
             <td class="num"><${V} m=${c.metrics.link_clicks} compact /></td>
             ${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}
-            ${d.metrics.primaryKey ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact />${c.target_cpl ? html`<div class="muted small">目標 ${fmt.money(c.target_cpl)}</div>` : null}</td>` : null}
+            ${d.metrics.primaryKey ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact why />${c.target_cpl ? html`<div class="muted small">目標 ${fmt.money(c.target_cpl)}</div>` : null}</td>` : null}
             ${p.metrics.payment?.enabled ? html`<td class="num"><${V} m=${c.metrics.net_amount} f="money" compact /></td>` : null}
             <td><${Judge} j=${c.judgement} /><div class="muted small">${c.judgement.reason}</div></td>
           </tr>`)}
@@ -87,7 +87,7 @@ function ProjectCampaigns({ d, reload }) {
           </tr>` : null}
         </tbody>
       </table></div>
-      <p class="note">專案合計以人去重，可能小於各活動相加；成本與轉換率都用合計分子 ÷ 合計分母。「!」表示資料不完整，滑鼠移上去看原因。</p>`
+      <p class="note">專案合計以人去重，可能小於各活動相加。成本＝本期付費花費 ÷ 同期可歸因至付費廣告的成果，免費渠道與來源不明不進分母；花費或成果資料不完整時暫不計算。「!」表示資料不完整，滑鼠移上去看原因。</p>`
       : html`<${Empty} title="還沒有活動">按「新增活動」建立第一波宣傳。</${Empty}>`}
     </section>
     ${edit ? html`<${CampaignForm} project=${p} campaigns=${d.campaigns} onClose=${() => setEdit(null)} onDone=${(id) => { setEdit(null); location.hash = '#/c/' + id; }} />` : null}
@@ -554,8 +554,12 @@ function ProjectOverview({ d, reload }) {
   const m = d.metrics;
   const has = (k) => p.metrics[k]?.enabled;
   const rel = d.relatedPosts;
-  const enrollProg = has('enroll') && p.target_enroll && m.enroll.v != null ? m.enroll.v / p.target_enroll : null;
-  const used = p.budget ? d.budget.spentAll / p.budget : null;
+  const cum = d.cumulative;
+  const pk = m.primaryKey;
+  const pkLabel = pk ? p.metrics[pk].label : '成果';
+  const hasPaid = d.creatives.some((c) => c.paid);
+  const used = d.budget.used;
+  const prog = cum.enrollProgress;
   return html`<div class="stack">
     <section class="facts" aria-label="專案資料">
       <${Info} label="推廣目標" v=${p.goal} />
@@ -570,30 +574,42 @@ function ProjectOverview({ d, reload }) {
 
     <section class="panel">
       <h2 class="sec">預算與花費</h2>
+      ${hasPaid ? null : html`<p class="sec-note"><span class="pstat st-todo">${NO_PAID_LABEL}</span> 本專案還沒有付費素材，花費與廣告成本不計算。</p>`}
       <div class="kpis compact">
         <${Kpi} label="總預算"><span class="val">${p.budget ? fmt.money(p.budget) : html`<span class="tbd">待填</span>`}</span></${Kpi}>
-        <${Kpi} label="本期花費" m=${m.spend} f="money" sub=${'所選期間；' + freshText(d.sources.ads, m.missingAdDates)} />
-        <${Kpi} label="專案累計花費"><span class="val">${fmt.money(d.budget.spentAll)}</span></${Kpi}>
-        <${Kpi} label="預算使用"><span class="val">${used != null ? fmt.pct(used) : '—'}</span></${Kpi}>
+        <${Kpi} label="本期花費" sub=${'所選期間；' + freshText(d.sources.ads, m.missingAdDates)}><${V} m=${m.spend} f="money" incLabel="已知小計" showNA why /></${Kpi}>
+        <${Kpi} label="專案累計花費" sub=${cum.from ? `${md(cum.from)} 起至 ${md(cum.to)}${cum.spend.s === 'incomplete' ? '；' + cum.spend.r : ''}` : '尚未開始投放'}><${V} m=${cum.spend} f="money" incLabel="已知小計" showNA why /></${Kpi}>
+        <${Kpi} label="預算使用率" sub=${used.s === 'incomplete' ? '累計花費缺資料，實際使用率不低於此數' : used.v != null ? '專案累計花費 ÷ 總預算' : null}><${V} m=${used} f="pct" incLabel="缺資料" prefix="至少" showNA why /></${Kpi}>
       </div>
-      ${used != null ? html`<div class="budget-bar big" role="img" aria-label=${'預算使用 ' + fmt.pct(used)}><span style=${`width:${Math.min(100, used * 100)}%`} class=${used > 1 ? 'over' : used > 0.9 ? 'near' : ''}></span></div>
-        <p class="note">計算：專案累計花費 ${fmt.money(d.budget.spentAll)} ÷ 總預算 ${fmt.money(p.budget)}。本期花費只算所選期間，波次累計見「投放波次」。</p>` : null}
+      ${used.v != null ? html`<div class="budget-bar big" role="img" aria-label=${(used.s === 'incomplete' ? '預算使用至少 ' : '預算使用 ') + fmt.pct(used.v)}><span style=${`width:${Math.min(100, used.v * 100)}%`} class=${(used.v > 1 ? 'over' : used.v > 0.9 ? 'near' : '') + (used.s === 'incomplete' ? ' partial' : '')}></span></div>
+        <p class="note">計算：專案累計花費${used.s === 'incomplete' ? '（已知小計）' : ''} ${fmt.money(used.n)} ÷ 總預算 ${fmt.money(used.d)}${used.s === 'incomplete' ? '；缺資料的日子補齊後數字只會增加' : ''}。本期花費只算所選期間，波次累計見「投放波次」。</p>` : null}
     </section>
 
-    <section class="panel">
-      <h2 class="sec">招生進度（專用付費廣告與可追蹤來源）</h2>
-      <div class="kpis compact">
-        ${['inquiry', 'claim', 'lead', 'valid_lead', 'enroll'].filter(has).map((k) => html`<${Kpi} label=${p.metrics[k].label} m=${m[k]}
-          sub=${k === m.primaryKey ? html`每筆成本 <${V} m=${m.cost_primary} f="money" compact />` : k === 'enroll' && p.target_enroll ? `目標 ${p.target_enroll} 人` : null} />`)}
-        ${has('payment') ? html`<${Kpi} label="付款" m=${m.payment} sub=${html`金額 <${V} m=${m.payment_amount} f="money" compact />`} />
-          <${Kpi} label="退款" m=${m.refund} sub=${html`金額 <${V} m=${m.refund_amount} f="money" compact />`} />
-          <${Kpi} label="付款淨額" m=${m.net_amount} f="money" sub="付款金額 − 退款金額" />` : null}
-        ${!outcomeKeys(p).length ? html`<${Kpi} label="成果指標" m=${{ v: null, s: 'not_computed', r: '本專案尚未定義成果指標，請到「專案設定」定義' }} />` : null}
-      </div>
-      ${enrollProg != null ? html`<div class="budget-bar big"><span style=${`width:${Math.min(100, enrollProg * 100)}%`}></span></div>
-        <p class="note">報名 ${fmt.int(m.enroll.v)} ÷ 招生目標 ${p.target_enroll}＝${fmt.pct(enrollProg)}（所選期間）。</p>` : null}
-      ${outcomeKeys(p).length ? html`<p class="note">其中來源不明：${['inquiry', 'enroll', 'payment'].filter(has).map((k) => `${p.metrics[k].label} ${d.unknown[k] || 0}`).join('、')}；這些不分配給任何素材。各數字的完整度見滑鼠提示或「資料來源」。</p>` : null}
+    <section class="panel" aria-labelledby="h-period">
+      <h2 class="sec" id="h-period">本期成果 <span class="sec-sub">${rangeText(d.range)}</span></h2>
+      ${outcomeKeys(p).length ? html`
+        <${OutcomeGroups} project=${p} groups=${d.groups} total=${m} />
+        ${hasPaid && pk ? html`<div class="kpis compact cost-cards">
+          <${Kpi} label=${`付費廣告每筆${pkLabel}成本`} sub=${m.cost_primary.v != null ? `本期付費花費 ÷ 付費廣告${pkLabel}` : `本期付費花費 ÷ 付費廣告${pkLabel}；免費名單不進分母`}><${V} m=${m.cost_primary} f="money" showNA why /></${Kpi}>
+          ${has('enroll') ? html`<${Kpi} label="付費廣告每筆報名成本" sub="本期付費花費 ÷ 付費廣告報名"><${V} m=${m.cost_enroll} f="money" showNA why /></${Kpi}>` : null}
+          <${Kpi} label="已知花費" sub=${m.spend.s === 'incomplete' ? m.spend.r : '所選期間'}><${V} m=${m.spend} f="money" incLabel="已知小計" showNA why /></${Kpi}>
+        </div>
+        <p class="note">付費廣告成本只用「同期間、可歸因至付費廣告素材」的成果當分母；免費引流（例如 LINE）與來源不明另列，不進分母。花費或成果資料不完整時，正式成本顯示「暫不計算」，已知花費標「已知小計」。</p>` : null}`
+      : html`<${Kpi} label="成果指標" m=${{ v: null, s: 'not_computed', r: '本專案尚未定義成果指標，請到「專案設定」定義' }} />`}
     </section>
+
+    ${has('enroll') ? html`<section class="panel" aria-labelledby="h-prog">
+      <h2 class="sec" id="h-prog">招生進度</h2>
+      <div class="kpis compact">
+        <${Kpi} label="本期新增報名" sub=${rangeText(d.range)}><${V} m=${m.enroll} showNA why /></${Kpi}>
+        <${Kpi} label="累計報名" sub=${cum.from ? `專案開始 ${md(cum.from)} 至 ${md(cum.to)}・以人去重` : '專案尚未開始'}><${V} m=${cum.all.enroll} showNA why /></${Kpi}>
+        <${Kpi} label="招生目標"><span class="val">${p.target_enroll ? p.target_enroll + ' 人' : html`<span class="tbd">待填</span>`}</span></${Kpi}>
+        <${Kpi} label="累計達成率"><${V} m=${prog} f="pct" showNA why /></${Kpi}>
+      </div>
+      ${prog.v != null ? html`<div class="budget-bar big" role="img" aria-label=${'累計達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>
+        <p class="note">計算：累計報名 ${fmt.int(prog.n)} ÷ 招生目標 ${prog.d}＝${fmt.pct(prog.v)}（專案開始至 ${md(cum.to)}，不隨上方期間改變）${prog.s === 'incomplete' ? '；' + prog.r + '，之後可能增加' : ''}。累計報名中付費廣告 ${fmt.int(cum.groups.paid.enroll.v ?? 0)}、免費引流 ${fmt.int(cum.groups.free.enroll.v ?? 0)}、來源不明 ${fmt.int(cum.groups.unknown.enroll.v ?? 0)}（以人去重，三者相加可能大於合計）。</p>` : null}
+      ${hasPaid && cum.cost_primary ? html`<p class="note">專案累計付費廣告每筆${pkLabel}成本：<${V} m=${cum.cost_primary} f="money" compact why /></p>` : null}
+    </section>` : null}
 
     <div class="two">
       <section class="panel">
@@ -651,7 +667,7 @@ function ProjectCreatives({ d, reload }) {
             <td class="num"><${V} m=${c.metrics.spend} f="money" compact showNA /></td><td class="num hide-sm"><${V} m=${c.metrics.impressions} compact /></td>
             <td class="num"><${V} m=${c.metrics.ctr} f="pct" compact /></td>
             ${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}
-            ${pk ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact /></td>` : null}
+            ${pk ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact why /></td>` : null}
             <td><${Judge} j=${c.judgement} /></td></tr>`)}
           ${keys.length ? html`<tr class="unknown"><td><b>只對應到波次</b><div class="muted small">有波次代碼、沒有素材代碼</div></td><td class="num">—</td><td class="num hide-sm">—</td><td class="num">—</td>
             ${keys.map((k) => html`<td class="num">${fmt.int(d.campaignOnly[k] || 0)}</td>`)}${pk ? html`<td></td>` : null}<td></td></tr>
@@ -659,7 +675,7 @@ function ProjectCreatives({ d, reload }) {
             ${keys.map((k) => html`<td class="num">${fmt.int(d.unknown[k] || 0)}</td>`)}${pk ? html`<td></td>` : null}<td></td></tr>` : null}
         </tbody>
       </table></div>
-      <p class="note">點擊率＝連結點擊 ÷ 曝光；每筆成本＝本期花費 ÷ 成果數，都是同一範圍加總後相除。「!」表示資料不完整，此時判斷不會給「持續」。</p>
+      <p class="note">點擊率＝連結點擊 ÷ 曝光；每筆成本＝該素材本期花費 ÷ 該素材可歸因的成果，同一範圍加總後相除。花費或成果資料不完整時顯示「暫不計算」，判斷也不會給「持續」。</p>
     </section>
     ${free.length ? html`<section class="panel"><h2 class="sec">其他免費引流渠道</h2>
       <div class="tbl"><table class="data"><thead><tr><th>渠道</th>${keys.map((k) => html`<th class="num">${p.metrics[k].label}</th>`)}</tr></thead>
@@ -691,7 +707,7 @@ function CreativeCard({ c, n, p, d, keys, onEdit, onPlacement }) {
     </dl>
     <dl class="mini">
       <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA /></dd></div>
-      <div><dt>累計花費</dt><dd>${m.spendAll ? fmt.money(m.spendAll) : '—'}</dd></div>
+      <div><dt>累計花費</dt><dd><${V} m=${m.spendCum} f="money" compact incLabel="已知小計" /></dd></div>
       <div><dt>曝光</dt><dd><${V} m=${m.impressions} compact /></dd></div>
       <div><dt>連結點擊</dt><dd><${V} m=${m.link_clicks} compact /></dd></div>
       ${keys.map((k) => html`<div><dt>${p.metrics[k].label}</dt><dd><${V} m=${m[k]} compact /></dd></div>`)}

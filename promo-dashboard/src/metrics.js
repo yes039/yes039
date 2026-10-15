@@ -95,7 +95,7 @@ export function computeScope(ctx, { ads, conv, hasPaid, expected = [], keyField 
     const have = new Set(ads.map((r) => r[keyField] + '|' + r.date));
     missing = [...new Set(expected.filter((e) => !have.has(e.key + '|' + e.date)).map((e) => e.date))].sort();
   }
-  const adIncomplete = missing.length ? `缺 ${missing.length} 天廣告資料（${missing.slice(0, 3).map(fmtMD).join('、')}${missing.length > 3 ? '…' : ''}）` : '';
+  const adIncomplete = missing.length ? `已知小計・缺 ${missing.length} 天廣告資料（${missing.slice(0, 3).map(fmtMD).join('、')}${missing.length > 3 ? '…' : ''}）` : '';
   const sum = (k) => ads.reduce((a, r) => a + Number(r[k] || 0), 0);
   for (const k of ['spend', 'impressions', 'link_clicks']) {
     out[k] = adState || finalize(sum(k), adIncomplete);
@@ -104,7 +104,25 @@ export function computeScope(ctx, { ads, conv, hasPaid, expected = [], keyField 
   out.ctr = ratio(out.link_clicks, out.impressions);
   out.cpc = ratio(out.spend, out.link_clicks);
 
-  // ---- 成果 ----
+  Object.assign(out, countOutcomes(ctx, conv));
+
+  // ---- 成本與轉換：只用「可歸因至付費廣告」的成果，免費引流與來源不明不進分母 ----
+  const paidIds = ctx.paidIds;
+  const paidConv = paidIds ? conv.filter((r) => r.creative_id && paidIds.has(r.creative_id)) : conv;
+  out.paid = countOutcomes(ctx, paidConv);
+  const primary = primaryOutcome(defs);
+  out.primaryKey = primary;
+  if (primary) out.cost_primary = strictCost(out.spend, out.paid[primary]);
+  if (defs.enroll?.enabled) out.cost_enroll = strictCost(out.spend, out.paid.enroll);
+  if (defs.payment?.enabled) out.return_on_spend = strictCost(out.paid.net_amount, out.spend, true);
+  return out;
+}
+
+/** 成果計數（以人去重；付款、退款以筆數計）。range.to 之後的資料若來源還沒更新到，標「資料不完整」 */
+export function countOutcomes(ctx, conv) {
+  const { defs, sources, range } = ctx;
+  const noDays = range.to < range.from;
+  const out = {};
   for (const t of OUTCOME_TYPES) {
     const def = defs[t];
     if (!def || !def.enabled) { out[t] = val(null, 'not_computed', '本專案未定義此指標'); continue; }
@@ -132,14 +150,19 @@ export function computeScope(ctx, { ads, conv, hasPaid, expected = [], keyField 
     const inc = [out.payment_amount, out.refund_amount].find((x) => x.s === 'incomplete');
     out.net_amount = inc ? val(out.payment_amount.v - refund, 'incomplete', inc.r) : finalize(out.payment_amount.v - refund, '');
   } else out.net_amount = out.payment_amount || val(null, 'not_computed', '本專案未定義付款');
-
-  // ---- 成本與轉換 ----
-  const primary = primaryOutcome(defs);
-  out.primaryKey = primary;
-  if (primary) out.cost_primary = ratio(out.spend, out[primary]);
-  if (defs.enroll?.enabled) out.cost_enroll = ratio(out.spend, out.enroll);
-  if (defs.payment?.enabled) out.return_on_spend = ratio(out.net_amount, out.spend);
   return out;
+}
+
+/**
+ * 正式成本指標：花費或成果任一不完整就不計算（不讓缺資料的數字看起來像正式成本）。
+ * spendIsDen：報酬率（淨額 ÷ 花費）時花費在分母。
+ */
+export function strictCost(num, den, spendIsDen = false) {
+  const [spend, outcome] = spendIsDen ? [den, num] : [num, den];
+  if (spend.s === 'incomplete') return val(null, 'not_computed', '廣告資料不完整');
+  if (outcome.s === 'incomplete') return val(null, 'not_computed', '成果資料不完整');
+  if (!spendIsDen && outcome.v === 0 && spend.v != null) return val(null, 'not_computed', '付費廣告尚無可歸因成果');
+  return ratio(num, den);
 }
 
 /**
@@ -151,7 +174,9 @@ export function judge(m, settings, targetCpl, hasPaid, defs) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const label = (k) => defs?.[k]?.label || { spend: '花費', link_clicks: '連結點擊' }[k] || k;
   const keys = ['spend', 'link_clicks', m.primaryKey].filter(Boolean);
-  const basis = keys.map((k) => `${label(k)}：${m[k].v == null ? STATE_LABEL[m[k].s] : Math.round(m[k].v).toLocaleString('zh-TW')}${m[k].s === 'incomplete' ? '（資料不完整）' : ''}`);
+  const pm = { ...m, ...(m.primaryKey && m.paid ? { [m.primaryKey]: m.paid[m.primaryKey] } : {}) }; // 只用付費可歸因成果
+  m = pm;
+  const basis = keys.map((k) => `${k === m.primaryKey && m.paid ? '付費廣告' : ''}${label(k)}：${m[k].v == null ? STATE_LABEL[m[k].s] : Math.round(m[k].v).toLocaleString('zh-TW')}${m[k].s === 'incomplete' ? '（資料不完整）' : ''}`);
   const missing = keys.filter((k) => m[k].v == null);
   if (missing.length) return { label: '觀察', reason: `${missing.map(label).join('、')}${STATE_LABEL[m[missing[0]].s]}，暫不判斷`, basis };
   const inc = keys.filter((k) => m[k].s === 'incomplete');
@@ -192,7 +217,7 @@ export function anomaliesFor({ project, defs, settings, campaigns, creatives, ca
       if (m.spendAll > c.budget) add(items, 'critical', '預算', `${c.code} 累計花費超過活動預算`, `活動累計 ${Math.round(m.spendAll)}／預算 ${c.budget}`, link, { owner, due: today });
       else if (m.spendAll > c.budget * 0.9) add(items, 'warning', '預算', `${c.code} 活動預算即將用完`, `已用 ${Math.round((m.spendAll / c.budget) * 100)}%`, link, { owner });
     }
-    if (m.missingAdDates?.length) add(items, 'serious', '資料', `${c.code} 廣告資料缺漏`, m.spend.r + '，請補登或重新匯入', link, { owner, manual: true });
+    if (m.missingAdDates?.length) add(items, 'serious', '資料', `${c.code} 廣告資料缺漏`, m.spend.r.replace(/^已知小計・/, '') + '，請補登或重新匯入', link, { owner, manual: true });
     if (c.status === '進行中' && c.end_date && c.end_date < today) add(todos, 'warning', '資料', `${c.code} 已過結束日，狀態仍為進行中`, `結束日 ${c.end_date}`, link, { owner, manual: true });
     const recent = m.recent;
     if (recent && recent.spend > 0 && recent.outcome === 0) {

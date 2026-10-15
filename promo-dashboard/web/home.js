@@ -1,7 +1,7 @@
 // 宣傳總覽：A 日常 FB 發文、B 付費廣告專案、集中待辦、資料更新狀態
 import { html, api, useApi, V, Kpi, Badge, Loading } from './ui.js';
 import { fmt, md, rangeText } from './format.js';
-import { OrganicTable, CountRules, TodoTable, outcomeKeys, freshText, sourceUsed } from './shared.js';
+import { OrganicTable, CountRules, TodoTable, outcomeKeys, freshText, sourceUsed, NO_PAID_LABEL } from './shared.js';
 import { SOURCE_KINDS } from '../src/metrics.js';
 
 export function Home({ q }) {
@@ -65,28 +65,44 @@ export function Home({ q }) {
   }}</${Loading}>`;
 }
 
-function ProjectCard({ p, range }) {
-  const { project, metrics: m } = p;
-  const keys = outcomeKeys(project).filter((k) => ['inquiry', 'valid_lead', 'enroll', 'payment'].includes(k));
+function ProjectCard({ p }) {
+  const { project, metrics: m, cumulative: cum, groups: g } = p;
   const budget = project.budget;
-  const used = budget ? p.budget.spentAll / budget : null;
+  const used = p.budget.used;
+  const hasPaid = p.paidCreatives > 0;
+  const pk = m.primaryKey;
+  const pkLabel = pk ? project.metrics[pk].label : null;
+  const has = (k) => project.metrics[k]?.enabled;
+  const prog = cum.enrollProgress;
   return html`<article class="proj-card">
     <a class="proj-card-head" href=${'#/p/' + project.id}>
       <div><span class="proj-code">${project.code}</span> ${project.is_test ? html`<${Badge} kind="test">測試</${Badge}>` : null} <${Badge} kind="status">${project.status}</${Badge}></div>
       <h3>${project.name}</h3>
+      ${hasPaid ? null : html`<div class="no-paid"><span class="pstat st-todo">${NO_PAID_LABEL}</span></div>`}
       <div class="muted small">推廣目標：${project.goal || '待填'}</div>
       <div class="muted small">投放期間：${p.flight ? `${md(p.flight.from)}–${md(p.flight.to)}` : '待填'}${p.active.length ? `・進行中 ${p.active.length} 波` : ''}</div>
     </a>
-    <dl class="mini">
-      <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA /></dd></div>
-      <div><dt>專案累計花費</dt><dd>${p.paidCreatives ? fmt.money(p.budget.spentAll) : html`<span class="muted">—</span>`}</dd></div>
+    ${hasPaid ? html`<dl class="mini">
+      <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA incLabel="已知小計" /></dd></div>
+      <div><dt>專案累計花費</dt><dd><${V} m=${cum.spend} f="money" compact showNA incLabel="已知小計" /></dd></div>
       <div><dt>總預算</dt><dd>${budget ? fmt.money(budget) : html`<span class="muted small">待填</span>`}</dd></div>
-      ${keys.map((k) => html`<div><dt>${k === 'payment' ? '付款淨額' : project.metrics[k].label}</dt><dd>${k === 'payment' ? html`<${V} m=${m.net_amount} f="money" compact />` : html`<${V} m=${m[k]} compact />`}</dd></div>`)}
+      ${pk ? html`<div><dt>本期付費廣告${pkLabel}</dt><dd><${V} m=${g.paid[pk]} compact /></dd></div>
+        <div><dt>本期免費引流${pkLabel}</dt><dd><${V} m=${g.free[pk]} compact /></dd></div>
+        <div><dt>本期來源不明${pkLabel}</dt><dd><${V} m=${g.unknown[pk]} compact /></dd></div>
+        <div class="wide"><dt>付費廣告每筆${pkLabel}成本</dt><dd><${V} m=${m.cost_primary} f="money" compact why /></dd></div>` : null}
+    </dl>` : html`<dl class="mini">
+      <div><dt>總預算</dt><dd>${budget ? fmt.money(budget) : html`<span class="muted small">待填</span>`}</dd></div>
+      <div class="wide"><dt>廣告花費與成本</dt><dd><span class="state s-not_computed sm">尚未啟用付費廣告，不計算</span></dd></div>
       ${!outcomeKeys(project).length ? html`<div class="wide"><dt>成果</dt><dd><span class="state s-not_computed sm">本專案尚未定義成果指標</span></dd></div>` : null}
-    </dl>
-    ${budget ? html`<div class="budget"><div class="budget-bar" role="img" aria-label=${`預算使用 ${fmt.pct(used)}`}><span style=${`width:${Math.min(100, used * 100)}%`} class=${used > 1 ? 'over' : used > 0.9 ? 'near' : ''}></span></div>
-      <div class="small muted">累計 ${fmt.money(p.budget.spentAll)} ÷ 總預算 ${fmt.money(budget)}＝${fmt.pct(used)}</div></div>` : null}
-    ${p.paidCreatives ? html`<div class="small muted">廣告數字：${freshText(p.sources.ads, p.missingAdDates)}</div>` : null}
+    </dl>`}
+    ${has('enroll') ? html`<div class="prog small">
+      <div>本期新增報名 <b><${V} m=${m.enroll} compact /></b>・累計報名 <b><${V} m=${cum.all.enroll} compact /></b>${project.target_enroll ? ` ÷ 目標 ${project.target_enroll}` : html`・目標<span class="tbd">待填</span>`}${prog.v != null ? html`＝<${V} m=${prog} f="pct" compact />` : null}</div>
+      ${prog.v != null ? html`<div class="budget-bar" role="img" aria-label=${'累計招生達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>` : null}
+      <div class="muted">累計：專案開始至 ${md(cum.to)}，不隨期間改變</div>
+    </div>` : null}
+    ${budget && used.v != null ? html`<div class="budget"><div class="budget-bar" role="img" aria-label=${(used.s === 'incomplete' ? '預算使用至少 ' : '預算使用 ') + fmt.pct(used.v)}><span style=${`width:${Math.min(100, used.v * 100)}%`} class=${(used.v > 1 ? 'over' : used.v > 0.9 ? 'near' : '') + (used.s === 'incomplete' ? ' partial' : '')}></span></div>
+      <div class="small muted">預算使用 ${used.s === 'incomplete' ? '至少 ' : ''}${fmt.pct(used.v)}：累計${used.s === 'incomplete' ? '已知小計' : ''} ${fmt.money(used.n)} ÷ 總預算 ${fmt.money(budget)}</div></div>` : null}
+    ${hasPaid ? html`<div class="small muted">廣告數字：${freshText(p.sources.ads, p.missingAdDates)}</div>` : null}
     <div class="card-foot small">${p.anomalies ? html`<span class="lv-text serious">▲ 異常 ${p.anomalies}</span>` : null}<span>□ 待辦 ${p.todos}</span><a href=${'#/p/' + project.id}>查看專案 →</a></div>
   </article>`;
 }

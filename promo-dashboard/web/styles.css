@@ -367,3 +367,14 @@ details.pl[open] { display: flex; flex-direction: column; gap: 6px; }
 .cr-copy > div { display: contents; }
 .s-not_entered { background: var(--surface-2); color: var(--ink-2); border: 1px dashed var(--ink-3); }
 @media (max-width: 640px) { table.data td:first-child, table.data th:first-child { min-width: 150px; } table.todo td:first-child { min-width: 0; } }
+
+/* v0.3：成果分組、已知小計、累計進度 */
+.sec-sub { font-size: 13px; font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+.budget-bar span.partial { background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.35) 6px 12px); }
+table.groups tr.g-paid td:first-child b { color: var(--series-1); }
+table.groups tr.g-sub td { font-size: 13px; color: var(--ink-3); }
+table.groups tr.g-sub td:first-child { padding-left: 22px; }
+.cost-cards { margin-top: 12px; }
+.proj-card .no-paid { margin: 4px 0; }
+.proj-card .prog { margin: 8px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.kpi-value .state, .mini dd .state, td .state { white-space: normal; overflow-wrap: anywhere; }

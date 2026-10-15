@@ -25,6 +25,22 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
   assert.equal(rows, 5); // 四個主體＋合計
   assert.ok(await page.isVisible('.proj-card:has-text("Jason 老師合作招生")'));
   step('首頁同時有 A 日常發文（四主體）與 B 付費廣告專案');
+  assert.ok(await page.isVisible('.proj-card:has-text("玉欣珍") :text("規劃中／尚未啟用付費廣告")'));
+  const jsnCard = page.locator('.proj-card:has-text("Jason 老師合作招生")');
+  assert.ok((await jsnCard.textContent()).includes('暫不計算：廣告資料不完整'));
+  assert.ok((await jsnCard.textContent()).includes('已知小計'));
+  assert.ok((await jsnCard.textContent()).includes('累計報名'));
+  step('專案卡：玉欣珍標示尚未啟用付費廣告；Jason 成本暫不計算、花費標已知小計、本期與累計報名分開');
+
+  await page.goto(base + '#/p/test-proj-jsn/overview');
+  await page.waitForSelector('#h-period');
+  for (const t of ['付費廣告成果', '免費引流成果', '來源不明', '專案合計']) assert.ok(await page.isVisible(`table.groups td:has-text("${t}")`), t);
+  assert.ok(await page.isVisible('.kpi:has-text("付費廣告每筆") :text("暫不計算：廣告資料不完整")'));
+  assert.ok(await page.isVisible('#h-prog'));
+  assert.ok(await page.isVisible('.kpi:has-text("預算使用率") :text("至少")'));
+  step('專案總覽：成果三組分開、成本暫不計算、預算使用率標「至少」、招生進度看累計');
+  await page.goto(base + '#/');
+  await page.waitForSelector('#h-b');
 
   // 首頁主體列 → 該主體 → 日曆 → 單篇
   const homePlanned = num(await page.locator('table.organic tbody tr:has-text("粉專") td').nth(1).textContent());

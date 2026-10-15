@@ -30,12 +30,18 @@ export function useApi(path, deps) {
 
 // ---------- 數字與狀態 ----------
 /** 顯示一個指標：有數值顯示數值；沒有就顯示狀態，不用 0 代替 */
-export function V({ m, f = 'int', compact, showNA }) {
+// why：沒有數值時把原因一起寫出來（例如「暫不計算：廣告資料不完整」）
+// incLabel：資料不完整時改用這個標籤（例如花費用「已知小計」），精簡模式也顯示
+// prefix：數值前的字（例如預算使用率不完整時的「至少」）
+export function V({ m, f = 'int', compact, showNA, why, incLabel, prefix }) {
   if (!m) return html`<span class="state">—</span>`;
   const label = STATE_LABEL[m.s] || '';
-  if (compact && !showNA && m.s === 'not_computed') return html`<span class="muted" title=${(label + '：' + (m.r || ''))}>—</span>`;
-  if (m.v == null) return html`<span class="state s-${m.s}" title=${m.r || label}>${label}</span>`;
+  if (compact && !showNA && !why && m.s === 'not_computed') return html`<span class="muted" title=${(label + '：' + (m.r || ''))}>—</span>`;
+  if (m.v == null) return html`<span class="state s-${m.s}" title=${m.r || label}>${label}${why && m.r ? '：' + m.r : ''}</span>`;
   const text = fmt[f](m.v);
+  if (m.s === 'incomplete' && incLabel) {
+    return html`<span class="val" title=${m.r}>${prefix ? html`<span class="small">${prefix} </span>` : null}${text} <span class="state s-incomplete sm">${incLabel}</span></span>`;
+  }
   if (m.s === 'incomplete') {
     return html`<span class="val">${text}${compact ? html`<span class="mark-inc" title=${m.r} aria-label=${'資料不完整：' + m.r}>!</span>` : html` <span class="state s-incomplete sm" title=${m.r}>資料不完整</span>`}</span>`;
   }

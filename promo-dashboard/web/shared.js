@@ -97,3 +97,33 @@ export function TodoTable({ items, limit = 10, showProject = true, onDone }) {
     ${list.length > limit ? html`<button class="btn small ghost more" onClick=${() => setAll(!all)}>${all ? '收合' : `顯示全部 ${list.length} 則`}</button>` : null}` : html`<p class="muted">沒有待辦。</p>`}
   </div>`;
 }
+
+/** 付費廣告成果／免費引流成果／來源不明分開列；專案合計以人去重，不等於各列相加 */
+export function OutcomeGroups({ project, groups, total, caption }) {
+  const keys = outcomeKeys(project).filter((k) => k !== 'payment');
+  const pay = project.metrics.payment?.enabled;
+  const rows = [
+    ['付費廣告成果', '可歸因至付費廣告素材', groups.paid, 'paid'],
+    ['免費引流成果', 'LINE、自然貼文等免費渠道（不計廣告成本）', groups.free, 'free'],
+    ['來源不明', '沒有素材代碼；不分配給任何素材', groups.unknown, 'unknown'],
+    ['└ 只對應到波次', '有波次代碼、沒有素材代碼', groups.campaignOnly, 'sub'],
+    ['└ 完全無法辨識', '沒有波次與素材代碼', groups.noCampaign, 'sub'],
+  ];
+  return html`<div class="tbl"><table class="data groups">
+    ${caption ? html`<caption class="small muted">${caption}</caption>` : null}
+    <thead><tr><th>成果來源</th>${keys.map((k) => html`<th class="num">${project.metrics[k].label}</th>`)}${pay ? html`<th class="num">付款淨額</th>` : null}</tr></thead>
+    <tbody>
+      ${rows.map(([label, sub, g, kind]) => html`<tr class=${'g-' + kind}>
+        <td><b>${label}</b><div class="muted small hide-sm">${sub}</div></td>
+        ${keys.map((k) => html`<td class="num"><${V} m=${g[k]} compact /></td>`)}
+        ${pay ? html`<td class="num"><${V} m=${g.net_amount} f="money" compact /></td>` : null}
+      </tr>`)}
+      <tr class="total"><td><b>專案合計</b><div class="muted small">以人去重，可能小於各列相加</div></td>
+        ${keys.map((k) => html`<td class="num"><${V} m=${total[k]} compact /></td>`)}
+        ${pay ? html`<td class="num"><${V} m=${total.net_amount} f="money" compact /></td>` : null}</tr>
+    </tbody>
+  </table></div>`;
+}
+
+/** 玉欣珍這類還沒有付費素材的專案：明確標示，不讓空白看起來像 0 */
+export const NO_PAID_LABEL = '規劃中／尚未啟用付費廣告';

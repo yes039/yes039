@@ -2,7 +2,7 @@
 import { getUser } from './auth.js';
 import { resolvePeriod, todayTW, addDays, overlap, datesInRange } from './periods.js';
 import {
-  computeScope, judge, anomaliesFor, metricDefs, defaultMetrics, DEFAULT_SETTINGS, OUTCOME_TYPES,
+  computeScope, countOutcomes, strictCost, judge, anomaliesFor, metricDefs, defaultMetrics, DEFAULT_SETTINGS, OUTCOME_TYPES,
   SOURCE_OF_TYPE, SOURCE_KINDS, ratio, primaryOutcome,
 } from './metrics.js';
 import {
@@ -108,6 +108,7 @@ export async function computeProject(db, project, range, today) {
   const cum = await all(db, 'SELECT campaign_id, creative_id, placement_id, SUM(spend) AS s FROM ad_daily WHERE project_id = ? GROUP BY campaign_id, creative_id, placement_id', project.id);
   const cumBy = (field, id) => cum.filter((r) => r[field] === id).reduce((a, r) => a + r.s, 0);
   const spentAll = cum.reduce((a, r) => a + r.s, 0);
+  const adDaysAll = new Set((await all(db, 'SELECT DISTINCT creative_id, date FROM ad_daily WHERE project_id = ? AND creative_id IS NOT NULL', project.id)).map((r) => r.creative_id + '|' + r.date));
 
   const campaignById = Object.fromEntries(campaigns.map((c) => [c.id, c]));
   const expectedByCreative = {};
@@ -115,7 +116,19 @@ export async function computeProject(db, project, range, today) {
     const c = campaignById[cr.campaign_id];
     expectedByCreative[cr.id] = expectedDays(cr, c, placements.filter((p) => p.creative_id === cr.id), range, yesterday).map((date) => ({ key: cr.id, date }));
   }
-  const ctx = { project, defs, sources, range, today };
+  const paidIds = new Set(creatives.filter((c) => c.paid).map((c) => c.id));
+  const ctx = { project, defs, sources, range, today, paidIds };
+  // 累計花費（專案開始至昨天）也要檢查完整度：缺日時只能稱「已知小計」
+  const allRange = { from: '0000-01-01', to: yesterday };
+  const missingAllOf = (crs) => [...new Set(crs.flatMap((cr) => expectedDays(cr, campaignById[cr.campaign_id], placements.filter((p) => p.creative_id === cr.id), allRange, yesterday)
+    .filter((d) => !adDaysAll.has(cr.id + '|' + d))))].sort();
+  const cumSpend = (crs, v) => {
+    if (!crs.some((x) => x.paid) && !v) return { v: null, s: 'not_computed', r: '無付費渠道' };
+    if (!sources.ads?.connected) return { v: null, s: 'not_connected', r: 'FB 廣告數字尚未匯入' };
+    const miss = missingAllOf(crs);
+    if (miss.length) return { v, s: 'incomplete', r: `已知小計・缺 ${miss.length} 天廣告資料（${miss.slice(0, 3).map((x) => `${Number(x.slice(5, 7))}/${Number(x.slice(8, 10))}`).join('、')}${miss.length > 3 ? '…' : ''}）`, missing: miss };
+    return v === 0 ? { v: 0, s: 'zero', r: '資料完整，數值為零' } : { v, s: 'value', r: '' };
+  };
   const scope = (crs, a, c) => computeScope(ctx, {
     ads: a, conv: c, hasPaid: crs.some((x) => x.paid), expected: crs.flatMap((x) => expectedByCreative[x.id]), keyField: 'creative_id',
   });
@@ -130,19 +143,21 @@ export async function computeProject(db, project, range, today) {
     const paid = crsRaw.some((x) => x.paid);
     const m = scope(crsRaw, ads.filter((r) => r.campaign_id === c.id), conv.filter((r) => r.campaign_id === c.id));
     m.spendAll = cumBy('campaign_id', c.id);
+    m.spendCum = cumSpend(crsRaw, m.spendAll);
     const campLive = crsRaw.some((x) => expectedByCreative[x.id].length) || ads.some((r) => r.campaign_id === c.id);
     if (paid && !campLive) for (const k of ['spend', 'impressions', 'link_clicks', 'ctr', 'cpc', 'cost_primary', 'cost_enroll', 'return_on_spend']) m[k] = { v: null, s: 'not_computed', r: '本期未投放' };
     const src = primary ? sources[SOURCE_OF_TYPE[primary]] : null;
     if (c.status === '進行中' && primary && src?.connected && src.covered_through >= yesterday && paid) {
       m.recent = {
         spend: adsAll.filter((r) => r.campaign_id === c.id && r.date >= recentFrom && r.date <= yesterday).reduce((a, r) => a + r.spend, 0),
-        outcome: convAll.filter((r) => r.campaign_id === c.id && r.type === primary && r.date >= recentFrom && r.date <= yesterday).length,
+        outcome: convAll.filter((r) => r.campaign_id === c.id && paidIds.has(r.creative_id) && r.type === primary && r.date >= recentFrom && r.date <= yesterday).length,
       };
     }
     campaignMetrics[c.id] = m;
     const crs = crsRaw.map((cr) => {
       const cm = scope([cr], ads.filter((r) => r.creative_id === cr.id), conv.filter((r) => r.creative_id === cr.id));
       cm.spendAll = cumBy('creative_id', cr.id);
+      cm.spendCum = cumSpend([cr], cm.spendAll);
       const hasAds = ads.some((r) => r.creative_id === cr.id);
       const notLive = cr.paid && !hasAds && (cr.status === '規劃中' || !expectedByCreative[cr.id].length);
       const why = cr.status === '規劃中' ? '尚未投放' : '本期未投放';
@@ -192,6 +207,37 @@ export async function computeProject(db, project, range, today) {
   const unknown = bucket(conv.filter((r) => !r.campaign_id));
   const campaignOnly = bucket(conv.filter((r) => r.campaign_id && !r.creative_id));
   const adsUnmatched = ads.filter((r) => !r.creative_id).length;
+
+  // 成果分三組：付費廣告成果／免費引流成果／來源不明（含只對應到波次）；專案合計以人去重，不等於三組相加
+  const freeIds = new Set(creatives.filter((c) => !c.paid).map((c) => c.id));
+  const groupsOf = (gctx, rows) => ({
+    paid: countOutcomes(gctx, rows.filter((r) => paidIds.has(r.creative_id))),
+    free: countOutcomes(gctx, rows.filter((r) => freeIds.has(r.creative_id))),
+    unknown: countOutcomes(gctx, rows.filter((r) => !r.creative_id)),
+    campaignOnly: countOutcomes(gctx, rows.filter((r) => r.campaign_id && !r.creative_id)),
+    noCampaign: countOutcomes(gctx, rows.filter((r) => !r.campaign_id)),
+  });
+  const groups = groupsOf(ctx, conv);
+
+  // 累計（專案開始至昨天）：與所選期間無關
+  const startDate = campaigns.map((c) => c.start_date).filter(Boolean).sort()[0] || null;
+  const cumRange = { from: startDate || yesterday, to: yesterday };
+  const convCum = await all(db, 'SELECT * FROM conversions WHERE project_id = ? AND date <= ?', project.id, yesterday);
+  const cumCtx = { ...ctx, range: cumRange };
+  const cumAll = countOutcomes(cumCtx, convCum);
+  const cumGroups = groupsOf(cumCtx, convCum);
+  const spendCum = cumSpend(creatives, spentAll);
+  const enrollCum = cumAll.enroll;
+  const cumulative = {
+    from: startDate, to: yesterday, spend: spendCum, all: cumAll, groups: cumGroups,
+    cost_primary: primary && paidIds.size ? strictCost(spendCum, cumGroups.paid[primary]) : null,
+    enrollProgress: defs.enroll?.enabled && project.target_enroll && enrollCum.v != null
+      ? { v: enrollCum.v / project.target_enroll, s: enrollCum.s === 'incomplete' ? 'incomplete' : 'value', r: enrollCum.r, n: enrollCum.v, d: project.target_enroll }
+      : { v: null, s: 'not_computed', r: !defs.enroll?.enabled ? '本專案未定義報名' : !project.target_enroll ? '招生目標待填' : enrollCum.r },
+  };
+  const budgetUse = !project.budget ? { v: null, s: 'not_computed', r: '總預算待填' }
+    : spendCum.v == null ? { v: null, s: spendCum.s, r: spendCum.r }
+      : { v: spendCum.v / project.budget, s: spendCum.s === 'incomplete' ? 'incomplete' : 'value', r: spendCum.s === 'incomplete' ? '累計花費缺資料，實際使用率至少此數' : '', n: spendCum.v, d: project.budget };
   const { anomalies, autoTodos } = anomaliesFor({
     project, defs, settings, campaigns, creatives, campaignMetrics, projectMetrics, adsUnmatched,
     unknownConv: unknown, links, sources, today, range,
@@ -200,10 +246,10 @@ export async function computeProject(db, project, range, today) {
   const periodDates = campaigns.filter((c) => c.start_date);
   return {
     project: { ...project, metrics: defs, settings },
-    sources, campaigns: outCampaigns, creatives: outCreatives, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched,
+    sources, campaigns: outCampaigns, creatives: outCreatives, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched, groups, cumulative,
     anomalies,
     todos: [...autoTodos, ...manualTodos.map((t) => ({ ...t, level: 'manual', kind: '人工待辦', manual: true, project: project.code, project_id: project.id, link: `#/p/${project.id}/sources` }))],
-    budget: { total: project.budget, spentAll },
+    budget: { total: project.budget, spentAll, spend: spendCum, used: budgetUse },
     flight: periodDates.length ? { from: periodDates.map((c) => c.start_date).sort()[0], to: periodDates.map((c) => c.end_date || c.start_date).sort().at(-1) } : null,
   };
 }
@@ -261,7 +307,7 @@ async function home(db, user, range, today) {
     range, today, user,
     organic: organic && { bySubject: organic.bySubject, total: organic.total, definition: organic.definition, outlets: organic.outlets.length },
     projects: results.map((r) => ({
-      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources, flight: r.flight,
+      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources, flight: r.flight, groups: r.groups, cumulative: r.cumulative,
       active: r.campaigns.filter((c) => c.status === '進行中').map((c) => ({ id: c.id, code: c.code, name: c.name, offer: c.offer, judgement: c.judgement })),
       paidCreatives: r.creatives.filter((c) => c.paid).length,
       missingAdDates: r.metrics.missingAdDates,
