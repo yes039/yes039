@@ -1,0 +1,18 @@
+# 宣傳戰情室（尚未部署）
+# 部署前必須完成 README「正式部署前檢查」：建立 D1、設定 Cloudflare Access、ADMIN_EMAILS、HASH_SALT。
+# 未設定 ACCESS_TEAM_DOMAIN 與 ACCESS_AUD 時，API 一律拒絕存取（不會在未保護的狀態下運作）。
+name = "promo-dashboard"
+main = "src/worker.js"
+compatibility_date = "2026-09-15"
+workers_dev = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "promo-dashboard"
+database_id = "待建立"
+
+[vars]
+ADMIN_EMAILS = ""
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+# HASH_SALT 用 `wrangler secret put HASH_SALT` 設定，不寫在這裡

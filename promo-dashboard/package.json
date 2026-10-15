@@ -1,0 +1,22 @@
+{
+  "name": "promo-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "宣傳戰情室 v0.1：專案／活動／素材四層的 FB 廣告宣傳儀表板（開發與測試版，未部署）",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && node --no-warnings dev/server.mjs",
+    "test": "node --no-warnings --test test/*.test.js",
+    "preview": "node scripts/build.mjs --preview",
+    "shots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "htm": "3.1.1",
+    "preact": "10.24.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0",
+    "sql.js": "1.11.0"
+  }
+}
