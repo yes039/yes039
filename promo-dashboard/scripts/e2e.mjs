@@ -40,8 +40,10 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
   assert.ok(await page.isVisible('.kpi:has-text("預算使用率") :text("至少")'));
   assert.ok(await page.isVisible('#h-prog ~ .enroll-prog :text("資料不完整，達成率暫不計算")') || (await page.locator('section:has(#h-prog)').textContent()).includes('資料不完整，達成率暫不計算'));
   assert.equal(await page.locator('section:has(#h-prog) .budget-bar').count(), 0, '不完整時不畫進度條');
-  assert.ok((await page.locator('section:has(#h-prog)').textContent()).includes('目前不扣除取消'));
-  step('專案總覽：成果三組分開、成本暫不計算、預算使用率標「至少」、累計達成率暫不計算、說明不扣除取消');
+  const progText = await page.locator('section:has(#h-prog)').textContent();
+  for (const t of ['累計報名', '目前取消', '恢復報名', '有效報名', '取消報名紀錄', '退款', '不視為取消報名']) assert.ok(progText.includes(t), t);
+  assert.equal(await page.locator('section:has(#h-prog) table.enroll-tbl tbody tr').count(), 4);
+  step('專案總覽：成果三組分開、成本暫不計算、預算使用率標「至少」、報名／取消／恢復／有效報名分開、達成率暫不計算');
 
   // 素材：比較表在素材卡前面；已結束收起；圖片放大；影片播放；落地頁
   await page.goto(base + '#/p/test-proj-jsn/creatives');
@@ -59,11 +61,11 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
   step('素材比較表在素材卡前面；已結束素材預設收起，展開後顯示「已結束」且不給持續；編號不變');
   assert.ok(await page.isVisible('.media-flag:has-text("僅封面，尚未提供影片")'));
   assert.ok(await page.isVisible('.media.none:has-text("尚未提供素材")'));
-  assert.ok(await page.locator('.mock-tag:has-text("測試示意")').count() >= 2);
+  assert.ok(await page.locator('.cr-card .asset-tag.test').count() >= 3, '每張素材卡都標測試素材');
   await page.locator('.cr-card .zoom').first().click();
   await page.waitForSelector('.lightbox img');
   await page.click('.modal .icon-btn');
-  step('圖片點擊放大；只有封面標「僅封面，尚未提供影片」；沒有檔案標「尚未提供素材」；測試示意圖有標示');
+  step('圖片點擊放大；只有封面標「僅封面，尚未提供影片」；沒有檔案標「尚未提供素材」；素材卡標「測試素材」');
   await page.locator('table.cmp tr.ended:has-text("VD01") button.linklike').first().click();
   await page.waitForSelector('.modal video');
   const played = await page.evaluate(async () => {
@@ -88,6 +90,18 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
     assert.ok(reqs.some((u) => /example\.com\/test-ebook/.test(u)), '新分頁開啟落地頁');
     await popup.close();
   }
+  // 測試／正式：明確確認才改正式；測試專案仍保留測試提示
+  assert.ok(await page.isVisible('.modal .asset-tag.test'));
+  assert.ok(await page.locator('.modal button:has-text("確認為正式素材")').isDisabled());
+  await page.locator('.modal .asset-box input[type=checkbox]').check();
+  await page.locator('.modal button:has-text("確認為正式素材")').click();
+  await page.waitForSelector('.modal .asset-tag.official');
+  assert.ok((await page.locator('.modal .asset-box').textContent()).includes('本專案是測試專案'));
+  assert.ok(await page.isVisible('.test-banner'));
+  assert.ok(await page.isVisible('.modal .media video'), '缺檔／封面狀態與正式標記分開');
+  await page.locator('.modal button:has-text("改回測試")').click();
+  await page.waitForSelector('.modal .asset-tag.test');
+  step('素材標記：預設測試，勾選確認後才能改正式；改正式後專案仍顯示測試提示；可改回測試');
   await page.click('.modal .icon-btn');
   step(`影片可播放（${played.toFixed(1)} 秒）；完整素材含版本、負責人、審核與投放狀態、標題文案 CTA、落地頁（可開啟）`);
   await page.goto(base + '#/');
@@ -120,10 +134,11 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
 
   // 招生達成率：資料不完整時不顯示確定數字
   const jcard = page.locator('.proj-card:has-text("Jason 老師合作招生")');
-  assert.ok((await jcard.textContent()).includes('已知累計報名'));
+  assert.ok((await jcard.textContent()).includes('已知有效報名'));
+  assert.ok((await jcard.textContent()).includes('本期取消'));
   assert.ok((await jcard.textContent()).includes('資料不完整，達成率暫不計算'));
   assert.ok(!/達成 \d/.test(await jcard.textContent()));
-  step('首頁：累計報名資料不完整，顯示「已知累計報名」與「達成率暫不計算」');
+  step('首頁：報名資料不完整，顯示「已知有效報名」與「達成率暫不計算」，並列本期取消、恢復');
 
   // 發文數核對：點數字看明細，筆數一致
   const recon = page.locator('section:has(#h-a) .reconcile');
@@ -186,6 +201,45 @@ for (const [vname, viewport] of [['桌機', { width: 1280, height: 900 }], ['手
     assert.ok(await page.isVisible('.mini-list a:has-text("E2E 支援招生貼文")'));
     assert.ok(await page.isVisible('text=不與廣告成果相加'));
     step('專案總覽分區顯示：專用付費廣告／相關自然貼文（不相加）');
+
+    // 取消報名與恢復（人工登錄）
+    const PH = '0933' + String(Date.now()).slice(-6);
+    const YD = new Date(Date.now() + 8 * 3600000 - 86400000).toISOString().slice(0, 10);
+    const cumCell = async (row) => num(await page.locator(`table.enroll-tbl tr:has-text("${row}") td`).nth(2).textContent());
+    await page.goto(base + '#/p/test-proj-jsn/overview');
+    await page.waitForSelector('table.enroll-tbl');
+    const e0 = { ever: await cumCell('報名'), cancel: await cumCell('取消報名'), valid: await cumCell('有效報名') };
+    await page.click('.tabs a:has-text("登錄與匯入")');
+    const outcomeForm = page.locator('section:has(h2:has-text("人工登錄：成果")) form');
+    const entry = async (type, phone, note) => {
+      await outcomeForm.locator('#f-type').selectOption(type);
+      await outcomeForm.locator('#f-phone').fill(phone);
+      await outcomeForm.locator('#f-date').fill(YD); // 統計到昨天，今天登錄的明天才計入
+      await outcomeForm.locator('#f-note').fill(note);
+      await outcomeForm.locator('button:has-text("登錄")').click();
+    };
+    await entry('cancel', PH, '測試');
+    await page.waitForSelector('.form-err:has-text("找不到")');
+    await entry('enroll', PH, '');
+    await page.waitForSelector('.ok-box');
+    await entry('cancel', PH, '時間無法配合');
+    await page.waitForTimeout(300);
+    await entry('cancel', PH, '重複取消');
+    await page.waitForSelector('.form-err:has-text("已是取消狀態")');
+    await page.click('.tabs a:has-text("專案總覽")');
+    await page.waitForSelector('table.enroll-tbl');
+    const e1 = { ever: await cumCell('報名'), cancel: await cumCell('取消報名'), valid: await cumCell('有效報名') };
+    assert.deepEqual(e1, { ever: e0.ever + 1, cancel: e0.cancel + 1, valid: e0.valid });
+    await page.click('.tabs a:has-text("登錄與匯入")');
+    await entry('enroll', PH, '恢復報名');
+    await page.waitForSelector('.ok-box');
+    await page.click('.tabs a:has-text("專案總覽")');
+    await page.waitForSelector('table.enroll-tbl');
+    const e2 = { ever: await cumCell('報名'), cancel: await cumCell('取消報名'), valid: await cumCell('有效報名') };
+    assert.deepEqual(e2, { ever: e0.ever + 1, cancel: e0.cancel, valid: e0.valid + 1 });
+    await page.locator('summary:has-text("取消報名紀錄")').click();
+    assert.ok(await page.isVisible('td:has-text("時間無法配合")'));
+    step('人工登錄：沒報名不能取消、重複取消被擋；取消後有效報名扣除、恢復後不重複計人；取消原因可查');
 
     // 素材比較
     await page.click('.tabs a:has-text("廣告素材比較")');

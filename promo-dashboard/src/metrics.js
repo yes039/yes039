@@ -19,7 +19,7 @@ export const STATE_LABEL = {
 };
 
 export const OUTCOME_TYPES = ['inquiry', 'claim', 'lead', 'valid_lead', 'enroll', 'payment', 'refund'];
-export const SOURCE_OF_TYPE = { inquiry: 'inquiry', claim: 'claim', lead: 'lead', valid_lead: 'lead', enroll: 'enroll', payment: 'payment', refund: 'payment' };
+export const SOURCE_OF_TYPE = { inquiry: 'inquiry', claim: 'claim', lead: 'lead', valid_lead: 'lead', enroll: 'enroll', cancel: 'enroll', payment: 'payment', refund: 'payment' };
 export const SOURCE_KINDS = {
   ads: 'FB 廣告數字', inquiry: '詢問', claim: '電子書／內容領取', lead: '名單', enroll: '報名', payment: '付款與退款',
 };
@@ -129,7 +129,8 @@ export function countOutcomes(ctx, conv) {
     const src = sources[SOURCE_OF_TYPE[t]];
     if (!src?.connected) { out[t] = val(null, 'not_connected', src?.note || `${SOURCE_KINDS[SOURCE_OF_TYPE[t]]}尚未接入`); continue; }
     if (noDays) { out[t] = val(null, 'not_computed', '本期還沒有已結束的日子'); continue; }
-    const rows = conv.filter((r) => r.type === t);
+    // 報名只算每人第一次報名（恢復報名、重複報名不重複計人）
+    const rows = conv.filter((r) => r.type === t && (t !== 'enroll' || !ctx.firstEnroll || !r.person_ref || ctx.firstEnroll.has(r.id)));
     let n;
     if (t === 'payment' || t === 'refund') n = rows.reduce((a, r) => a + Number(r.qty || 1), 0);
     else {
@@ -251,4 +252,64 @@ export function anomaliesFor({ project, defs, settings, campaigns, creatives, ca
   items.sort((a, b) => order[a.level] - order[b.level]);
   todos.sort((a, b) => order[a.level] - order[b.level]);
   return { anomalies: items, autoTodos: todos };
+}
+
+/**
+ * 報名生命週期：同一人依時間重播「報名／取消報名」事件。
+ *   累計報名（曾報名）：截至某日有任何報名紀錄的人，以人去重
+ *   目前取消：截至某日最後一筆是「取消報名」的人
+ *   有效報名＝累計報名 − 目前取消；取消後再報名＝恢復，不重複計人
+ *   本期新增報名：第一次報名落在期間內的人（恢復報名不算新增）
+ * 退款不在這裡處理，不會視為取消。
+ * 沒有電話或 Email 的報名（無法去重）各自算一人；取消一定要能對應到人。
+ */
+export function enrollLifecycle(rows) {
+  const order = (a, b) => a.date.localeCompare(b.date) || String(a.created_at || '').localeCompare(String(b.created_at || '')) || String(a.id).localeCompare(String(b.id));
+  const byPerson = new Map();
+  const anon = [];
+  for (const r of rows) {
+    if (r.type !== 'enroll' && r.type !== 'cancel') continue;
+    if (!r.person_ref) { if (r.type === 'enroll') anon.push(r); continue; }
+    if (!byPerson.has(r.person_ref)) byPerson.set(r.person_ref, []);
+    byPerson.get(r.person_ref).push(r);
+  }
+  const firstIds = new Set(anon.map((r) => r.id));
+  for (const evs of byPerson.values()) {
+    evs.sort(order);
+    const first = evs.find((e) => e.type === 'enroll');
+    if (first) firstIds.add(first.id);
+  }
+  /** 截至 asOf 的狀態，以及 [from, asOf] 期間內的變動 */
+  function stats(from, asOf) {
+    const out = { ever: 0, cancelledNow: 0, valid: 0, restoredNow: 0, newIn: 0, cancelIn: 0, restoreIn: 0 };
+    for (const r of anon) {
+      if (r.date > asOf) continue;
+      const q = Number(r.qty || 1);
+      out.ever += q; out.valid += q;
+      if (r.date >= from) out.newIn += q;
+    }
+    for (const evs of byPerson.values()) {
+      let enrolled = false; let everEnrolled = false; let cancelledOnce = false;
+      let cIn = false; let rIn = false;
+      for (const e of evs) {
+        if (e.date > asOf) break;
+        const inP = e.date >= from;
+        if (e.type === 'enroll') {
+          if (!everEnrolled && inP) out.newIn++;
+          if (!enrolled && cancelledOnce && inP) rIn = true; // 取消後再報名＝恢復
+          enrolled = true; everEnrolled = true;
+        } else if (enrolled) { // 沒有有效報名時的取消紀錄不影響人數
+          enrolled = false; cancelledOnce = true;
+          if (inP) cIn = true;
+        }
+      }
+      if (!everEnrolled) continue;
+      out.ever++;
+      if (enrolled) { out.valid++; if (cancelledOnce) out.restoredNow++; } else out.cancelledNow++;
+      if (cIn) out.cancelIn++;
+      if (rIn) out.restoreIn++;
+    }
+    return out;
+  }
+  return { firstIds, stats };
 }

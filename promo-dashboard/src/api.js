@@ -2,7 +2,7 @@
 import { getUser } from './auth.js';
 import { resolvePeriod, todayTW, addDays, overlap, datesInRange } from './periods.js';
 import {
-  computeScope, countOutcomes, strictCost, judge, anomaliesFor, metricDefs, defaultMetrics, DEFAULT_SETTINGS, OUTCOME_TYPES,
+  computeScope, countOutcomes, strictCost, enrollLifecycle, judge, anomaliesFor, metricDefs, defaultMetrics, DEFAULT_SETTINGS, OUTCOME_TYPES,
   SOURCE_OF_TYPE, SOURCE_KINDS, ratio, primaryOutcome,
 } from './metrics.js';
 import {
@@ -117,7 +117,18 @@ export async function computeProject(db, project, range, today) {
     expectedByCreative[cr.id] = expectedDays(cr, c, placements.filter((p) => p.creative_id === cr.id), range, yesterday).map((date) => ({ key: cr.id, date }));
   }
   const paidIds = new Set(creatives.filter((c) => c.paid).map((c) => c.id));
-  const ctx = { project, defs, sources, range, today, paidIds };
+  // 報名生命週期（全部期間的報名與取消報名，依人重播）
+  const lifeRows = await all(db, "SELECT id, type, date, person_ref, qty, created_at, creative_id, campaign_id, note FROM conversions WHERE project_id = ? AND type IN ('enroll','cancel')", project.id);
+  const life = enrollLifecycle(lifeRows);
+  const ctx = { project, defs, sources, range, today, paidIds, firstEnroll: life.firstIds };
+  const lcVal = (n, to, from) => {
+    if (!defs.enroll?.enabled) return { v: null, s: 'not_computed', r: '本專案未定義報名' };
+    const src = sources.enroll;
+    if (!src?.connected) return { v: null, s: 'not_connected', r: src?.note || '報名尚未接入' };
+    if (from && to < from) return { v: null, s: 'not_computed', r: '本期還沒有已結束的日子' };
+    if (src.covered_through && src.covered_through < to) return { v: n, s: 'incomplete', r: `資料只更新到 ${Number(src.covered_through.slice(5, 7))}/${Number(src.covered_through.slice(8, 10))}` };
+    return n === 0 ? { v: 0, s: 'zero', r: '資料完整，數值為零' } : { v: n, s: 'value', r: '' };
+  };
   // 累計花費（專案開始至昨天）也要檢查完整度：缺日時只能稱「已知小計」
   const allRange = { from: '0000-01-01', to: yesterday };
   const missingAllOf = (crs) => [...new Set(crs.flatMap((cr) => expectedDays(cr, campaignById[cr.campaign_id], placements.filter((p) => p.creative_id === cr.id), allRange, yesterday)
@@ -230,9 +241,19 @@ export async function computeProject(db, project, range, today) {
   const cumAll = countOutcomes(cumCtx, convCum);
   const cumGroups = groupsOf(cumCtx, convCum);
   const spendCum = cumSpend(creatives, spentAll);
-  const enrollCum = cumAll.enroll;
+  const lcP = life.stats(range.from, range.to);
+  const lcC = life.stats('0000-01-01', yesterday);
+  const enrollment = {
+    period: { new: lcVal(lcP.newIn, range.to, range.from), cancel: lcVal(lcP.cancelIn, range.to, range.from), restore: lcVal(lcP.restoreIn, range.to, range.from) },
+    cumulative: { ever: lcVal(lcC.ever, yesterday), cancelled: lcVal(lcC.cancelledNow, yesterday), restored: lcVal(lcC.restoredNow, yesterday), valid: lcVal(lcC.valid, yesterday) },
+    cancels: defs.enroll?.enabled ? lifeRows.filter((r) => r.type === 'cancel').sort((a, b) => b.date.localeCompare(a.date) || String(b.created_at).localeCompare(String(a.created_at))).slice(0, 20).map((r) => {
+      const after = lifeRows.some((x) => x.type === 'enroll' && x.person_ref === r.person_ref && (x.date > r.date || (x.date === r.date && x.created_at > r.created_at)));
+      return { id: r.id, date: r.date, recorded_at: r.created_at, reason: r.note, creative: creatives.find((c) => c.id === r.creative_id)?.code || '', status: after ? '已恢復報名' : '仍為取消' };
+    }) : [],
+  };
+  const enrollCum = enrollment.cumulative.valid; // 達成率用有效報名
   const cumulative = {
-    from: startDate, to: yesterday, spend: spendCum, all: cumAll, groups: cumGroups,
+    from: startDate, to: yesterday, spend: spendCum, all: cumAll, groups: cumGroups, enrollment: enrollment.cumulative,
     cost_primary: primary && paidIds.size ? strictCost(spendCum, cumGroups.paid[primary]) : null,
     // 累計報名資料不完整時不給確定的達成率；保留已知人數與目標供畫面顯示
     enrollProgress: !defs.enroll?.enabled ? { v: null, s: 'not_computed', r: '本專案未定義報名' }
@@ -252,7 +273,7 @@ export async function computeProject(db, project, range, today) {
   const periodDates = campaigns.filter((c) => c.start_date);
   return {
     project: { ...project, metrics: defs, settings },
-    sources, campaigns: outCampaigns, creatives: outCreatives, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched, groups, cumulative,
+    sources, campaigns: outCampaigns, creatives: outCreatives, byChannel, metrics: projectMetrics, unknown, campaignOnly, adsUnmatched, groups, cumulative, enrollment,
     anomalies,
     todos: [...autoTodos, ...manualTodos.map((t) => ({ ...t, level: 'manual', kind: '人工待辦', manual: true, project: project.code, project_id: project.id, link: `#/p/${project.id}/sources` }))],
     budget: { total: project.budget, spentAll, spend: spendCum, used: budgetUse },
@@ -315,7 +336,7 @@ async function home(db, user, range, today) {
     range, today, user,
     organic: organic && { bySubject: organic.bySubject, total: organic.total, definition: organic.definition, outlets: organic.outlets.length },
     projects: results.map((r) => ({
-      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources, flight: r.flight, groups: r.groups, cumulative: r.cumulative,
+      project: r.project, metrics: r.metrics, unknown: r.unknown, budget: r.budget, sources: r.sources, flight: r.flight, groups: r.groups, cumulative: r.cumulative, enrollment: r.enrollment,
       active: r.campaigns.filter((c) => c.status === '進行中').map((c) => ({ id: c.id, code: c.code, name: c.name, offer: c.offer, judgement: c.judgement })),
       paidCreatives: r.creatives.filter((c) => c.paid).length,
       missingAdDates: r.metrics.missingAdDates,
@@ -416,22 +437,25 @@ async function saveCreative(db, user, c, b, existing) {
   if (video && !/^https:\/\//.test(video)) throw new HttpError('影片需為 https 網址');
   const landing = str(b.landing_url ?? existing?.landing_url, 1000);
   if (landing && !/^https:\/\//.test(landing)) throw new HttpError('落地頁需為 https 網址');
-  // 換了圖片或影片，就不再是測試示意素材
-  const mock = existing && preview === existing.preview_url && video === existing.video_url ? existing.asset_mock : 0;
   const prod = b.prod_status ?? existing?.prod_status ?? '製作中';
   if (!['製作中', '待審核', '已核可'].includes(prod)) throw new HttpError('製作狀態不正確');
   const keep = (k, max) => str(b[k] ?? existing?.[k], max);
   const vals = [keep('name', 200), channel, paid, format in FORMATS ? format : '', str(b.status || existing?.status || '規劃中', 10), keep('platform_ref', 200),
-    prod, keep('owner', 100), keep('headline', 200), keep('copy_text', 3000), keep('cta', 50), keep('appeal', 300), keep('destination', 300), preview, video, landing, mock];
+    prod, keep('owner', 100), keep('headline', 200), keep('copy_text', 3000), keep('cta', 50), keep('appeal', 300), keep('destination', 300), preview, video, landing];
   if (prod !== '已核可' && ['進行中'].includes(vals[4])) throw new HttpError('素材未核可前不能設為投放中');
   if (existing) {
-    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, prod_status=?, owner=?, headline=?, copy_text=?, cta=?, appeal=?, destination=?, preview_url=?, video_url=?, landing_url=?, asset_mock=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
+    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, prod_status=?, owner=?, headline=?, copy_text=?, cta=?, appeal=?, destination=?, preview_url=?, video_url=?, landing_url=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
+    // 正式素材換了圖片或影片：退回「測試」，要再確認一次（反方向絕不自動變正式）
+    if (existing.asset_status === '正式' && (preview !== existing.preview_url || video !== existing.video_url)) {
+      await run(db, "UPDATE creatives SET asset_status='測試', asset_confirmed_by='', asset_confirmed_at=NULL WHERE id=?", existing.id);
+      await audit(db, user.email, 'creative.asset_status', c.project_id, { code, from: '正式', to: '測試', why: '更換素材檔案' });
+    }
     await audit(db, user.email, 'creative.update', c.project_id, { code });
     return { id: existing.id };
   }
   const id = uid();
-  await run(db, `INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, video_url, landing_url, asset_mock, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.project_id, c.id, code, ...vals, now(), now());
+  await run(db, `INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, video_url, landing_url, asset_status, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'測試',?,?)`, id, c.project_id, c.id, code, ...vals, now(), now());
   await audit(db, user.email, 'creative.create', c.project_id, { code });
   return { id };
 }
@@ -455,6 +479,30 @@ async function lookups(db, p) {
     creativesByCode: new Map(creatives.map((c) => [c.code, c])),
     claimCodes: new Map(codes.map((c) => [normalizeClaimCode(c.code), c])),
   };
+}
+
+/**
+ * 檢查取消報名是否能成立：依時間重播同一人的報名／取消。
+ * 取消前必須是「有效報名」狀態；已取消的人不能再取消一次（避免重複扣人）。
+ * existing：資料庫裡的報名與取消紀錄；incoming：要新增的紀錄（依日期處理）。回傳每筆的錯誤訊息（沒有錯誤為空字串）。
+ */
+function checkCancels(existing, incoming) {
+  const events = existing.map((r) => ({ ...r, _old: true }));
+  const errors = new Map();
+  const sorted = [...incoming].sort((a, b) => a.date.localeCompare(b.date) || (a.line || 0) - (b.line || 0));
+  for (const r of sorted) {
+    if (r.type !== 'cancel' && r.type !== 'enroll') continue;
+    if (r.type === 'cancel') {
+      const mine = events.filter((e) => e.person_ref === r.person_ref && e.date <= r.date)
+        .sort((a, b) => a.date.localeCompare(b.date) || (a._old === b._old ? String(a.created_at || '~').localeCompare(String(b.created_at || '~')) : a._old ? -1 : 1));
+      let enrolled = false;
+      for (const e of mine) enrolled = e.type === 'enroll' ? true : false;
+      if (!mine.some((e) => e.type === 'enroll')) { errors.set(r, '找不到這個人在取消日期之前的報名紀錄'); continue; }
+      if (!enrolled) { errors.set(r, '這個人目前已是取消狀態，不能重複取消'); continue; }
+    }
+    if (r.person_ref) events.push(r);
+  }
+  return errors;
 }
 
 async function importPreview(db, p, b, env) {
@@ -484,6 +532,11 @@ async function importPreview(db, p, b, env) {
         r.action = ex ? 'update' : 'insert';
       } else r.action = 'insert';
     }
+    // 取消報名要對應到有效報名；同一檔案內先報名後取消、取消後恢復都可以
+    const existing = (await all(db, "SELECT id, type, date, person_ref, external_ref, created_at FROM conversions WHERE project_id = ? AND type IN ('enroll','cancel') AND person_ref IS NOT NULL", p.id))
+      .filter((e) => !rows.some((r) => r.status === 'ok' && r.action === 'update' && r.type === e.type && r.external_ref === e.external_ref));
+    const cErr = checkCancels(existing, rows.filter((r) => r.status === 'ok'));
+    for (const [r, msg] of cErr) { r.status = 'error'; r.message = msg; }
     return { kind, rows, errors };
   }
   throw new HttpError('不支援的匯入類型');
@@ -734,7 +787,8 @@ export async function handleApi(request, env) {
       }
       if (sub === 'conversions' && method === 'POST') {
         const defs = metricDefs(p);
-        if (!OUTCOME_TYPES.includes(body.type) || !defs[body.type]?.enabled) throw new HttpError('本專案未定義這個成果指標');
+        const isCancel = body.type === 'cancel';
+        if (isCancel ? !defs.enroll?.enabled : (!OUTCOME_TYPES.includes(body.type) || !defs[body.type]?.enabled)) throw new HttpError('本專案未定義這個成果指標');
         const d = date(body.date, '日期', false);
         let campaign_id = null; let creative_id = null;
         if (body.creative_id) {
@@ -751,10 +805,17 @@ export async function handleApi(request, env) {
         if ((body.type === 'payment' || body.type === 'refund') && !(amount > 0)) throw new HttpError('付款與退款需要金額');
         const person = await personRef(body.phone, body.email, env.HASH_SALT || 'dev-salt');
         if (person && qty !== 1) throw new HttpError('填了電話或 Email 時數量只能是 1');
+        if (isCancel) {
+          if (!person) throw new HttpError('取消報名需要電話或 Email，才能對應到報名的人');
+          if (!str(body.note)) throw new HttpError('請填寫取消原因');
+          const existing = await all(db, "SELECT id, type, date, person_ref, created_at FROM conversions WHERE project_id = ? AND type IN ('enroll','cancel') AND person_ref = ?", p.id, person);
+          const msg = checkCancels(existing, [{ type: 'cancel', date: d, person_ref: person }]).values().next().value;
+          if (msg) throw new HttpError(msg);
+        }
         await run(db, `INSERT INTO conversions (id, project_id, type, date, campaign_id, creative_id, claim_code, qty, amount, person_ref, external_ref, source, note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,NULL,'manual',?,?)`,
           uid(), p.id, body.type, d, campaign_id, creative_id, '', qty, amount, person, str(body.note, 300), now());
         await markSource(db, p.id, SOURCE_OF_TYPE[body.type], body.coveredThrough ? date(body.coveredThrough, '資料更新到') : null);
-        await audit(db, user.email, 'conversion.manual', p.id, { type: body.type, qty });
+        await audit(db, user.email, isCancel ? 'enroll.cancel' : 'conversion.manual', p.id, { type: body.type, qty, date: d });
         return json({ ok: true }, 201);
       }
       if (sub === 'import' && seg[3] === 'preview' && method === 'POST') return json(await importPreview(db, p, body, env));
@@ -835,6 +896,19 @@ export async function handleApi(request, env) {
       const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', pl.creative_id);
       await projectFor(db, user, pl.project_id, true);
       return json(await savePlacement(db, user, cr, body, pl));
+    }
+    // 素材的測試／正式：只能由人明確確認，一般編輯不會改到
+    if (seg[0] === 'creatives' && seg[1] && seg[2] === 'asset-status' && method === 'POST') {
+      const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', seg[1]);
+      if (!cr) throw new HttpError('找不到素材', 404);
+      await campaignFor(db, user, cr.campaign_id, true);
+      if (!['測試', '正式'].includes(body.status)) throw new HttpError('狀態只能是「測試」或「正式」');
+      if (body.status === '正式' && body.confirm !== true) throw new HttpError('改為正式素材需要明確確認');
+      const official = body.status === '正式';
+      await run(db, 'UPDATE creatives SET asset_status=?, asset_confirmed_by=?, asset_confirmed_at=?, updated_at=? WHERE id=?',
+        body.status, official ? user.email : '', official ? now() : null, now(), cr.id);
+      await audit(db, user.email, 'creative.asset_status', cr.project_id, { code: cr.code, from: cr.asset_status, to: body.status });
+      return json({ ok: true, status: body.status });
     }
     if (seg[0] === 'creatives' && seg[1] && method === 'PUT') {
       const cr = await first(db, 'SELECT * FROM creatives WHERE id = ?', seg[1]);

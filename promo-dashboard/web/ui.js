@@ -128,12 +128,14 @@ export function Field({ label, name, value, type = 'text', hint, required, optio
   if (options) {
     input = html`<select id=${id} name=${name} ...${rest}>${options.map((o) => {
       const [v, l] = Array.isArray(o) ? o : [o, o];
-      return html`<option value=${v} selected=${String(value ?? '') === String(v)}>${l}</option>`;
+      // 沒有預設值時不設定 selected，避免背景重新載入把使用者已選的項目改回第一個
+      return html`<option value=${v} selected=${value == null ? undefined : String(value) === String(v)}>${l}</option>`;
     })}</select>`;
   } else if (type === 'textarea') {
-    input = html`<textarea id=${id} name=${name} rows="3" placeholder=${placeholder} ...${rest}>${value ?? ''}</textarea>`;
+    input = html`<textarea id=${id} name=${name} rows="3" placeholder=${placeholder} defaultValue=${value ?? ''} ...${rest}></textarea>`;
   } else {
-    input = html`<input id=${id} name=${name} type=${type} value=${value ?? ''} placeholder=${placeholder} ...${rest} />`;
+    // 用 defaultValue：背景重新載入時不會清掉使用者正在輸入的內容
+    input = html`<input id=${id} name=${name} type=${type} defaultValue=${value ?? ''} placeholder=${placeholder} ...${rest} />`;
   }
   return html`<div class=${'field' + (wide ? ' wide' : '')}>
     <label for=${id}>${label}${required ? html`<span class="req" aria-hidden="true"> *</span>` : null}</label>

@@ -108,10 +108,10 @@ export async function resetTestData(db, today, salt) {
     const cover = hasFile ? preview(fmt, x.code.split('-')[4], x.color) : '';
     const video = x.id === 'test-cr1' ? MOCK_VIDEO : '';
     add(`INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination,
-      preview_url, video_url, landing_url, asset_mock, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      preview_url, video_url, landing_url, asset_status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     x.id, pid, x.c.id, x.code, x.name, x.channel, x.paid, fmt.slice(0, 2), status, '',
     x.prod, pid === jsn ? '小編A（測試）' : '待填', x.headline, x.copy, x.cta, x.appeal, pid === jsn ? '落地頁表單（測試網址）' : '待定',
-    cover, video, pid === jsn && x.paid ? 'https://example.com/test-ebook' : '', cover ? 1 : 0, t, t);
+    cover, video, pid === jsn && x.paid ? 'https://example.com/test-ebook' : '', '測試', t, t);
   }
   // 素材 3 用在兩組受眾：各一筆投放紀錄
   const pls = [
@@ -186,13 +186,23 @@ export async function resetTestData(db, today, salt) {
     conv.push({ type: 'enroll', date: d, x: null, person });
     conv.push({ type: 'payment', date: d, x: null, person, amount: 3980 });
   }
+  // 部分退款：退 1,000 元，報名仍有效（退款不等於取消）
   const firstPay = conv.find((c) => c.type === 'payment' && c.x);
-  if (firstPay) conv.push({ type: 'refund', date: addDays(firstPay.date, 3), x: firstPay.x, person: firstPay.person, amount: 3980 });
+  if (firstPay) conv.push({ type: 'refund', date: addDays(firstPay.date, 3), x: firstPay.x, person: firstPay.person, amount: 1000, note: '部分退款：早鳥差額（測試）' });
+  // 取消報名：一人取消；一人取消後又恢復報名（恢復不重複計人）
+  const enrolls = conv.filter((c) => c.type === 'enroll' && c.x);
+  const cancelOnly = enrolls[1];
+  const restored = enrolls[2];
+  if (cancelOnly) conv.push({ type: 'cancel', date: addDays(cancelOnly.date, 2), x: cancelOnly.x, person: cancelOnly.person, note: '時間無法配合（測試）' });
+  if (restored) {
+    conv.push({ type: 'cancel', date: addDays(restored.date, 1), x: restored.x, person: restored.person, note: '家人反對（測試）' });
+    conv.push({ type: 'enroll', date: addDays(restored.date, 3), x: restored.x, person: restored.person, note: '恢復報名（測試）' });
+  }
   let n = 0;
   for (const c of conv) {
     add(`INSERT INTO conversions (id, project_id, type, date, campaign_id, creative_id, claim_code, qty, amount, person_ref, external_ref, source, batch_id, note, created_at)
-      VALUES (?,?,?,?,?,?,?,1,?,?,?,'csv','test-batch','測試資料',?)`, `test-cv-${++n}`, jsn, c.type, c.date, c.x?.c.id ?? null, c.x?.id ?? null, '', c.amount || 0, c.person,
-    ['enroll', 'payment', 'refund'].includes(c.type) ? `TEST-${c.type}-${n}` : null, t);
+      VALUES (?,?,?,?,?,?,?,1,?,?,?,'csv','test-batch',?,?)`, `test-cv-${++n}`, jsn, c.type, c.date, c.x?.c.id ?? null, c.x?.id ?? null, '', c.amount || 0, c.person,
+    ['enroll', 'payment', 'refund', 'cancel'].includes(c.type) ? `TEST-${c.type}-${n}` : null, c.note || '測試資料', t);
   }
   // 資料來源：報名只更新到前天（示範「更新至…」與完整度分開）
   for (const [kind, covered] of [['ads', yesterday], ['inquiry', yesterday], ['claim', yesterday], ['lead', yesterday], ['enroll', D(-2)], ['payment', yesterday]]) {

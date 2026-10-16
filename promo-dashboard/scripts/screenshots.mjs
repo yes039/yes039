@@ -30,6 +30,7 @@ const pages = [
   ['10-發文核對-已發明細', '#/organic?view=list&bucket=published'],
   ['11-素材詳情-影片', '#/p/test-proj-jsn/creatives', openDetail, false],
   ['12-圖片放大', '#/p/test-proj-jsn/creatives', async (page) => { await page.locator('.cr-card .zoom').first().click(); await page.waitForSelector('.lightbox img'); }, false],
+  ['14-招生進度-取消紀錄', '#/p/test-proj-jsn/overview', async (page) => { await page.locator('summary:has-text("取消報名紀錄")').click(); await page.locator('#h-prog').scrollIntoViewIfNeeded(); }],
   ['13-素材比較-已結束展開', '#/p/test-proj-jsn/creatives', async (page) => { await page.locator('table.cmp button:has-text("已結束")').click(); }],
 ]
 const viewports = [['桌機', { width: 1440, height: 900 }, 1], ['手機', { width: 390, height: 844 }, 2]];

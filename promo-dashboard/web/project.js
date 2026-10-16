@@ -150,7 +150,7 @@ function ProjectEntry({ d, reload }) {
         <h2 class="sec">人工登錄：成果</h2>
         ${enabled.length ? html`<${Form} submitLabel="登錄" onSubmit=${async (f, el) => { await api('POST', `/projects/${p.id}/conversions`, f); el.reset(); setMsg('已登錄成果'); reload(); }}>
           <div class="grid2">
-            <${Field} label="類型" name="type" options=${enabled.map((t) => [t, p.metrics[t].label])} />
+            <${Field} label="類型" name="type" options=${[...enabled.map((t) => [t, p.metrics[t].label]), ...(p.metrics.enroll?.enabled ? [['cancel', '取消報名']] : [])]} hint="取消報名需填電話或 Email 與原因；恢復報名請登錄一筆新的「報名」" />
             <${Field} label="日期" name="date" type="date" value=${today} required />
             <${Field} label="來源（素材）" name="creative_id" options=${[['', '不指定素材'], ...creatives.map((c) => [c.id, c.code])]} />
             <${Field} label="或只指定活動" name="campaign_id" options=${[['', '來源不明'], ...d.campaigns.map((c) => [c.id, c.code])]} hint="指定素材時以素材為準" />
@@ -159,7 +159,7 @@ function ProjectEntry({ d, reload }) {
             <${Field} label="電話（選填，用於去重）" name="phone" hint="只存雜湊值，不存原文" />
             <${Field} label="Email（選填）" name="email" type="email" />
             <${Field} label="這類資料已更新到" name="coveredThrough" type="date" />
-            <${Field} label="備註" name="note" />
+            <${Field} label="備註（取消報名請填原因）" name="note" />
           </div>
         </${Form}>` : html`<p class="muted">本專案尚未定義成果指標，請先到「專案設定」定義。</p>`}
       </section>
@@ -604,15 +604,30 @@ function ProjectOverview({ d, reload }) {
     ${has('enroll') ? html`<section class="panel" aria-labelledby="h-prog">
       <h2 class="sec" id="h-prog">招生進度</h2>
       <div class="kpis compact">
-        <${Kpi} label="本期新增報名" sub=${rangeText(d.range)}><${V} m=${m.enroll} showNA why /></${Kpi}>
+        <${Kpi} label="本期新增報名" sub=${'第一次報名在 ' + rangeText(d.range)}><${V} m=${d.enrollment.period.new} showNA why /></${Kpi}>
+        <${Kpi} label="累計有效報名" sub="累計報名 − 目前取消"><${V} m=${cum.enrollment.valid} showNA why /></${Kpi}>
         <${Kpi} label="招生目標"><span class="val">${p.target_enroll ? p.target_enroll + ' 人' : html`<span class="tbd">待填</span>`}</span></${Kpi}>
       </div>
       <${EnrollProgress} prog=${prog} cum=${cum} />
-      <p class="note">累計報名中：付費廣告 ${fmt.int(cum.groups.paid.enroll.v ?? 0)}、免費引流 ${fmt.int(cum.groups.free.enroll.v ?? 0)}、來源不明 ${fmt.int(cum.groups.unknown.enroll.v ?? 0)} 人（以人去重，三者相加可能大於合計）。</p>
-      <details class="rules-box"><summary>報名、付款、退款怎麼算</summary><ul>
-        <li><b>報名</b>：報名紀錄以人去重（同一電話或 Email 只算一人）。<b>目前不扣除取消</b>：系統還沒有「取消報名」紀錄，取消的人仍算在報名內；要扣除需先決定取消的定義並新增紀錄類型。</li>
-        <li><b>付款、退款分開</b>：付款與退款各自以筆數、金額呈現；退款不自動扣報名人數，只用在「付款淨額＝付款金額 − 退款金額」。</li>
-        <li>累計資料有任何來源沒更新到昨天時，只寫「已知累計」，達成率暫不計算。</li>
+      <div class="tbl"><table class="data enroll-tbl">
+        <thead><tr><th>報名狀態（以人去重）</th><th class="num">本期<div class="small muted">${rangeText(d.range)}</div></th><th class="num">累計<div class="small muted">至 ${md(cum.to)}</div></th></tr></thead>
+        <tbody>
+          <tr><td><b>報名</b><div class="small muted">本期：第一次報名在期間內；累計：曾完成報名</div></td><td class="num"><${V} m=${d.enrollment.period.new} compact /></td><td class="num"><${V} m=${cum.enrollment.ever} compact /></td></tr>
+          <tr><td><b>取消報名</b><div class="small muted">本期：期間內取消的人；累計：目前仍為取消的人</div></td><td class="num"><${V} m=${d.enrollment.period.cancel} compact /></td><td class="num"><${V} m=${cum.enrollment.cancelled} compact /></td></tr>
+          <tr><td><b>恢復報名</b><div class="small muted">取消後再報名，不重複計人</div></td><td class="num"><${V} m=${d.enrollment.period.restore} compact /></td><td class="num"><${V} m=${cum.enrollment.restored} compact /></td></tr>
+          <tr class="total"><td><b>有效報名</b><div class="small muted">累計報名 − 目前取消；用於招生達成率</div></td><td class="num">—</td><td class="num"><${V} m=${cum.enrollment.valid} compact /></td></tr>
+        </tbody></table></div>
+      <p class="note">累計報名中：付費廣告 ${fmt.int(cum.groups.paid.enroll.v ?? 0)}、免費引流 ${fmt.int(cum.groups.free.enroll.v ?? 0)}、來源不明 ${fmt.int(cum.groups.unknown.enroll.v ?? 0)} 人（以第一次報名的來源計，三者相加可能大於合計）。</p>
+      ${d.enrollment.cancels.length ? html`<details class="rules-box"><summary>取消報名紀錄（${d.enrollment.cancels.length}）</summary>
+        <div class="tbl"><table class="data"><thead><tr><th>取消日期</th><th>原因</th><th class="hide-sm">來源素材</th><th>目前狀態</th><th class="hide-sm">登錄時間</th></tr></thead>
+        <tbody>${d.enrollment.cancels.map((c) => html`<tr><td class="nowrap">${md(c.date)}</td><td>${c.reason || '—'}</td><td class="small hide-sm">${c.creative || '來源不明'}</td><td class="small">${c.status}</td><td class="small nowrap hide-sm">${String(c.recorded_at).slice(0, 16).replace('T', ' ')}</td></tr>`)}</tbody></table></div>
+        <p class="note">個人資料只存電話或 Email 的雜湊值，這裡不顯示個人身分。</p></details>` : null}
+      <details class="rules-box"><summary>報名、取消、退款怎麼算</summary><ul>
+        <li><b>累計報名</b>：曾完成報名的人數，同一電話或 Email 只算一人。</li>
+        <li><b>取消報名</b>：獨立紀錄，保存取消日期、原因與登錄時間；必須能對應到已報名的人，已取消的人不能重複取消。</li>
+        <li><b>有效報名</b>：累計報名扣除目前仍為取消的人；取消後再報名＝恢復，不重複計人。招生達成率＝有效報名 ÷ 招生目標。</li>
+        <li><b>退款</b>：獨立處理，不視為取消報名，只用在「付款淨額＝付款金額 − 退款金額」（含部分退款）。</li>
+        <li>報名資料沒有更新到昨天時，只寫「已知有效報名」，達成率暫不計算。</li>
       </ul></details>
       ${has('payment') ? html`<div class="tbl"><table class="data pay">
         <thead><tr><th></th><th class="num">付款筆數</th><th class="num">付款金額</th><th class="num">退款筆數</th><th class="num">退款金額</th><th class="num">付款淨額</th></tr></thead>
@@ -669,7 +684,7 @@ const version = (c) => c.code.split('-').at(-1);
 
 /** 素材檔：圖片可點擊放大、影片可播放；沒有檔案或只有封面時明確標示；測試示意圖另外標示 */
 function Media({ c, onZoom, big }) {
-  const mock = c.asset_mock ? html`<span class="mock-tag">測試示意，非真實素材</span>` : null;
+  const mock = html`<${AssetTag} c=${c} />`;
   if (c.video_url) {
     return html`<div class=${'media' + (big ? ' big' : '')}>
       <video controls preload="metadata" playsinline poster=${c.preview_url || undefined} src=${c.video_url} aria-label=${'素材影片：' + (c.name || c.code)}></video>
@@ -684,21 +699,48 @@ function Media({ c, onZoom, big }) {
   return html`<div class=${'media none' + (big ? ' big' : '')}><span>尚未提供素材</span></div>`;
 }
 
+/** 測試／正式標記（明確欄位）；與缺檔案、僅封面等狀態分開顯示 */
+function AssetTag({ c }) {
+  return c.asset_status === '正式'
+    ? html`<span class="asset-tag official" title=${`由 ${c.asset_confirmed_by || '—'} 於 ${String(c.asset_confirmed_at || '').slice(0, 16).replace('T', ' ')} 確認`}>正式素材</span>`
+    : html`<span class="asset-tag test">測試素材・未確認為正式</span>`;
+}
+
+function AssetStatusBox({ c, isTestProject, onChanged }) {
+  const [ok, setOk] = useState(false);
+  const [err, setErr] = useState('');
+  const set = async (status) => {
+    setErr('');
+    try { await api('POST', `/creatives/${c.id}/asset-status`, { status, confirm: status === '正式' ? ok : undefined }); onChanged(); } catch (x) { setErr(x.message); }
+  };
+  return html`<div class="asset-box">
+    <div><b>素材標記：</b><${AssetTag} c=${c} />
+      ${c.asset_status === '正式' ? html` <span class="small muted">由 ${c.asset_confirmed_by} 於 ${String(c.asset_confirmed_at || '').slice(0, 16).replace('T', ' ')} 確認</span>` : null}</div>
+    ${isTestProject ? html`<div class="small muted">本專案是測試專案：即使素材標為正式，整個專案的數字仍是測試資料。</div>` : null}
+    ${c.asset_status === '正式'
+      ? html`<button type="button" class="btn small" onClick=${() => set('測試')}>改回測試</button>`
+      : html`<label class="check"><input type="checkbox" checked=${ok} onChange=${(e) => setOk(e.currentTarget.checked)} /> 我已確認這份素材的圖片、影片與文案是可對外使用的正式版本</label>
+        <button type="button" class="btn small primary" disabled=${!ok} onClick=${() => set('正式')}>確認為正式素材</button>
+        <div class="small muted">新素材一律預設「測試」；更換圖片或影片後會退回「測試」，需要再確認一次。</div>`}
+    ${err ? html`<p class="form-err" role="alert">${err}</p>` : null}
+  </div>`;
+}
+
 function Lightbox({ c, onClose }) {
   return html`<${Modal} title=${`放大檢視：素材 ${c.n}・${c.name || c.code}`} onClose=${onClose} wide>
     <div class="lightbox"><img src=${c.preview_url} alt=${'素材圖片：' + (c.name || c.code)} /></div>
-    ${c.asset_mock ? html`<p class="note">這是測試示意圖，不是真實素材。</p>` : null}
+    <p class="note"><${AssetTag} c=${c} /></p>
     ${c.format === 'VD' && !c.video_url ? html`<p class="note">僅封面，尚未提供影片。</p>` : null}
   </${Modal}>`;
 }
 
 function LandingLink({ c }) {
   return c.landing_url
-    ? html`<a href=${c.landing_url} target="_blank" rel="noopener noreferrer" class="landing">開啟落地頁 ↗</a>${c.asset_mock || /example\.com/.test(c.landing_url) ? html` <span class="small muted">（測試網址）</span>` : null}`
+    ? html`<a href=${c.landing_url} target="_blank" rel="noopener noreferrer" class="landing">開啟落地頁 ↗</a>${/example\.com/.test(c.landing_url) ? html` <span class="small muted">（測試網址）</span>` : null}`
     : html`<span class="tbd">尚未提供落地頁</span>`;
 }
 
-function CreativeDetail({ c, p, d, keys, onClose, onZoom, onEdit }) {
+function CreativeDetail({ c, p, d, keys, onClose, onZoom, onEdit, onChanged }) {
   const m = c.metrics;
   return html`<${Modal} title=${`素材 ${c.n}・${c.name || '未命名'}`} onClose=${onClose} wide>
     <div class="cr-detail">
@@ -718,6 +760,7 @@ function CreativeDetail({ c, p, d, keys, onClose, onZoom, onEdit }) {
         <div><dt>實際落地頁</dt><dd><${LandingLink} c=${c} /></dd></div>
       </dl>
     </div>
+    <${AssetStatusBox} c=${c} isTestProject=${!!p.is_test} onChanged=${onChanged} />
     <h3 class="sub-sec">各受眾投放紀錄</h3>
     ${c.placements.length ? html`<div class="tbl"><table class="data"><thead><tr><th>受眾／設定</th><th>期間</th><th>狀態</th><th class="num">本期花費</th><th class="num">累計花費</th><th class="num">點擊率</th></tr></thead>
       <tbody>${c.placements.map((pl) => html`<tr><td><b>${pl.audience || '未填受眾'}</b><div class="muted small">${pl.code}・${pl.setting || ''}</div></td>
@@ -752,9 +795,10 @@ function ProjectCreatives({ d, reload }) {
   const g = creativeGroups(paid);
   const close = () => setModal(null);
   const done = () => { setModal(null); reload(); };
-  const open = (c) => setModal({ type: 'detail', cr: c });
+  const open = (c) => setModal({ type: 'detail', id: c.id });
+  const numbered = [...g.live, ...g.upcoming, ...g.ended];
   const zoom = (c) => setModal({ type: 'zoom', cr: c });
-  const row = (c) => html`<tr class=${c.ended ? 'ended' : ''}><td><button type="button" class="linklike" onClick=${() => open(c)}><b>素材 ${c.n}</b>・${c.name}</button><div class="muted small">${c.code}・${c.ended ? '已結束' : c.status}・${c.prod_status}</div></td>
+  const row = (c) => html`<tr class=${c.ended ? 'ended' : ''}><td><button type="button" class="linklike" onClick=${() => open(c)}><b>素材 ${c.n}</b>・${c.name}</button><div class="muted small">${c.code}・${c.ended ? '已結束' : c.status}・${c.prod_status}・${c.asset_status === '正式' ? '正式素材' : '測試素材'}</div></td>
     <td class="num"><${V} m=${c.metrics.spend} f="money" compact showNA incLabel="已知小計" /></td><td class="num hide-sm"><${V} m=${c.metrics.impressions} compact /></td>
     <td class="num"><${V} m=${c.metrics.ctr} f="pct" compact /></td>
     ${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}
@@ -788,7 +832,7 @@ function ProjectCreatives({ d, reload }) {
       <div class="tbl"><table class="data"><thead><tr><th>渠道</th>${keys.map((k) => html`<th class="num">${p.metrics[k].label}</th>`)}</tr></thead>
         <tbody>${free.map((c) => html`<tr><td><b>${c.name}</b><div class="muted small">${c.code}・${CHANNELS[c.channel]}</div></td>${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}</tr>`)}</tbody></table></div>
       <p class="note">免費渠道不計廣告成本。</p></section>` : null}
-    ${modal?.type === 'detail' ? html`<${CreativeDetail} c=${modal.cr} p=${p} d=${d} keys=${keys} onClose=${close} onZoom=${() => zoom(modal.cr)} onEdit=${() => setModal({ type: 'creative', cr: modal.cr })} />` : null}
+    ${modal?.type === 'detail' ? (() => { const cr = numbered.find((x) => x.id === modal.id); return cr ? html`<${CreativeDetail} c=${cr} p=${p} d=${d} keys=${keys} onClose=${close} onZoom=${() => zoom(cr)} onEdit=${() => setModal({ type: 'creative', cr })} onChanged=${reload} />` : null; })() : null}
     ${modal?.type === 'zoom' ? html`<${Lightbox} c=${modal.cr} onClose=${close} />` : null}
     ${modal?.type === 'creative' ? html`<${CreativeForm} campaigns=${d.campaigns} cr=${modal.cr} onClose=${close} onDone=${done} />` : null}
     ${modal?.type === 'placement' ? html`<${PlacementForm} cr=${modal.cr} pl=${modal.pl} onClose=${close} onDone=${done} />` : null}

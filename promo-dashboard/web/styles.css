@@ -453,3 +453,8 @@ td.num .val .state.s-incomplete.sm { display: block; width: fit-content; margin:
 }
 td.num .val .state.s-incomplete.sm { white-space: nowrap; }
 @media (max-width: 760px) { .sum-proj .sum-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.asset-tag { font-size: 11px; border-radius: 4px; padding: 0 5px; align-self: flex-start; font-weight: 600; }
+.asset-tag.test { color: var(--ink-2); border: 1px dashed var(--ink-3); }
+.asset-tag.official { color: var(--good); background: var(--good-bg); border: 1px solid var(--good); }
+.asset-box { background: var(--surface-2); border-radius: 8px; padding: 8px 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+table.enroll-tbl td:first-child { min-width: 160px; }

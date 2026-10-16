@@ -124,6 +124,7 @@ export const OUTCOME_TYPE_ALIASES = {
   enroll: ['報名', 'enroll'],
   payment: ['付款', 'payment'],
   refund: ['退款', 'refund'],
+  cancel: ['取消報名', '取消', 'cancel'],
 };
 
 export const OUTCOME_COLUMNS = ['類型', '日期', '活動代碼', '素材代碼', '領取碼', '數量', '金額', '外部編號', '電話', 'Email', '備註'];
@@ -174,7 +175,7 @@ export async function mapOutcomeRows(text, lookups, salt) {
     const external = get(r, '外部編號') || null;
     const base = { line, type, typeRaw, date, qty, amount, external_ref: external, note: get(r, '備註') };
     if (!type) { rows.push({ ...base, status: 'error', message: `類型「${typeRaw}」無法辨識` }); continue; }
-    if (!lookups.defs[type]?.enabled) { rows.push({ ...base, status: 'error', message: `本專案未定義「${typeRaw}」這個指標` }); continue; }
+    if (!lookups.defs[type === 'cancel' ? 'enroll' : type]?.enabled) { rows.push({ ...base, status: 'error', message: `本專案未定義「${typeRaw}」這個指標` }); continue; }
     if (!date) { rows.push({ ...base, status: 'error', message: '日期無法辨識' }); continue; }
     if (!Number.isInteger(qty) || qty < 1) { rows.push({ ...base, status: 'error', message: '數量必須是正整數' }); continue; }
     if (Number.isNaN(amount) || amount < 0) { rows.push({ ...base, status: 'error', message: '金額無法辨識' }); continue; }
@@ -202,6 +203,9 @@ export async function mapOutcomeRows(text, lookups, salt) {
       campaign_id = cc.campaign_id; creative_id = creative_id || cc.creative_id; via = via || '領取碼';
     }
     const person_ref = await personRef(get(r, '電話'), get(r, 'Email'), salt);
+    if (type === 'cancel' && !person_ref) { rows.push({ ...base, status: 'error', message: '取消報名需要電話或 Email，才能對應到報名的人' }); continue; }
+    if (type === 'cancel' && !base.note) { rows.push({ ...base, status: 'error', message: '取消報名請在備註填寫原因' }); continue; }
+    if (type === 'cancel' && qty !== 1) { rows.push({ ...base, status: 'error', message: '取消報名一列只能一人' }); continue; }
     rows.push({ ...base, status: 'ok', campaign_id, creative_id, claim_code: claim, person_ref, via: via || '來源不明' });
   }
   return { rows, errors: [] };

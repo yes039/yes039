@@ -69,7 +69,7 @@ test('本期新增與累計招生進度分開：累計不隨期間改變', async
   const mo = await get(call, 'period=month');
   assert.deepEqual(w.cumulative.enrollProgress, mo.cumulative.enrollProgress);
   assert.equal(w.cumulative.enrollProgress.d, w.project.target_enroll);
-  assert.equal(w.cumulative.enrollProgress.n, w.cumulative.all.enroll.v);
+  assert.equal(w.cumulative.enrollProgress.n, w.cumulative.enrollment.valid.v);
   assert.ok(w.cumulative.all.enroll.v >= mo.metrics.enroll.v);
   assert.ok(mo.metrics.enroll.v >= w.metrics.enroll.v);
 });
@@ -91,7 +91,7 @@ test('累計報名資料不完整：不給確定達成率，只保留已知人�
   assert.equal(pr.v, null);
   assert.equal(pr.s, 'not_computed');
   assert.ok(pr.known);
-  assert.equal(pr.n, j.cumulative.all.enroll.v);
+  assert.equal(pr.n, j.cumulative.enrollment.valid.v);
   assert.equal(pr.d, 60);
   assert.match(pr.r, /達成率暫不計算/);
   const h = (await call('GET', '/home')).data;
@@ -122,18 +122,18 @@ test('已結束的素材與波次：顯示「已結束」與歷史成效，不�
   assert.ok(ended.every((c) => c.judgement.label !== '持續'));
 });
 
-test('素材檔：影片可播放、只有封面要標示、沒有檔案、測試示意標記、落地頁', async () => {
+test('素材檔：影片可播放、只有封面要標示、沒有檔案、測試標記、落地頁', async () => {
   const { call } = await setup();
   const j = await get(call, 'period=all');
   const by = (code) => j.creatives.find((c) => c.code === code);
   const v1 = by('TJSN-2609-01-VD01-v1');
   assert.match(v1.video_url, /^data:video\/webm/);
-  assert.equal(v1.asset_mock, 1);
+  assert.equal(v1.asset_status, '測試');
   const v3 = by('TJSN-2610-01-VD01-v1');
   assert.ok(v3.preview_url && !v3.video_url, '只有封面');
   const im2 = by('TJSN-2610-01-IM02-v1');
   assert.equal(im2.preview_url, '');
-  assert.equal(im2.asset_mock, 0);
+  assert.equal(im2.asset_status, '測試');
   assert.match(v1.landing_url, /^https:\/\//);
   // 落地頁、影片只接受 https；換成真實檔案後不再標測試示意
   assert.equal((await call('PUT', '/creatives/' + v3.id, { landing_url: 'javascript:alert(1)' })).status, 400);
@@ -141,7 +141,7 @@ test('素材檔：影片可播放、只有封面要標示、沒有檔案、測�
   assert.equal((await call('PUT', '/creatives/' + v3.id, { video_url: 'https://cdn.example.com/a.mp4' })).status, 200);
   const after = (await get(call, 'period=all')).creatives.find((c) => c.id === v3.id);
   assert.equal(after.video_url, 'https://cdn.example.com/a.mp4');
-  assert.equal(after.asset_mock, 0);
+  assert.equal(after.asset_status, '測試', '換成 https 網址不會自動移除測試標記');
 });
 
 test('首頁待辦：逾期優先，再依急迫程度與期限排序', async () => {
@@ -150,4 +150,36 @@ test('首頁待辦：逾期優先，再依急迫程度與期限排序', async ()
   const firstNotOverdue = t.findIndex((x) => !x.overdue);
   assert.ok(t.slice(firstNotOverdue).every((x) => !x.overdue), '逾期都排在前面');
   assert.ok(t.length > 5);
+});
+
+test('素材測試／正式：新素材預設測試，要明確確認才改正式；換檔退回測試；測試專案仍標測試', async () => {
+  const { call } = await setup();
+  const j = await get(call, 'period=all');
+  const c2 = j.campaigns.find((c) => c.code === 'TJSN-2610-01');
+  const created = await call('POST', `/campaigns/${c2.id}/creatives`, { code: 'TJSN-2610-01-IM03-v1', name: '新素材', channel: 'fb_ad', preview_url: 'https://cdn.example.com/real.jpg' });
+  assert.equal(created.status, 201);
+  const id = created.data.id;
+  const find = async () => (await get(call, 'period=all')).creatives.find((c) => c.id === id);
+  assert.equal((await find()).asset_status, '測試', '新素材預設測試，即使是 https 網址');
+  // 一般編輯帶 asset_status 也不會改
+  await call('PUT', '/creatives/' + id, { asset_status: '正式', name: '新素材' });
+  assert.equal((await find()).asset_status, '測試');
+  // 沒有明確確認不能改
+  const noConfirm = await call('POST', `/creatives/${id}/asset-status`, { status: '正式' });
+  assert.equal(noConfirm.status, 400);
+  assert.equal((await call('POST', `/creatives/${id}/asset-status`, { status: '正式', confirm: true })).status, 200);
+  const off = await find();
+  assert.equal(off.asset_status, '正式');
+  assert.equal(off.asset_confirmed_by, 'admin@test.local');
+  assert.ok(off.asset_confirmed_at);
+  // 測試專案仍是測試
+  const pj = await get(call, 'period=all');
+  assert.equal(pj.project.is_test, 1);
+  // 只改文案不影響；換圖片退回測試
+  await call('PUT', '/creatives/' + id, { headline: '新標題' });
+  assert.equal((await find()).asset_status, '正式');
+  await call('PUT', '/creatives/' + id, { preview_url: 'https://cdn.example.com/real-v2.jpg' });
+  assert.equal((await find()).asset_status, '測試', '換檔後要重新確認');
+  // 只能看的成員不能改
+  assert.equal((await call('POST', `/creatives/${id}/asset-status`, { status: '正式', confirm: true }, 'viewer@test.local')).status >= 400, true);
 });

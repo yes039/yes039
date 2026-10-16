@@ -134,7 +134,7 @@ function ProjectCard({ p }) {
       <div class="wide"><dt>廣告花費與成本</dt><dd><span class="state s-not_computed sm">尚未啟用付費廣告，不計算</span></dd></div>
       ${!outcomeKeys(project).length ? html`<div class="wide"><dt>成果</dt><dd><span class="state s-not_computed sm">本專案尚未定義成果指標</span></dd></div>` : null}
     </dl>`}
-    ${has('enroll') ? html`<div class="prog small"><div>本期新增報名 <b><${V} m=${m.enroll} compact /></b></div><${EnrollProgress} prog=${prog} cum=${cum} compact /></div>` : null}
+    ${has('enroll') ? html`<div class="prog small"><div>本期新增報名 <b><${V} m=${p.enrollment.period.new} compact /></b>・本期取消 <b><${V} m=${p.enrollment.period.cancel} compact /></b>・恢復 <b><${V} m=${p.enrollment.period.restore} compact /></b></div><${EnrollProgress} prog=${prog} cum=${cum} compact /></div>` : null}
     ${budget && used.v != null ? html`<div class="budget"><div class="budget-bar" role="img" aria-label=${(used.s === 'incomplete' ? '預算使用至少 ' : '預算使用 ') + fmt.pct(used.v)}><span style=${`width:${Math.min(100, used.v * 100)}%`} class=${(used.v > 1 ? 'over' : used.v > 0.9 ? 'near' : '') + (used.s === 'incomplete' ? ' partial' : '')}></span></div>
       <div class="small muted">預算使用 ${used.s === 'incomplete' ? '至少 ' : ''}${fmt.pct(used.v)}：累計${used.s === 'incomplete' ? '已知小計' : ''} ${fmt.money(used.n)} ÷ 總預算 ${fmt.money(budget)}</div></div>` : null}
     ${hasPaid ? html`<div class="small muted">廣告數字：${freshText(p.sources.ads, p.missingAdDates)}</div>` : null}

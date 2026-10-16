@@ -148,13 +148,14 @@ export function Reconcile({ c, linkOf }) {
  * 首頁與專案頁共用，確保同一規則。
  */
 export function EnrollProgress({ prog, cum, compact }) {
+  const e = cum.enrollment;
   const known = prog.n != null;
   return html`<div class=${'enroll-prog' + (compact ? ' compact' : '')}>
-    <div>${known ? html`${prog.v == null ? '已知' : ''}累計報名 <b>${fmt.int(prog.n)} 人</b>` : html`累計報名 <${V} m=${cum.all.enroll} compact showNA why />`}
+    <div>${known ? html`${prog.v == null ? '已知' : ''}有效報名 <b>${fmt.int(prog.n)} 人</b>` : html`有效報名 <${V} m=${e.valid} compact showNA why />`}
       ${prog.d ? html`／目標 <b>${prog.d} 人</b>` : html`／目標<span class="tbd">待填</span>`}
       ${prog.v != null ? html`・達成 <b>${fmt.pct(prog.v)}</b>` : null}</div>
     ${prog.v != null ? html`<div class="budget-bar${compact ? '' : ' big'}" role="img" aria-label=${'累計招生達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>`
-      : prog.known ? html`<div class="prog-hold"><span class="state s-not_computed sm">資料不完整，達成率暫不計算</span> <span class="small muted">${cum.all.enroll?.r || ''}</span></div>` : null}
-    <div class="small muted">累計＝專案開始${cum.from ? ' ' + md(cum.from) : ''}至 ${md(cum.to)}，以人去重，不隨所選週／月改變</div>
+      : prog.known ? html`<div class="prog-hold"><span class="state s-not_computed sm">資料不完整，達成率暫不計算</span> <span class="small muted">${e.valid?.r || ''}</span></div>` : null}
+    <div class="small muted">有效報名＝累計報名 ${e.ever.v ?? '—'} − 目前取消 ${e.cancelled.v ?? '—'}（以人去重；恢復報名不重複計）・累計至 ${md(cum.to)}，不隨所選週／月改變</div>
   </div>`;
 }
