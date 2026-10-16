@@ -68,21 +68,23 @@ const KIND_ORDER = ['全部', '內容', '回覆', '廣告異常', '預算', '資
 const LEVEL_TAG = { critical: ['嚴重', '■'], serious: ['注意', '▲'], warning: ['提醒', '●'], manual: ['待辦', '□'] };
 
 /** 集中待辦：類型、事項、負責人、期限、狀態、處理入口；需人工的項目標示 */
-export function TodoTable({ items, limit = 10, showProject = true, onDone }) {
+export function TodoTable({ items, limit = 5, showProject = true, onDone, scope }) {
   const [kind, setKind] = useState('全部');
   const [all, setAll] = useState(false);
   const kinds = KIND_ORDER.filter((k) => k === '全部' || items.some((i) => i.kind === k));
   const list = items.filter((i) => kind === '全部' || i.kind === kind);
   const shown = all ? list : list.slice(0, limit);
   return html`<div>
+    ${scope ? html`<p class="todo-scope"><b>範圍：</b>${scope}</p>` : null}
     <div class="chips" role="group" aria-label="待辦類型">${kinds.map((k) => html`<button type="button" class=${'chip' + (k === kind ? ' on' : '')} aria-pressed=${k === kind} onClick=${() => { setKind(k); setAll(false); }}>
       ${k}${k !== '全部' ? ` ${items.filter((i) => i.kind === k).length}` : ` ${items.length}`}</button>`)}</div>
+    ${list.length > limit ? html`<p class="small muted">依逾期、急迫程度、期限排序；目前顯示 ${shown.length}／${list.length} 則</p>` : null}
     ${shown.length ? html`<div class="tbl"><table class="data todo">
       <thead><tr><th>事項</th><th class="hide-sm">類型</th><th class="hide-sm">負責人</th><th class="hide-sm">期限</th><th class="hide-sm">狀態</th><th></th></tr></thead>
       <tbody>${shown.map((t) => {
         const [lv, icon] = LEVEL_TAG[t.level] || LEVEL_TAG.warning;
         return html`<tr class=${'lv-row lv-' + t.level}>
-          <td><span class="lv-tag" title=${lv}><span aria-hidden="true">${icon}</span> ${lv}</span> ${showProject ? html`<span class="proj-code">${t.project}</span> ` : null}<b>${t.title}</b>
+          <td><span class="lv-tag" title=${lv}><span aria-hidden="true">${icon}</span> ${lv}</span> ${showProject ? html`<span class="proj-code">${t.project}</span> ` : null}${t.overdue ? html`<span class="late small">逾期</span> ` : null}<b>${t.title}</b>
             ${t.detail ? html`<div class="muted small">${t.detail}</div>` : null}
             ${t.manual ? html`<span class="tag-manual">需人工登錄或處理</span>` : null}
             <div class="show-sm small muted">負責人 ${t.owner || '待指派'}・期限 ${t.due ? md(t.due) : '—'}・${t.status}</div></td>
@@ -94,7 +96,7 @@ export function TodoTable({ items, limit = 10, showProject = true, onDone }) {
         </tr>`;
       })}</tbody>
     </table></div>
-    ${list.length > limit ? html`<button class="btn small ghost more" onClick=${() => setAll(!all)}>${all ? '收合' : `顯示全部 ${list.length} 則`}</button>` : null}` : html`<p class="muted">沒有待辦。</p>`}
+    ${list.length > limit ? html`<button class="btn small ghost more" onClick=${() => setAll(!all)}>${all ? `收合，只看前 ${limit} 則` : `查看全部 ${list.length} 則`}</button>` : null}` : html`<p class="muted">沒有待辦。</p>`}
   </div>`;
 }
 
@@ -127,3 +129,32 @@ export function OutcomeGroups({ project, groups, total, caption }) {
 
 /** 玉欣珍這類還沒有付費素材的專案：明確標示，不讓空白看起來像 0 */
 export const NO_PAID_LABEL = '規劃中／尚未啟用付費廣告';
+
+/** 發文數核對：每個數字都能點進清單看是哪幾篇 */
+export function Reconcile({ c, linkOf }) {
+  const L = ({ k, children }) => (c[k] ? html`<a class="rc-n" href=${linkOf(k)}>${children}</a>` : html`<span class="rc-n zero">${children}</span>`);
+  return html`<div class="reconcile" aria-label="發文數核對">
+    <div class="rc-row"><b>預計 <${L} k="planned">${c.planned}</${L}></b> ＝ 依期發布 <${L} k="onPlan">${c.onPlan}</${L}>
+      ＋ 期內預定、期外發布 <${L} k="plannedOut">${c.plannedOut}</${L}> ＋ 待發 <${L} k="pending">${c.pending}</${L}>${c.overdue ? html`（含逾期 <${L} k="overdue">${c.overdue}</${L}>）` : ''}</div>
+    <div class="rc-row"><b>已發 <${L} k="published">${c.published}</${L}></b> ＝ 依期發布 <${L} k="onPlan">${c.onPlan}</${L}>
+      ＋ 跨期補發 <${L} k="crossIn">${c.crossIn}</${L}> ＋ 臨時加發 <${L} k="extra">${c.extra}</${L}></div>
+    <div class="rc-row muted">取消 <${L} k="cancelled">${c.cancelled}</${L}>（預定在期間內但取消，不算入預計）</div>
+    <div class="rc-row small muted">所以「已發＋待發」不一定等於「預計」：跨期補發與臨時加發只算已發；期外發布只算預計。點數字看明細。</div>
+  </div>`;
+}
+
+/**
+ * 累計招生進度：資料完整才顯示達成率與進度條；不完整時只寫「已知累計報名 N 人／目標 M 人」並註明達成率暫不計算。
+ * 首頁與專案頁共用，確保同一規則。
+ */
+export function EnrollProgress({ prog, cum, compact }) {
+  const known = prog.n != null;
+  return html`<div class=${'enroll-prog' + (compact ? ' compact' : '')}>
+    <div>${known ? html`${prog.v == null ? '已知' : ''}累計報名 <b>${fmt.int(prog.n)} 人</b>` : html`累計報名 <${V} m=${cum.all.enroll} compact showNA why />`}
+      ${prog.d ? html`／目標 <b>${prog.d} 人</b>` : html`／目標<span class="tbd">待填</span>`}
+      ${prog.v != null ? html`・達成 <b>${fmt.pct(prog.v)}</b>` : null}</div>
+    ${prog.v != null ? html`<div class="budget-bar${compact ? '' : ' big'}" role="img" aria-label=${'累計招生達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>`
+      : prog.known ? html`<div class="prog-hold"><span class="state s-not_computed sm">資料不完整，達成率暫不計算</span> <span class="small muted">${cum.all.enroll?.r || ''}</span></div>` : null}
+    <div class="small muted">累計＝專案開始${cum.from ? ' ' + md(cum.from) : ''}至 ${md(cum.to)}，以人去重，不隨所選週／月改變</div>
+  </div>`;
+}

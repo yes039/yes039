@@ -5,7 +5,7 @@ import { DailyBars, Funnel, InlineBar } from './charts.js';
 import { fmt, md, ymd, rangeText } from './format.js';
 import { CHANNELS, FORMATS, UTM_SOURCES, UTM_MEDIUMS, suggestCampaignCode, suggestCreativeCode, suggestClaimCode } from '../src/tracking.js';
 import { SOURCE_KINDS, OUTCOME_TYPES } from '../src/metrics.js';
-import { outcomeKeys, sourceUsed, freshText, TodoTable, OrganicSummary, OutcomeGroups, NO_PAID_LABEL } from './shared.js';
+import { outcomeKeys, sourceUsed, freshText, TodoTable, OrganicSummary, OutcomeGroups, NO_PAID_LABEL, EnrollProgress } from './shared.js';
 
 const STATUS = ['規劃中', '進行中', '暫停', '已結束'];
 const KINDS = ['合作', '自有課程', '客戶', '自有品牌'];
@@ -295,7 +295,7 @@ function ProjectSources({ d, reload }) {
     </section>
     <section class="panel">
       <div class="sec-row"><h2 class="sec">待辦</h2></div>
-      <${TodoTable} items=${[...d.anomalies, ...d.todos]} showProject=${false} onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); reload(); }} />
+      <${TodoTable} items=${[...d.anomalies, ...d.todos]} showProject=${false} scope="本專案全部未完成事項（含跨期，不受所選週／月影響）" onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); reload(); }} />
       <${Form} submitLabel="新增待辦" onSubmit=${async (f, el) => { await api('POST', `/projects/${p.id}/todos`, f); el.reset(); reload(); }}>
         <div class="grid3"><${Field} label="待辦內容" name="title" required /><${Field} label="負責人" name="owner" /><${Field} label="期限" name="due" type="date" /></div>
       </${Form}>
@@ -517,6 +517,7 @@ function CreativeForm({ c, campaigns, cr, onClose, onDone }) {
   return html`<${Modal} title=${cr ? '編輯素材' : '新增素材'} onClose=${onClose} wide>
     <${Form} onCancel=${onClose} onSubmit=${async (f) => {
       if (!f.preview_url && cr?.preview_url) delete f.preview_url;
+      if (!f.video_url && cr?.video_url) delete f.video_url;
       if (cr) await api('PUT', '/creatives/' + cr.id, f); else await api('POST', `/campaigns/${campId}/creatives`, f);
       onDone();
     }}>
@@ -534,7 +535,9 @@ function CreativeForm({ c, campaigns, cr, onClose, onDone }) {
         <${Field} label="廣告文案" name="copy_text" type="textarea" value=${cr?.copy_text} wide />
         <${Field} label="訴求" name="appeal" value=${cr?.appeal} />
         <${Field} label="導向位置" name="destination" value=${cr?.destination} />
-        <${Field} label="預覽圖片或影片網址" name="preview_url" value=${cr?.preview_url?.startsWith('data:') ? '' : cr?.preview_url} placeholder="https://..." hint=${cr?.preview_url?.startsWith('data:') ? '目前是測試預覽圖；留空會保留' : '第一版只存網址，上傳檔案待後續'} wide />
+        <${Field} label="圖片或影片封面網址" name="preview_url" value=${cr?.preview_url?.startsWith('data:') ? '' : cr?.preview_url} placeholder="https://..." hint=${cr?.preview_url?.startsWith('data:') ? '目前是測試示意圖；留空會保留' : '第一版只存網址，上傳檔案待後續'} wide />
+        <${Field} label="影片網址" name="video_url" value=${cr?.video_url?.startsWith('data:') ? '' : cr?.video_url} placeholder="https://...（.mp4／.webm）" hint=${cr?.video_url?.startsWith('data:') ? '目前是測試示意影片；留空會保留' : '影片素材只填封面時，畫面會標「僅封面，尚未提供影片」'} wide />
+        <${Field} label="實際落地頁網址" name="landing_url" value=${cr?.landing_url} placeholder="https://..." wide />
         <${Field} label="平台 ID（廣告 ID）" name="platform_ref" value=${cr?.platform_ref} />
       </div>
       <label class="check"><input type="checkbox" name="paid" checked=${!!cr?.paid} /> 其他渠道也有付費</label>
@@ -602,12 +605,21 @@ function ProjectOverview({ d, reload }) {
       <h2 class="sec" id="h-prog">招生進度</h2>
       <div class="kpis compact">
         <${Kpi} label="本期新增報名" sub=${rangeText(d.range)}><${V} m=${m.enroll} showNA why /></${Kpi}>
-        <${Kpi} label="累計報名" sub=${cum.from ? `專案開始 ${md(cum.from)} 至 ${md(cum.to)}・以人去重` : '專案尚未開始'}><${V} m=${cum.all.enroll} showNA why /></${Kpi}>
         <${Kpi} label="招生目標"><span class="val">${p.target_enroll ? p.target_enroll + ' 人' : html`<span class="tbd">待填</span>`}</span></${Kpi}>
-        <${Kpi} label="累計達成率"><${V} m=${prog} f="pct" showNA why /></${Kpi}>
       </div>
-      ${prog.v != null ? html`<div class="budget-bar big" role="img" aria-label=${'累計達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>
-        <p class="note">計算：累計報名 ${fmt.int(prog.n)} ÷ 招生目標 ${prog.d}＝${fmt.pct(prog.v)}（專案開始至 ${md(cum.to)}，不隨上方期間改變）${prog.s === 'incomplete' ? '；' + prog.r + '，之後可能增加' : ''}。累計報名中付費廣告 ${fmt.int(cum.groups.paid.enroll.v ?? 0)}、免費引流 ${fmt.int(cum.groups.free.enroll.v ?? 0)}、來源不明 ${fmt.int(cum.groups.unknown.enroll.v ?? 0)}（以人去重，三者相加可能大於合計）。</p>` : null}
+      <${EnrollProgress} prog=${prog} cum=${cum} />
+      <p class="note">累計報名中：付費廣告 ${fmt.int(cum.groups.paid.enroll.v ?? 0)}、免費引流 ${fmt.int(cum.groups.free.enroll.v ?? 0)}、來源不明 ${fmt.int(cum.groups.unknown.enroll.v ?? 0)} 人（以人去重，三者相加可能大於合計）。</p>
+      <details class="rules-box"><summary>報名、付款、退款怎麼算</summary><ul>
+        <li><b>報名</b>：報名紀錄以人去重（同一電話或 Email 只算一人）。<b>目前不扣除取消</b>：系統還沒有「取消報名」紀錄，取消的人仍算在報名內；要扣除需先決定取消的定義並新增紀錄類型。</li>
+        <li><b>付款、退款分開</b>：付款與退款各自以筆數、金額呈現；退款不自動扣報名人數，只用在「付款淨額＝付款金額 − 退款金額」。</li>
+        <li>累計資料有任何來源沒更新到昨天時，只寫「已知累計」，達成率暫不計算。</li>
+      </ul></details>
+      ${has('payment') ? html`<div class="tbl"><table class="data pay">
+        <thead><tr><th></th><th class="num">付款筆數</th><th class="num">付款金額</th><th class="num">退款筆數</th><th class="num">退款金額</th><th class="num">付款淨額</th></tr></thead>
+        <tbody>
+          <tr><td><b>本期</b></td><td class="num"><${V} m=${m.payment} compact /></td><td class="num"><${V} m=${m.payment_amount} f="money" compact /></td><td class="num"><${V} m=${m.refund} compact /></td><td class="num"><${V} m=${m.refund_amount} f="money" compact /></td><td class="num"><${V} m=${m.net_amount} f="money" compact /></td></tr>
+          <tr><td><b>累計</b></td><td class="num"><${V} m=${cum.all.payment} compact /></td><td class="num"><${V} m=${cum.all.payment_amount} f="money" compact /></td><td class="num"><${V} m=${cum.all.refund} compact /></td><td class="num"><${V} m=${cum.all.refund_amount} f="money" compact /></td><td class="num"><${V} m=${cum.all.net_amount} f="money" compact /></td></tr>
+        </tbody></table></div>` : null}
       ${hasPaid && cum.cost_primary ? html`<p class="note">專案累計付費廣告每筆${pkLabel}成本：<${V} m=${cum.cost_primary} f="money" compact why /></p>` : null}
     </section>` : null}
 
@@ -636,7 +648,7 @@ function ProjectOverview({ d, reload }) {
 
     <section class="panel">
       <h2 class="sec">本專案的異常與待辦</h2>
-      <${TodoTable} items=${[...d.anomalies, ...d.todos]} showProject=${false} onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); reload(); }} />
+      <${TodoTable} items=${[...d.anomalies, ...d.todos]} showProject=${false} scope="本專案全部未完成事項（含跨期，不受所選週／月影響）" onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); reload(); }} />
     </section>
   </div>`;
 }
@@ -644,80 +656,174 @@ function ProjectOverview({ d, reload }) {
 // ---------- 廣告素材比較 ----------
 const PROD_CLASS = { 製作中: 'st-todo', 待審核: 'st-review', 已核可: 'st-done' };
 
+/** 素材分組：進行中 → 待審核／製作中／規劃中／暫停 → 已結束（預設收起）。素材編號依建立順序固定，不因分組改變 */
+function creativeGroups(paid) {
+  const numbered = paid.map((c, i) => ({ ...c, n: i + 1 }));
+  return {
+    live: numbered.filter((c) => !c.ended && c.status === '進行中'),
+    upcoming: numbered.filter((c) => !c.ended && c.status !== '進行中'),
+    ended: numbered.filter((c) => c.ended),
+  };
+}
+const version = (c) => c.code.split('-').at(-1);
+
+/** 素材檔：圖片可點擊放大、影片可播放；沒有檔案或只有封面時明確標示；測試示意圖另外標示 */
+function Media({ c, onZoom, big }) {
+  const mock = c.asset_mock ? html`<span class="mock-tag">測試示意，非真實素材</span>` : null;
+  if (c.video_url) {
+    return html`<div class=${'media' + (big ? ' big' : '')}>
+      <video controls preload="metadata" playsinline poster=${c.preview_url || undefined} src=${c.video_url} aria-label=${'素材影片：' + (c.name || c.code)}></video>
+      ${mock}</div>`;
+  }
+  if (c.preview_url) {
+    return html`<div class=${'media' + (big ? ' big' : '')}>
+      <button type="button" class="zoom" onClick=${onZoom} aria-label=${'放大圖片：' + (c.name || c.code)}><img src=${c.preview_url} alt=${'素材預覽：' + (c.name || c.code)} loading="lazy" /><span class="zoom-hint" aria-hidden="true">⤢ 放大</span></button>
+      ${c.format === 'VD' ? html`<span class="media-flag">僅封面，尚未提供影片</span>` : null}
+      ${mock}</div>`;
+  }
+  return html`<div class=${'media none' + (big ? ' big' : '')}><span>尚未提供素材</span></div>`;
+}
+
+function Lightbox({ c, onClose }) {
+  return html`<${Modal} title=${`放大檢視：素材 ${c.n}・${c.name || c.code}`} onClose=${onClose} wide>
+    <div class="lightbox"><img src=${c.preview_url} alt=${'素材圖片：' + (c.name || c.code)} /></div>
+    ${c.asset_mock ? html`<p class="note">這是測試示意圖，不是真實素材。</p>` : null}
+    ${c.format === 'VD' && !c.video_url ? html`<p class="note">僅封面，尚未提供影片。</p>` : null}
+  </${Modal}>`;
+}
+
+function LandingLink({ c }) {
+  return c.landing_url
+    ? html`<a href=${c.landing_url} target="_blank" rel="noopener noreferrer" class="landing">開啟落地頁 ↗</a>${c.asset_mock || /example\.com/.test(c.landing_url) ? html` <span class="small muted">（測試網址）</span>` : null}`
+    : html`<span class="tbd">尚未提供落地頁</span>`;
+}
+
+function CreativeDetail({ c, p, d, keys, onClose, onZoom, onEdit }) {
+  const m = c.metrics;
+  return html`<${Modal} title=${`素材 ${c.n}・${c.name || '未命名'}`} onClose=${onClose} wide>
+    <div class="cr-detail">
+      <${Media} c=${c} big onZoom=${onZoom} />
+      <dl class="cr-facts">
+        <div><dt>素材編號</dt><dd>素材 ${c.n}・<code>${c.code}</code></dd></div>
+        <div><dt>版本</dt><dd>${version(c)}</dd></div>
+        <div><dt>波次</dt><dd>${c.campaign_code}</dd></div>
+        <div><dt>負責人</dt><dd>${c.owner || '待指派'}</dd></div>
+        <div><dt>製作與審核</dt><dd><span class=${'pstat ' + (PROD_CLASS[c.prod_status] || '')}>${c.prod_status}</span></dd></div>
+        <div><dt>投放狀態</dt><dd>${c.ended ? '已結束' : c.status}</dd></div>
+        <div class="wide"><dt>標題</dt><dd>${c.headline || html`<span class="tbd">待填</span>`}</dd></div>
+        <div class="wide"><dt>文案</dt><dd class="copy-full">${c.copy_text || html`<span class="tbd">待填</span>`}</dd></div>
+        <div><dt>行動按鈕（CTA）</dt><dd>${c.cta || html`<span class="tbd">待填</span>`}</dd></div>
+        <div><dt>訴求</dt><dd>${c.appeal || '—'}</dd></div>
+        <div><dt>導向</dt><dd>${c.destination || '—'}</dd></div>
+        <div><dt>實際落地頁</dt><dd><${LandingLink} c=${c} /></dd></div>
+      </dl>
+    </div>
+    <h3 class="sub-sec">各受眾投放紀錄</h3>
+    ${c.placements.length ? html`<div class="tbl"><table class="data"><thead><tr><th>受眾／設定</th><th>期間</th><th>狀態</th><th class="num">本期花費</th><th class="num">累計花費</th><th class="num">點擊率</th></tr></thead>
+      <tbody>${c.placements.map((pl) => html`<tr><td><b>${pl.audience || '未填受眾'}</b><div class="muted small">${pl.code}・${pl.setting || ''}</div></td>
+        <td class="small nowrap">${md(pl.start_date)}–${md(pl.end_date)}</td><td class="small">${pl.status}</td>
+        <td class="num"><${V} m=${pl.metrics.spend} f="money" compact showNA /></td><td class="num">${fmt.money(pl.metrics.spendAll || 0)}</td><td class="num"><${V} m=${pl.metrics.ctr} f="pct" compact /></td></tr>`)}</tbody></table></div>
+      <p class="note">投放紀錄只分廣告數字；成果只追蹤到素材層。</p>`
+      : html`<p class="muted small">沒有分受眾的投放紀錄，花費記在素材本身。</p>`}
+    <h3 class="sub-sec">${c.ended ? '歷史成效' : '本期成效'}</h3>
+    ${c.ended && m.spend.s === 'not_computed' ? html`<p class="small muted">所選期間沒有投放；上方期間改選「全部」可看這份素材的完整歷史成效。</p>` : null}
+    <dl class="mini">
+      <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA incLabel="已知小計" /></dd></div>
+      <div><dt>累計花費</dt><dd><${V} m=${m.spendCum} f="money" compact incLabel="已知小計" /></dd></div>
+      <div><dt>曝光</dt><dd><${V} m=${m.impressions} compact /></dd></div>
+      <div><dt>連結點擊</dt><dd><${V} m=${m.link_clicks} compact /></dd></div>
+      ${keys.map((k) => html`<div><dt>${p.metrics[k].label}</dt><dd><${V} m=${m[k]} compact /></dd></div>`)}
+      ${m.primaryKey ? html`<div><dt>每筆${p.metrics[m.primaryKey].label}成本</dt><dd><${V} m=${m.cost_primary} f="money" compact why /></dd></div>` : null}
+    </dl>
+    <div class="judge-box"><${Judge} j=${c.judgement} /> <span class="small">${c.judgement.reason}</span>
+      ${c.judgement.basis?.length ? html`<div class="muted small">依據：${c.judgement.basis.join('；')}</div>` : null}</div>
+    <div class="form-actions"><button class="btn" onClick=${onEdit}>編輯素材</button><button class="btn primary" onClick=${onClose}>關閉</button></div>
+  </${Modal}>`;
+}
+
 function ProjectCreatives({ d, reload }) {
   const p = d.project;
   const [modal, setModal] = useState(null);
+  const [showEnded, setShowEnded] = useState(false);
   const keys = ['inquiry', 'valid_lead', 'enroll'].filter((k) => p.metrics[k]?.enabled);
   const pk = d.metrics.primaryKey;
   const paid = d.creatives.filter((c) => c.paid);
   const free = d.creatives.filter((c) => !c.paid);
+  const g = creativeGroups(paid);
   const close = () => setModal(null);
   const done = () => { setModal(null); reload(); };
+  const open = (c) => setModal({ type: 'detail', cr: c });
+  const zoom = (c) => setModal({ type: 'zoom', cr: c });
+  const row = (c) => html`<tr class=${c.ended ? 'ended' : ''}><td><button type="button" class="linklike" onClick=${() => open(c)}><b>素材 ${c.n}</b>・${c.name}</button><div class="muted small">${c.code}・${c.ended ? '已結束' : c.status}・${c.prod_status}</div></td>
+    <td class="num"><${V} m=${c.metrics.spend} f="money" compact showNA incLabel="已知小計" /></td><td class="num hide-sm"><${V} m=${c.metrics.impressions} compact /></td>
+    <td class="num"><${V} m=${c.metrics.ctr} f="pct" compact /></td>
+    ${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}
+    ${pk ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact why /></td>` : null}
+    <td><${Judge} j=${c.judgement} /></td></tr>`;
+  const cols = 5 + keys.length + (pk ? 1 : 0);
+  const cards = (list) => html`<div class="cr-grid">${list.map((c) => html`<${CreativeCard} c=${c} p=${p} d=${d} keys=${keys} onOpen=${() => open(c)} onZoom=${() => zoom(c)} onEdit=${() => setModal({ type: 'creative', cr: c })} onPlacement=${(pl) => setModal({ type: 'placement', cr: c, pl })} />`)}</div>`;
   return html`<div class="stack">
-    <div class="sec-row"><p class="sec-note">每份付費素材獨立記錄，不必綁自然貼文。同一素材用在不同受眾時各有一筆投放紀錄，彙總回素材。成果只對應到素材層；無法確認素材的成果列為來源不明。</p>
+    <div class="sec-row"><p class="sec-note">先看比較表，點素材名稱看完整圖片、影片與文案。素材編號依建立順序固定；已結束的素材預設收起。</p>
       <button class="btn primary small" onClick=${() => setModal({ type: 'creative' })} disabled=${!d.campaigns.length}>＋ 新增素材</button></div>
-    <div class="cr-grid">${paid.map((c, i) => html`<${CreativeCard} c=${c} n=${i + 1} p=${p} d=${d} keys=${keys} onEdit=${() => setModal({ type: 'creative', cr: c })} onPlacement=${(pl) => setModal({ type: 'placement', cr: c, pl })} />`)}</div>
-    <section class="panel">
-      <h2 class="sec">素材比較表</h2>
-      <div class="tbl"><table class="data">
+    <section class="panel" aria-labelledby="h-cmp">
+      <h2 class="sec" id="h-cmp">素材比較表</h2>
+      <div class="tbl"><table class="data cmp">
         <thead><tr><th>素材</th><th class="num">本期花費</th><th class="num hide-sm">曝光</th><th class="num">點擊率</th>
           ${keys.map((k) => html`<th class="num">${p.metrics[k].label}</th>`)}${pk ? html`<th class="num">每筆${p.metrics[pk].label}成本</th>` : null}<th>判斷</th></tr></thead>
         <tbody>
-          ${paid.map((c, i) => html`<tr><td><b>素材 ${i + 1}</b><div class="muted small">${c.code}</div></td>
-            <td class="num"><${V} m=${c.metrics.spend} f="money" compact showNA /></td><td class="num hide-sm"><${V} m=${c.metrics.impressions} compact /></td>
-            <td class="num"><${V} m=${c.metrics.ctr} f="pct" compact /></td>
-            ${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}
-            ${pk ? html`<td class="num"><${V} m=${c.metrics.cost_primary} f="money" compact why /></td>` : null}
-            <td><${Judge} j=${c.judgement} /></td></tr>`)}
+          ${g.live.length ? html`<tr class="grp"><td colspan=${cols}>投放中（${g.live.length}）</td></tr>${g.live.map(row)}` : null}
+          ${g.upcoming.length ? html`<tr class="grp"><td colspan=${cols}>待審核／製作中／未開始（${g.upcoming.length}）</td></tr>${g.upcoming.map(row)}` : null}
+          ${g.ended.length ? html`<tr class="grp"><td colspan=${cols}><button type="button" class="linklike" aria-expanded=${showEnded} onClick=${() => setShowEnded(!showEnded)}>${showEnded ? '▾' : '▸'} 已結束（${g.ended.length}）：${showEnded ? '收起' : '展開看歷史成效'}</button></td></tr>${showEnded ? g.ended.map(row) : null}` : null}
           ${keys.length ? html`<tr class="unknown"><td><b>只對應到波次</b><div class="muted small">有波次代碼、沒有素材代碼</div></td><td class="num">—</td><td class="num hide-sm">—</td><td class="num">—</td>
             ${keys.map((k) => html`<td class="num">${fmt.int(d.campaignOnly[k] || 0)}</td>`)}${pk ? html`<td></td>` : null}<td></td></tr>
           <tr class="unknown"><td><b>來源不明</b><div class="muted small">無法確認來自哪份素材或波次</div></td><td class="num">—</td><td class="num hide-sm">—</td><td class="num">—</td>
             ${keys.map((k) => html`<td class="num">${fmt.int(d.unknown[k] || 0)}</td>`)}${pk ? html`<td></td>` : null}<td></td></tr>` : null}
         </tbody>
       </table></div>
-      <p class="note">點擊率＝連結點擊 ÷ 曝光；每筆成本＝該素材本期花費 ÷ 該素材可歸因的成果，同一範圍加總後相除。花費或成果資料不完整時顯示「暫不計算」，判斷也不會給「持續」。</p>
+      <p class="note">點擊率＝連結點擊 ÷ 曝光；每筆成本＝該素材本期花費 ÷ 該素材可歸因的成果。已結束的素材只顯示歷史成效，不給投放建議；投放中的素材在資料完整且達到樣本門檻後才給「持續／觀察／調整」，否則顯示「暫不判斷」。</p>
     </section>
+    ${g.live.length || g.upcoming.length ? html`<section aria-labelledby="h-cards"><h2 class="sec" id="h-cards">素材卡</h2>${cards([...g.live, ...g.upcoming])}</section>` : null}
+    ${g.ended.length ? html`<details class="ended-box" open=${showEnded} onToggle=${(e) => setShowEnded(e.currentTarget.open)}><summary>已結束的素材 ${g.ended.length} 份（歷史成效）</summary>${cards(g.ended)}</details>` : null}
     ${free.length ? html`<section class="panel"><h2 class="sec">其他免費引流渠道</h2>
       <div class="tbl"><table class="data"><thead><tr><th>渠道</th>${keys.map((k) => html`<th class="num">${p.metrics[k].label}</th>`)}</tr></thead>
         <tbody>${free.map((c) => html`<tr><td><b>${c.name}</b><div class="muted small">${c.code}・${CHANNELS[c.channel]}</div></td>${keys.map((k) => html`<td class="num"><${V} m=${c.metrics[k]} compact /></td>`)}</tr>`)}</tbody></table></div>
       <p class="note">免費渠道不計廣告成本。</p></section>` : null}
+    ${modal?.type === 'detail' ? html`<${CreativeDetail} c=${modal.cr} p=${p} d=${d} keys=${keys} onClose=${close} onZoom=${() => zoom(modal.cr)} onEdit=${() => setModal({ type: 'creative', cr: modal.cr })} />` : null}
+    ${modal?.type === 'zoom' ? html`<${Lightbox} c=${modal.cr} onClose=${close} />` : null}
     ${modal?.type === 'creative' ? html`<${CreativeForm} campaigns=${d.campaigns} cr=${modal.cr} onClose=${close} onDone=${done} />` : null}
     ${modal?.type === 'placement' ? html`<${PlacementForm} cr=${modal.cr} pl=${modal.pl} onClose=${close} onDone=${done} />` : null}
   </div>`;
 }
 
-function CreativeCard({ c, n, p, d, keys, onEdit, onPlacement }) {
+function CreativeCard({ c, p, d, keys, onOpen, onZoom, onEdit, onPlacement }) {
   const m = c.metrics;
-  return html`<article class="cr-card">
+  return html`<article class=${'cr-card' + (c.ended ? ' ended' : '')}>
     <div class="cr-top">
-      ${c.preview_url ? html`<img class="cr-img" src=${c.preview_url} alt=${'素材預覽：' + c.name} loading="lazy" />` : html`<div class="cr-img none">沒有預覽</div>`}
+      <${Media} c=${c} onZoom=${onZoom} />
       <div class="cr-head">
-        <div class="small muted">素材 ${n}・${c.code}</div>
+        <div class="small muted">素材 ${c.n}・${c.code}</div>
         <h3>${c.name || '未命名'}</h3>
-        <div class="cr-tags"><span class=${'pstat ' + (PROD_CLASS[c.prod_status] || '')}>${c.prod_status}</span><${Badge} kind="status">投放：${c.status}</${Badge}></div>
-        <div class="small muted">負責人 ${c.owner || '待指派'}</div>
+        <div class="cr-tags"><span class=${'pstat ' + (PROD_CLASS[c.prod_status] || '')}>${c.prod_status}</span><${Badge} kind="status">投放：${c.ended ? '已結束' : c.status}</${Badge}></div>
+        <div class="small muted">${version(c)}・負責人 ${c.owner || '待指派'}</div>
       </div>
     </div>
     <dl class="cr-copy">
       <div><dt>標題</dt><dd>${c.headline || html`<span class="tbd">待填</span>`}</dd></div>
       <div><dt>文案</dt><dd class="clamp">${c.copy_text || html`<span class="tbd">待填</span>`}</dd></div>
       <div><dt>行動按鈕</dt><dd>${c.cta || '—'}</dd></div>
-      <div><dt>訴求</dt><dd>${c.appeal || '—'}</dd></div>
-      <div><dt>導向</dt><dd>${c.destination || '—'}</dd></div>
+      <div><dt>落地頁</dt><dd><${LandingLink} c=${c} /></dd></div>
     </dl>
     <dl class="mini">
-      <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA /></dd></div>
+      <div><dt>本期花費</dt><dd><${V} m=${m.spend} f="money" compact showNA incLabel="已知小計" /></dd></div>
       <div><dt>累計花費</dt><dd><${V} m=${m.spendCum} f="money" compact incLabel="已知小計" /></dd></div>
-      <div><dt>曝光</dt><dd><${V} m=${m.impressions} compact /></dd></div>
       <div><dt>連結點擊</dt><dd><${V} m=${m.link_clicks} compact /></dd></div>
       ${keys.map((k) => html`<div><dt>${p.metrics[k].label}</dt><dd><${V} m=${m[k]} compact /></dd></div>`)}
-      ${p.metrics.payment?.enabled ? html`<div><dt>付款／退款</dt><dd><${V} m=${m.payment} compact /> ／ <${V} m=${m.refund} compact /></dd></div>` : null}
     </dl>
     <div class="small muted">廣告數字：${m.spend.s === 'not_computed' ? m.spend.r : freshText(d.sources.ads, m.missingAdDates)}</div>
     <div class="judge-box"><${Judge} j=${c.judgement} /> <span class="small">${c.judgement.reason}</span>
       ${c.judgement.basis?.length ? html`<div class="muted small">依據：${c.judgement.basis.join('；')}</div>` : null}</div>
     <details class="pl">
-      <summary>投放紀錄 ${c.placements.length ? `（${c.placements.length} 組）` : '（未分組，花費記在素材）'}</summary>
+      <summary>各受眾投放紀錄 ${c.placements.length ? `（${c.placements.length} 組）` : '（未分組，花費記在素材）'}</summary>
       ${c.placements.length ? html`<div class="tbl"><table class="data"><thead><tr><th>受眾／設定</th><th>期間</th><th class="num">本期花費</th><th class="num">點擊率</th><th></th></tr></thead>
         <tbody>${c.placements.map((pl) => html`<tr><td><b>${pl.audience || '未填受眾'}</b><div class="muted small">${pl.code}・${pl.setting || ''}</div></td>
           <td class="small nowrap">${md(pl.start_date)}–${md(pl.end_date)}</td><td class="num"><${V} m=${pl.metrics.spend} f="money" compact /></td><td class="num"><${V} m=${pl.metrics.ctr} f="pct" compact /></td>
@@ -725,7 +831,7 @@ function CreativeCard({ c, n, p, d, keys, onEdit, onPlacement }) {
         <p class="note">投放紀錄只分廣告數字；成果只追蹤到素材層。${c.unplacedSpend ? `另有 ${fmt.money(c.unplacedSpend)} 未對應投放紀錄。` : ''}</p>` : null}
       <button class="btn tiny" onClick=${() => onPlacement(null)}>＋ 新增投放紀錄</button>
     </details>
-    <div class="cr-foot"><button class="btn small" onClick=${onEdit}>編輯素材</button></div>
+    <div class="cr-foot"><button class="btn small primary" onClick=${onOpen}>看完整素材</button> <button class="btn small" onClick=${onEdit}>編輯素材</button></div>
   </article>`;
 }
 

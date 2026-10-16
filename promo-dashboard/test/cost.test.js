@@ -82,3 +82,72 @@ test('玉欣珍沒有付費素材：花費與成本不計算，首頁可標示�
   assert.equal(y.cumulative.spend.s, 'not_computed');
   assert.equal(y.metrics.spend.s, 'not_computed');
 });
+
+test('累計報名資料不完整：不給確定達成率，只保留已知人數與目標', async () => {
+  const { call } = await setup();
+  const j = await get(call, 'period=week');
+  const pr = j.cumulative.enrollProgress;
+  assert.equal(j.cumulative.all.enroll.s, 'incomplete'); // 報名只更新到前天
+  assert.equal(pr.v, null);
+  assert.equal(pr.s, 'not_computed');
+  assert.ok(pr.known);
+  assert.equal(pr.n, j.cumulative.all.enroll.v);
+  assert.equal(pr.d, 60);
+  assert.match(pr.r, /達成率暫不計算/);
+  const h = (await call('GET', '/home')).data;
+  assert.deepEqual(h.projects.find((p) => p.project.id === P).cumulative.enrollProgress, pr, '首頁與專案頁同一規則');
+  // 補齊報名資料後才有確定的達成率
+  assert.equal((await call('PUT', `/projects/${P}/sources/enroll`, { connected: true, covered_through: '2026-10-14' })).status, 200);
+  const after = await get(call, 'period=week');
+  assert.equal(after.cumulative.all.enroll.s, 'value');
+  assert.equal(after.cumulative.enrollProgress.v, after.cumulative.enrollProgress.n / 60);
+});
+
+test('已結束的素材與波次：顯示「已結束」與歷史成效，不給投放建議；進行中但資料不足時暫不判斷', async () => {
+  const { call } = await setup();
+  for (const q of ['period=week', 'period=month', 'period=all']) {
+    const j = await get(call, q);
+    for (const c of [...j.creatives.filter((x) => x.paid), ...j.campaigns]) {
+      if (c.ended) {
+        assert.equal(c.judgement.label, '已結束', `${q} ${c.code}`);
+        assert.match(c.judgement.reason, /不提供投放建議/);
+      } else assert.notEqual(c.judgement.label, '已結束');
+      const bad = ['spend', 'link_clicks'].some((k) => c.metrics[k].s === 'incomplete' || c.metrics[k].v == null);
+      if (!c.ended && bad && c.judgement.label !== '—') assert.equal(c.judgement.label, '暫不判斷', `${q} ${c.code}`);
+    }
+  }
+  const m = await get(call, 'period=month');
+  const ended = m.creatives.filter((c) => c.paid && c.ended);
+  assert.equal(ended.length, 2, '第一波的素材 1、2 已結束');
+  assert.ok(ended.every((c) => c.judgement.label !== '持續'));
+});
+
+test('素材檔：影片可播放、只有封面要標示、沒有檔案、測試示意標記、落地頁', async () => {
+  const { call } = await setup();
+  const j = await get(call, 'period=all');
+  const by = (code) => j.creatives.find((c) => c.code === code);
+  const v1 = by('TJSN-2609-01-VD01-v1');
+  assert.match(v1.video_url, /^data:video\/webm/);
+  assert.equal(v1.asset_mock, 1);
+  const v3 = by('TJSN-2610-01-VD01-v1');
+  assert.ok(v3.preview_url && !v3.video_url, '只有封面');
+  const im2 = by('TJSN-2610-01-IM02-v1');
+  assert.equal(im2.preview_url, '');
+  assert.equal(im2.asset_mock, 0);
+  assert.match(v1.landing_url, /^https:\/\//);
+  // 落地頁、影片只接受 https；換成真實檔案後不再標測試示意
+  assert.equal((await call('PUT', '/creatives/' + v3.id, { landing_url: 'javascript:alert(1)' })).status, 400);
+  assert.equal((await call('PUT', '/creatives/' + v3.id, { video_url: 'http://x/a.mp4' })).status, 400);
+  assert.equal((await call('PUT', '/creatives/' + v3.id, { video_url: 'https://cdn.example.com/a.mp4' })).status, 200);
+  const after = (await get(call, 'period=all')).creatives.find((c) => c.id === v3.id);
+  assert.equal(after.video_url, 'https://cdn.example.com/a.mp4');
+  assert.equal(after.asset_mock, 0);
+});
+
+test('首頁待辦：逾期優先，再依急迫程度與期限排序', async () => {
+  const { call } = await setup();
+  const t = (await call('GET', '/home')).data.todos;
+  const firstNotOverdue = t.findIndex((x) => !x.overdue);
+  assert.ok(t.slice(firstNotOverdue).every((x) => !x.overdue), '逾期都排在前面');
+  assert.ok(t.length > 5);
+});

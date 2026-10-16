@@ -1,5 +1,6 @@
 // 測試資料：全部標【測試】。付費專案代碼 TJSN、TYXZ；日常發文的位置、題材、貼文都標 is_test。
 // 數字由固定亂數產生，日期相對於「今天」，不是任何真實營運資料。
+import { MOCK_VIDEO } from './seed-media.js';
 import { personRef } from './csv.js';
 import { defaultMetrics } from './metrics.js';
 import { addDays, datesInRange } from './periods.js';
@@ -21,7 +22,7 @@ function rng(seed) {
 /** 測試用素材預覽圖（SVG），畫面上清楚標示「測試素材」 */
 function preview(label, sub, color) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320"><rect width="320" height="320" fill="${color}"/>`
-    + `<rect x="16" y="16" width="120" height="30" rx="6" fill="#ffffff" opacity=".9"/><text x="76" y="37" font-size="16" text-anchor="middle" fill="#333" font-family="sans-serif">測試素材</text>`
+    + `<rect x="16" y="16" width="130" height="30" rx="6" fill="#ffffff" opacity=".9"/><text x="81" y="37" font-size="16" text-anchor="middle" fill="#333" font-family="sans-serif">測試示意圖</text>`
     + `<text x="160" y="170" font-size="34" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">${label}</text>`
     + `<text x="160" y="210" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">${sub}</text></svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
@@ -101,10 +102,16 @@ export async function resetTestData(db, today, salt) {
     const pid = x.c === c3 ? yxz : jsn;
     const status = x.status || (x.c.status === '進行中' ? '進行中' : x.c.status === '已結束' ? '已結束' : '規劃中');
     x.status = status;
-    add(`INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, x.id, pid, x.c.id, x.code, x.name, x.channel, x.paid, x.code.split('-')[3].slice(0, 2), status, '',
+    // 測試示意素材：素材 1 有封面＋示意影片；素材 3 只有封面；未核可的素材還沒有檔案
+    const fmt = x.code.split('-')[3];
+    const hasFile = pid === jsn && x.prod === '已核可';
+    const cover = hasFile ? preview(fmt, x.code.split('-')[4], x.color) : '';
+    const video = x.id === 'test-cr1' ? MOCK_VIDEO : '';
+    add(`INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination,
+      preview_url, video_url, landing_url, asset_mock, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    x.id, pid, x.c.id, x.code, x.name, x.channel, x.paid, fmt.slice(0, 2), status, '',
     x.prod, pid === jsn ? '小編A（測試）' : '待填', x.headline, x.copy, x.cta, x.appeal, pid === jsn ? '落地頁表單（測試網址）' : '待定',
-    preview(x.code.split('-')[3], x.code.split('-')[4], x.color), t, t);
+    cover, video, pid === jsn && x.paid ? 'https://example.com/test-ebook' : '', cover ? 1 : 0, t, t);
   }
   // 素材 3 用在兩組受眾：各一筆投放紀錄
   const pls = [
@@ -236,6 +243,7 @@ export async function resetTestData(db, today, salt) {
     [3, null, '待製作', 'test-o2', 'test-t3', null],
     [5, null, '待製作', 'test-o5', 'test-t5', null],
     [9, null, '待製作', 'test-o2', 'test-t2', jsn],
+    [null, -2, '已發布', 'test-o4', 'test-t3', null, 17, 3, 0, 0, 0, -1], // 臨時加發（沒有預定日期）
   ];
   const owners = { 'test-o1': 'Shen', 'test-o2': '小編A（測試）', 'test-o3': '小編A（測試）', 'test-o4': '小編B（測試）', 'test-o5': '小編B（測試）' };
   P.forEach((r, i) => {
@@ -245,7 +253,7 @@ export async function resetTestData(db, today, salt) {
     add(`INSERT INTO posts (id, topic_id, outlet_id, project_id, planned_date, published_date, title, content, asset, owner, status, url, purpose, destination,
       likes, comments, shares, inquiries, conversions, pending_replies, metrics_source, metrics_as_of, metrics_updated_at, is_test, created_at, updated_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`,
-    `test-post-${i + 1}`, topic, outlet, project, D(po), pubo == null ? null : D(pubo), title, '【測試內容】' + title + '，內容摘要。', '測試圖片 1 張', owners[outlet], status,
+    `test-post-${i + 1}`, topic, outlet, project, po == null ? null : D(po), pubo == null ? null : D(pubo), title, '【測試內容】' + title + '，內容摘要。', '測試圖片 1 張', owners[outlet], status,
     status === '已發布' ? `https://example.com/test-post-${i + 1}` : '', project ? '支援招生：導流到電子書' : '經營互動', project ? '電子書落地頁（測試網址）' : '粉專／社團互動',
     hasM ? likes : null, hasM ? comments : null, hasM ? shares : null, hasM ? inq : null, hasM ? 0 : null, pend ?? null,
     hasM ? '人工登錄' : '', hasM ? asOf(D(asof)) : null, hasM ? t : null, t, t);

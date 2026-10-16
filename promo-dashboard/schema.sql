@@ -90,7 +90,10 @@ CREATE TABLE IF NOT EXISTS creatives (
   cta TEXT NOT NULL DEFAULT '',
   appeal TEXT NOT NULL DEFAULT '',      -- 訴求
   destination TEXT NOT NULL DEFAULT '', -- 導向位置
-  preview_url TEXT NOT NULL DEFAULT '', -- 圖片或影片預覽（網址或測試用 data URI）
+  preview_url TEXT NOT NULL DEFAULT '', -- 圖片，或影片的封面（網址或測試用 data URI）
+  video_url TEXT NOT NULL DEFAULT '',   -- 影片檔；只有封面沒有影片時留空
+  landing_url TEXT NOT NULL DEFAULT '', -- 實際落地頁
+  asset_mock INTEGER NOT NULL DEFAULT 0, -- 1＝測試示意圖／影片，不是真實素材
   platform_ref TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL

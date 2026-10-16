@@ -5,6 +5,9 @@
 //   已發文：實際發布日期在期間內（不論預定日期是哪天）
 //   待發文：預定日期在期間內、尚未發布、未取消；其中預定日期已過今天者另計「逾期」
 //   取消：預定日期在期間內且狀態為「取消」，不算入預計
+// 核對（各欄可以由明細加總對上）：
+//   預計 ＝ 依期發布（預定與發布都在期間內）＋ 期外發布（預定在期間內、發布在期間外）＋ 待發
+//   已發 ＝ 依期發布 ＋ 跨期補發（預定在期間外、發布在期間內）＋ 臨時加發（沒有預定日期）
 // 互動口徑（第一版）：期間內「實際發布」的貼文，到各篇統計截至時間為止的累計互動；不是期間內新增的互動。
 import { addDays } from './periods.js';
 
@@ -23,12 +26,23 @@ export function classify(post, range, today) {
   const published = isPublished && post.published_date >= range.from && post.published_date <= range.fullTo;
   const planned = inPlan && !cancelled;
   const pending = planned && !isPublished;
-  return { planned, published, pending, overdue: pending && post.planned_date < today, cancelled: inPlan && cancelled };
+  return {
+    planned, published, pending, overdue: pending && post.planned_date < today, cancelled: inPlan && cancelled,
+    onPlan: published && inPlan,
+    crossIn: published && !!post.planned_date && !inPlan,
+    extra: published && !post.planned_date,
+    plannedOut: planned && isPublished && !published,
+  };
 }
+
+export const BUCKETS = {
+  planned: '預計發文', published: '已發文', pending: '待發文', overdue: '逾期', cancelled: '取消',
+  onPlan: '依期發布', plannedOut: '期內預定、期外發布', crossIn: '跨期補發（期外預定、期內發布）', extra: '臨時加發（無預定日）',
+};
 
 /** 彙總一組貼文；互動只算期間內已發布的貼文 */
 export function summarize(posts, range, today) {
-  const c = { planned: 0, published: 0, pending: 0, overdue: 0, cancelled: 0 };
+  const c = { planned: 0, published: 0, pending: 0, overdue: 0, cancelled: 0, onPlan: 0, crossIn: 0, extra: 0, plannedOut: 0 };
   const pub = [];
   for (const p of posts) {
     const k = classify(p, range, today);

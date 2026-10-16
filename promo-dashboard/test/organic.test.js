@@ -16,9 +16,13 @@ test('發文計數口徑：預計依預定日、已發依發布日、待發含�
     { status: '待製作', planned_date: '2026-10-17' },                                 // 預計＋待發
     { status: '取消', planned_date: '2026-10-15' },                                   // 只算取消
     { status: '待製作', planned_date: '2026-10-25' },                                 // 期外
+    { status: '已發布', planned_date: null, published_date: '2026-10-14' },           // 臨時加發：只算已發
   ];
   const s = summarize(posts, range, TODAY);
-  assert.deepEqual(s.counts, { planned: 4, published: 2, pending: 2, overdue: 1, cancelled: 1 });
+  assert.deepEqual(s.counts, { planned: 4, published: 3, pending: 2, overdue: 1, cancelled: 1, onPlan: 1, crossIn: 1, extra: 1, plannedOut: 1 });
+  // 核對：預計＝依期＋期外發布＋待發；已發＝依期＋跨期補發＋臨時加發
+  assert.equal(s.counts.planned, s.counts.onPlan + s.counts.plannedOut + s.counts.pending);
+  assert.equal(s.counts.published, s.counts.onPlan + s.counts.crossIn + s.counts.extra);
   assert.equal(classify(posts[2], range, TODAY).pending, false); // 已提前發布，不是待發
 });
 
@@ -123,7 +127,8 @@ test('判斷規則：關鍵資料不完整時不給「持續」，並列出依�
   const pj = (await call('GET', '/projects/test-proj-jsn?period=r30')).data;
   const vd = pj.creatives.find((c) => c.code === 'TJSN-2610-01-VD01-v1');
   assert.equal(vd.metrics.spend.s, 'incomplete');
-  assert.equal(vd.judgement.label, '觀察');
+  assert.equal(vd.judgement.label, '暫不判斷');
+  assert.match(vd.judgement.reason, /^待補資料/);
 });
 
 test('花費分開標示：本期、波次累計、專案累計、預算', async () => {
@@ -137,5 +142,21 @@ test('花費分開標示：本期、波次累計、專案累計、預算', async
   assert.ok(c2.metrics.spend.v < c2.metrics.spendAll);
   const c1 = pj.campaigns.find((c) => c.code === 'TJSN-2609-01');
   assert.equal(c1.metrics.spend.s, 'not_computed'); // 本週沒有投放
-  assert.equal(c1.judgement.label, '—');
+  assert.equal(c1.judgement.label, '已結束'); // 已結束的波次只看歷史成效
+});
+
+test('發文數可由明細核對：各期間的預計、已發都等於分項相加，且等於清單筆數', async () => {
+  const { call } = await setup();
+  for (const q of ['period=week', 'period=month', 'period=r30', 'period=month&m=2026-09']) {
+    const o = (await call('GET', '/organic?' + q)).data;
+    const c = o.total.counts;
+    assert.equal(c.planned, c.onPlan + c.plannedOut + c.pending, q);
+    assert.equal(c.published, c.onPlan + c.crossIn + c.extra, q);
+    for (const k of ['planned', 'published', 'pending', 'overdue', 'cancelled', 'onPlan', 'crossIn', 'extra', 'plannedOut']) {
+      assert.equal(o.posts.filter((p) => p.flags[k]).length, c[k], `${q} ${k}`);
+    }
+  }
+  const m = (await call('GET', '/organic?period=month')).data.total.counts;
+  const w = (await call('GET', '/organic?period=week')).data.total.counts;
+  assert.ok(m.extra >= 1 && w.crossIn >= 1 && m.cancelled >= 1, '測試資料含臨時加發、跨期補發、取消');
 });

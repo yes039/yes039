@@ -1,7 +1,7 @@
 // 宣傳總覽：A 日常 FB 發文、B 付費廣告專案、集中待辦、資料更新狀態
 import { html, api, useApi, V, Kpi, Badge, Loading } from './ui.js';
 import { fmt, md, rangeText } from './format.js';
-import { OrganicTable, CountRules, TodoTable, outcomeKeys, freshText, sourceUsed, NO_PAID_LABEL } from './shared.js';
+import { OrganicTable, CountRules, TodoTable, outcomeKeys, freshText, sourceUsed, NO_PAID_LABEL, EnrollProgress, Reconcile } from './shared.js';
 import { SOURCE_KINDS } from '../src/metrics.js';
 
 export function Home({ q }) {
@@ -16,27 +16,26 @@ export function Home({ q }) {
           <p class="sub">${rangeText(d.range)}・廣告與成果統計到 ${md(d.range.to)}（今天的資料隔天才完整）</p></div>
       </div>
 
+      <div class="summary-grid">
+        ${o ? html`<${OrganicSummary} o=${o} />` : html`<section class="sum-card"><h2 class="sum-title">日常發文摘要</h2><p class="muted">日常發文只開放系統管理者查看。</p></section>`}
+        <${AdsSummary} projects=${d.projects} />
+      </div>
+
       ${o ? html`<section class="zone" aria-labelledby="h-a">
         <div class="zone-head">
-          <h2 id="h-a"><span class="zone-tag a">A</span> 日常 FB 發文</h2>
+          <h2 id="h-a"><span class="zone-tag a">A</span> 日常 FB 發文明細</h2>
           <div class="zone-links"><a class="btn small" href="#/organic?view=calendar">發文日曆</a><a class="btn small" href="#/organic?view=list">貼文清單</a></div>
         </div>
-        <div class="kpis compact">
-          <${Kpi} label="預計發文"><span class="val">${fmt.int(o.total.counts.planned)}</span></${Kpi}>
-          <${Kpi} label="已發文"><span class="val">${fmt.int(o.total.counts.published)}</span></${Kpi}>
-          <${Kpi} label="待發文" sub=${o.total.counts.overdue ? html`<span class="late">其中逾期 ${o.total.counts.overdue}</span>` : '沒有逾期'}><span class="val">${fmt.int(o.total.counts.pending)}</span></${Kpi}>
-          <${Kpi} label="按讚" m=${o.total.likes} sub="已發布貼文累計" />
-          <${Kpi} label="留言" m=${o.total.comments} sub="已發布貼文累計" />
-          <${Kpi} label="分享" m=${o.total.shares} sub=${o.total.metricsAsOf ? '最早統計截至 ' + o.total.metricsAsOf.slice(5).replace('-', '/') : '人工登錄'} />
-        </div>
         <${OrganicTable} first="發布主體" rows=${o.bySubject.map((s) => ({ ...s, sub: `${s.outlets} 個帳號或社團` }))} total=${o.total} linkOf=${(r) => '#/organic?type=' + r.type} />
-        <p class="note">${o.definition}。取消 ${o.total.counts.cancelled} 篇不計入預計。</p>
+        <h3 class="sub-sec">發文數核對</h3>
+        <${Reconcile} c=${o.total.counts} linkOf=${(k) => '#/organic?view=list&bucket=' + k} />
+        <p class="note">${o.definition}。</p>
         <${CountRules} />
-      </section>` : html`<section class="zone"><p class="muted">日常發文只開放系統管理者查看。</p></section>`}
+      </section>` : null}
 
       <section class="zone" aria-labelledby="h-b">
         <div class="zone-head">
-          <h2 id="h-b"><span class="zone-tag b">B</span> 付費廣告專案</h2>
+          <h2 id="h-b"><span class="zone-tag b">B</span> 付費廣告專案明細</h2>
           ${d.user.isAdmin ? html`<div class="zone-links"><a class="btn small" href="#/new">＋ 新增專案</a></div>` : null}
         </div>
         <div class="proj-grid">${d.projects.map((p) => html`<${ProjectCard} p=${p} range=${d.range} />`)}</div>
@@ -45,7 +44,7 @@ export function Home({ q }) {
 
       <section class="zone" aria-labelledby="h-todo">
         <div class="zone-head"><h2 id="h-todo">待辦與異常</h2></div>
-        <${TodoTable} items=${d.todos} onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); st.reload(); }} />
+        <${TodoTable} items=${d.todos} scope="全部未完成事項（含跨期，不受上方週／月切換影響）" onDone=${async (t) => { await api('PUT', '/todos/' + t.id, { done: true }); st.reload(); }} />
       </section>
 
       <section class="zone" aria-labelledby="h-src">
@@ -63,6 +62,46 @@ export function Home({ q }) {
       </section>
     </main>`;
   }}</${Loading}>`;
+}
+
+function OrganicSummary({ o }) {
+  const c = o.total.counts;
+  const n = (label, v, href, cls = '') => html`<a class=${'sum-stat ' + cls} href=${href}><span class="sum-label">${label}</span><span class="sum-val">${fmt.int(v)}</span></a>`;
+  return html`<section class="sum-card" aria-labelledby="h-sum-a">
+    <div class="sum-head"><h2 class="sum-title" id="h-sum-a"><span class="zone-tag a">A</span> 日常發文摘要</h2><a class="small" href="#/organic">日曆與清單 →</a></div>
+    <div class="sum-stats">
+      ${n('預計', c.planned, '#/organic?view=list&bucket=planned')}
+      ${n('已發', c.published, '#/organic?view=list&bucket=published')}
+      ${n('待發', c.pending, '#/organic?view=list&bucket=pending')}
+      ${n('逾期', c.overdue, '#/organic?view=list&bucket=overdue', c.overdue ? 'late' : '')}
+    </div>
+    <div class="sum-stats">
+      ${['likes', 'comments', 'shares'].map((k) => html`<div class="sum-stat"><span class="sum-label">${{ likes: '按讚', comments: '留言', shares: '分享' }[k]}</span><span class="sum-val"><${V} m=${o.total[k]} compact showNA /></span></div>`)}
+    </div>
+    <p class="small muted hide-sm">${c.crossIn || c.extra || c.plannedOut ? `另有跨期補發 ${c.crossIn}、臨時加發 ${c.extra}、期外發布 ${c.plannedOut} 篇，見下方「發文數核對」。` : ''}互動為已發布貼文的人工登錄累計${o.total.metricsAsOf ? '，最早統計截至 ' + md(o.total.metricsAsOf.slice(0, 10)) : ''}。</p>
+  </section>`;
+}
+
+function AdsSummary({ projects }) {
+  return html`<section class="sum-card" aria-labelledby="h-sum-b">
+    <div class="sum-head"><h2 class="sum-title" id="h-sum-b"><span class="zone-tag b">B</span> 廣告專案摘要</h2><span class="small muted">各專案分開，不跨專案加總</span></div>
+    ${projects.map((p) => {
+      const m = p.metrics;
+      const pk = m.primaryKey;
+      const has = (k) => p.project.metrics[k]?.enabled;
+      const hasPaid = p.paidCreatives > 0;
+      return html`<div class="sum-proj">
+        <a class="sum-proj-name" href=${'#/p/' + p.project.id}><span class="proj-code">${p.project.code}</span> ${p.project.name}</a>
+        ${!hasPaid ? html`<div><span class="pstat st-todo">${NO_PAID_LABEL}</span></div>` : html`<div class="sum-stats">
+          <div class="sum-stat"><span class="sum-label">本期花費</span><span class="sum-val"><${V} m=${m.spend} f="money" compact showNA incLabel="已知小計" /></span></div>
+          ${pk ? html`<div class="sum-stat"><span class="sum-label">付費${p.project.metrics[pk].label}</span><span class="sum-val"><${V} m=${p.groups.paid[pk]} compact showNA /></span></div>` : null}
+          ${has('enroll') ? html`<div class="sum-stat"><span class="sum-label">新增報名</span><span class="sum-val"><${V} m=${m.enroll} compact showNA /></span></div>` : null}
+          ${has('payment') ? html`<div class="sum-stat"><span class="sum-label">付款</span><span class="sum-val"><${V} m=${m.payment} compact showNA /> 筆</span><span class="small muted">淨額 <${V} m=${m.net_amount} f="money" compact /></span></div>` : null}
+        </div>
+        <div class="small muted">資料：廣告 ${freshText(p.sources.ads, p.missingAdDates)}${has('enroll') ? '；報名 ' + freshText(p.sources.enroll) : ''}</div>`}
+      </div>`;
+    })}
+  </section>`;
 }
 
 function ProjectCard({ p }) {
@@ -95,11 +134,7 @@ function ProjectCard({ p }) {
       <div class="wide"><dt>廣告花費與成本</dt><dd><span class="state s-not_computed sm">尚未啟用付費廣告，不計算</span></dd></div>
       ${!outcomeKeys(project).length ? html`<div class="wide"><dt>成果</dt><dd><span class="state s-not_computed sm">本專案尚未定義成果指標</span></dd></div>` : null}
     </dl>`}
-    ${has('enroll') ? html`<div class="prog small">
-      <div>本期新增報名 <b><${V} m=${m.enroll} compact /></b>・累計報名 <b><${V} m=${cum.all.enroll} compact /></b>${project.target_enroll ? ` ÷ 目標 ${project.target_enroll}` : html`・目標<span class="tbd">待填</span>`}${prog.v != null ? html`＝<${V} m=${prog} f="pct" compact />` : null}</div>
-      ${prog.v != null ? html`<div class="budget-bar" role="img" aria-label=${'累計招生達成 ' + fmt.pct(prog.v)}><span style=${`width:${Math.min(100, prog.v * 100)}%`}></span></div>` : null}
-      <div class="muted">累計：專案開始至 ${md(cum.to)}，不隨期間改變</div>
-    </div>` : null}
+    ${has('enroll') ? html`<div class="prog small"><div>本期新增報名 <b><${V} m=${m.enroll} compact /></b></div><${EnrollProgress} prog=${prog} cum=${cum} compact /></div>` : null}
     ${budget && used.v != null ? html`<div class="budget"><div class="budget-bar" role="img" aria-label=${(used.s === 'incomplete' ? '預算使用至少 ' : '預算使用 ') + fmt.pct(used.v)}><span style=${`width:${Math.min(100, used.v * 100)}%`} class=${(used.v > 1 ? 'over' : used.v > 0.9 ? 'near' : '') + (used.s === 'incomplete' ? ' partial' : '')}></span></div>
       <div class="small muted">預算使用 ${used.s === 'incomplete' ? '至少 ' : ''}${fmt.pct(used.v)}：累計${used.s === 'incomplete' ? '已知小計' : ''} ${fmt.money(used.n)} ÷ 總預算 ${fmt.money(budget)}</div></div>` : null}
     ${hasPaid ? html`<div class="small muted">廣告數字：${freshText(p.sources.ads, p.missingAdDates)}</div>` : null}

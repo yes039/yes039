@@ -144,6 +144,7 @@ export async function computeProject(db, project, range, today) {
     const m = scope(crsRaw, ads.filter((r) => r.campaign_id === c.id), conv.filter((r) => r.campaign_id === c.id));
     m.spendAll = cumBy('campaign_id', c.id);
     m.spendCum = cumSpend(crsRaw, m.spendAll);
+    const campEnded = c.status === '已結束' || (!!c.end_date && c.end_date < today);
     const campLive = crsRaw.some((x) => expectedByCreative[x.id].length) || ads.some((r) => r.campaign_id === c.id);
     if (paid && !campLive) for (const k of ['spend', 'impressions', 'link_clicks', 'ctr', 'cpc', 'cost_primary', 'cost_enroll', 'return_on_spend']) m[k] = { v: null, s: 'not_computed', r: '本期未投放' };
     const src = primary ? sources[SOURCE_OF_TYPE[primary]] : null;
@@ -157,10 +158,11 @@ export async function computeProject(db, project, range, today) {
     const crs = crsRaw.map((cr) => {
       const cm = scope([cr], ads.filter((r) => r.creative_id === cr.id), conv.filter((r) => r.creative_id === cr.id));
       cm.spendAll = cumBy('creative_id', cr.id);
-      cm.spendCum = cumSpend([cr], cm.spendAll);
+      cm.spendCum = cr.paid && cr.status === '規劃中' && !cm.spendAll ? { v: null, s: 'not_computed', r: '尚未投放' } : cumSpend([cr], cm.spendAll);
       const hasAds = ads.some((r) => r.creative_id === cr.id);
       const notLive = cr.paid && !hasAds && (cr.status === '規劃中' || !expectedByCreative[cr.id].length);
       const why = cr.status === '規劃中' ? '尚未投放' : '本期未投放';
+      const crEnded = cr.status === '已結束' || campEnded;
       if (notLive) for (const k of ['spend', 'impressions', 'link_clicks', 'ctr', 'cpc', 'cost_primary', 'cost_enroll', 'return_on_spend']) cm[k] = { v: null, s: 'not_computed', r: why };
       const pls = placements.filter((p) => p.creative_id === cr.id).map((pl) => {
         const exp = expectedDays(cr, c, [pl], range, yesterday).map((date) => ({ key: pl.id, date }));
@@ -173,12 +175,13 @@ export async function computeProject(db, project, range, today) {
       const item = {
         ...cr, campaign_code: c.code, metrics: cm, placements: pls,
         unplacedSpend: noPlacement.reduce((a, r) => a + r.spend, 0),
-        judgement: notLive ? { label: '—', reason: why, basis: [] } : judge(cm, settings, c.target_cpl, !!cr.paid, defs), links: links.filter((l) => l.creative_id === cr.id).length,
+        ended: crEnded,
+        judgement: cr.paid && crEnded ? judge(cm, settings, c.target_cpl, true, defs, { ended: true }) : notLive ? { label: '—', reason: why, basis: [] } : judge(cm, settings, c.target_cpl, !!cr.paid, defs), links: links.filter((l) => l.creative_id === cr.id).length,
       };
       outCreatives.push(item);
       return item;
     });
-    outCampaigns.push({ ...c, paid, metrics: m, judgement: paid && !campLive ? { label: '—', reason: '本期未投放', basis: [] } : judge(m, settings, c.target_cpl, paid, defs), creatives: crs });
+    outCampaigns.push({ ...c, paid, ended: campEnded, metrics: m, judgement: paid && campEnded ? judge(m, settings, c.target_cpl, true, defs, { ended: true }) : paid && !campLive ? { label: '—', reason: '本期未投放', basis: [] } : judge(m, settings, c.target_cpl, paid, defs), creatives: crs });
   }
 
   // 素材依波次開始日、建立順序排列，畫面上的「素材 1、2、3」才穩定
@@ -231,9 +234,12 @@ export async function computeProject(db, project, range, today) {
   const cumulative = {
     from: startDate, to: yesterday, spend: spendCum, all: cumAll, groups: cumGroups,
     cost_primary: primary && paidIds.size ? strictCost(spendCum, cumGroups.paid[primary]) : null,
-    enrollProgress: defs.enroll?.enabled && project.target_enroll && enrollCum.v != null
-      ? { v: enrollCum.v / project.target_enroll, s: enrollCum.s === 'incomplete' ? 'incomplete' : 'value', r: enrollCum.r, n: enrollCum.v, d: project.target_enroll }
-      : { v: null, s: 'not_computed', r: !defs.enroll?.enabled ? '本專案未定義報名' : !project.target_enroll ? '招生目標待填' : enrollCum.r },
+    // 累計報名資料不完整時不給確定的達成率；保留已知人數與目標供畫面顯示
+    enrollProgress: !defs.enroll?.enabled ? { v: null, s: 'not_computed', r: '本專案未定義報名' }
+      : !project.target_enroll ? { v: null, s: 'not_computed', r: '招生目標待填', n: enrollCum.v }
+        : enrollCum.v == null ? { v: null, s: 'not_computed', r: enrollCum.r, d: project.target_enroll }
+          : enrollCum.s === 'incomplete' ? { v: null, s: 'not_computed', r: `資料不完整（${enrollCum.r}），達成率暫不計算`, n: enrollCum.v, d: project.target_enroll, known: true }
+            : { v: enrollCum.v / project.target_enroll, s: 'value', r: '', n: enrollCum.v, d: project.target_enroll },
   };
   const budgetUse = !project.budget ? { v: null, s: 'not_computed', r: '總預算待填' }
     : spendCum.v == null ? { v: null, s: spendCum.s, r: spendCum.r }
@@ -302,7 +308,9 @@ async function home(db, user, range, today) {
     ...(organic ? organic.todos : []),
     ...manualOrganic.map((t) => ({ ...t, level: 'manual', kind: '人工待辦', manual: true, project: '日常發文', link: '#/organic' })),
     ...results.flatMap((r) => [...r.anomalies, ...r.todos]),
-  ].sort((a, b) => (levelOrder[a.level] ?? 9) - (levelOrder[b.level] ?? 9) || String(a.due || '9').localeCompare(String(b.due || '9')));
+  ].map((t) => ({ ...t, overdue: t.status === '逾期' || (!!t.due && t.due < today) }))
+    // 排序：逾期優先 → 急迫程度 → 期限（無期限排最後）
+    .sort((a, b) => (b.overdue - a.overdue) || (levelOrder[a.level] ?? 9) - (levelOrder[b.level] ?? 9) || String(a.due || '9').localeCompare(String(b.due || '9')));
   return {
     range, today, user,
     organic: organic && { bySubject: organic.bySubject, total: organic.total, definition: organic.definition, outlets: organic.outlets.length },
@@ -404,20 +412,26 @@ async function saveCreative(db, user, c, b, existing) {
   const paid = channel === 'fb_ad' ? 1 : (b.paid ? 1 : 0);
   const preview = str(b.preview_url ?? existing?.preview_url, 200000);
   if (preview && !/^https:\/\//.test(preview) && !/^data:image\/(png|jpeg|gif|webp|svg\+xml)[;,]/.test(preview)) throw new HttpError('預覽需為 https 網址或圖片');
+  const video = str(b.video_url ?? existing?.video_url, 1000);
+  if (video && !/^https:\/\//.test(video)) throw new HttpError('影片需為 https 網址');
+  const landing = str(b.landing_url ?? existing?.landing_url, 1000);
+  if (landing && !/^https:\/\//.test(landing)) throw new HttpError('落地頁需為 https 網址');
+  // 換了圖片或影片，就不再是測試示意素材
+  const mock = existing && preview === existing.preview_url && video === existing.video_url ? existing.asset_mock : 0;
   const prod = b.prod_status ?? existing?.prod_status ?? '製作中';
   if (!['製作中', '待審核', '已核可'].includes(prod)) throw new HttpError('製作狀態不正確');
   const keep = (k, max) => str(b[k] ?? existing?.[k], max);
   const vals = [keep('name', 200), channel, paid, format in FORMATS ? format : '', str(b.status || existing?.status || '規劃中', 10), keep('platform_ref', 200),
-    prod, keep('owner', 100), keep('headline', 200), keep('copy_text', 3000), keep('cta', 50), keep('appeal', 300), keep('destination', 300), preview];
+    prod, keep('owner', 100), keep('headline', 200), keep('copy_text', 3000), keep('cta', 50), keep('appeal', 300), keep('destination', 300), preview, video, landing, mock];
   if (prod !== '已核可' && ['進行中'].includes(vals[4])) throw new HttpError('素材未核可前不能設為投放中');
   if (existing) {
-    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, prod_status=?, owner=?, headline=?, copy_text=?, cta=?, appeal=?, destination=?, preview_url=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
+    await run(db, 'UPDATE creatives SET name=?, channel=?, paid=?, format=?, status=?, platform_ref=?, prod_status=?, owner=?, headline=?, copy_text=?, cta=?, appeal=?, destination=?, preview_url=?, video_url=?, landing_url=?, asset_mock=?, updated_at=? WHERE id=?', ...vals, now(), existing.id);
     await audit(db, user.email, 'creative.update', c.project_id, { code });
     return { id: existing.id };
   }
   const id = uid();
-  await run(db, `INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.project_id, c.id, code, ...vals, now(), now());
+  await run(db, `INSERT INTO creatives (id, project_id, campaign_id, code, name, channel, paid, format, status, platform_ref, prod_status, owner, headline, copy_text, cta, appeal, destination, preview_url, video_url, landing_url, asset_mock, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.project_id, c.id, code, ...vals, now(), now());
   await audit(db, user.email, 'creative.create', c.project_id, { code });
   return { id };
 }

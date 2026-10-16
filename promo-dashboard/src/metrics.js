@@ -166,32 +166,31 @@ export function strictCost(num, den, spendIsDen = false) {
 }
 
 /**
- * 依目標成本與最小樣本，給出「持續／觀察／調整」建議（只對付費範圍）。
- * 關鍵資料（花費、點擊、主要成果）不完整時一律不給「持續」，並列出依據。
+ * 投放建議（只對進行中的付費素材或波次）：
+ *   已結束 → 「已結束」，只看歷史成效，不給投放指令
+ *   資料不完整、缺資料、樣本不足、未設目標成本 → 「暫不判斷」（待補資料）
+ *   以上都通過才給「持續／觀察／調整」
+ * 一律附上依據（花費、點擊、付費廣告主要成果）。
  */
-export function judge(m, settings, targetCpl, hasPaid, defs) {
+export function judge(m, settings, targetCpl, hasPaid, defs, { ended = false } = {}) {
   if (!hasPaid) return { label: '—', reason: '免費渠道不計成本', basis: [] };
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const label = (k) => defs?.[k]?.label || { spend: '花費', link_clicks: '連結點擊' }[k] || k;
   const keys = ['spend', 'link_clicks', m.primaryKey].filter(Boolean);
-  const pm = { ...m, ...(m.primaryKey && m.paid ? { [m.primaryKey]: m.paid[m.primaryKey] } : {}) }; // 只用付費可歸因成果
-  m = pm;
-  const basis = keys.map((k) => `${k === m.primaryKey && m.paid ? '付費廣告' : ''}${label(k)}：${m[k].v == null ? STATE_LABEL[m[k].s] : Math.round(m[k].v).toLocaleString('zh-TW')}${m[k].s === 'incomplete' ? '（資料不完整）' : ''}`);
+  m = { ...m, ...(m.primaryKey && m.paid ? { [m.primaryKey]: m.paid[m.primaryKey] } : {}) }; // 只用付費可歸因成果
+  const basis = keys.map((k) => `${k === m.primaryKey ? '付費廣告' : ''}${label(k)}：${m[k].v == null ? STATE_LABEL[m[k].s] : Math.round(m[k].v).toLocaleString('zh-TW')}${m[k].s === 'incomplete' ? '（資料不完整）' : ''}`);
+  if (ended) return { label: '已結束', reason: '已結束投放，以下為歷史成效，不提供投放建議', basis };
+  const hold = (reason) => ({ label: '暫不判斷', reason, basis });
+  if (!m.primaryKey) return hold('本專案尚未定義主要成果');
   const missing = keys.filter((k) => m[k].v == null);
-  if (missing.length) return { label: '觀察', reason: `${missing.map(label).join('、')}${STATE_LABEL[m[missing[0]].s]}，暫不判斷`, basis };
+  if (missing.length) return hold(`待補資料：${missing.map(label).join('、')}${STATE_LABEL[m[missing[0]].s]}`);
   const inc = keys.filter((k) => m[k].s === 'incomplete');
-  if (m.spend.v < s.minSpend && m.link_clicks.v < s.minClicks) {
-    return { label: '觀察', reason: `樣本不足（點擊 < ${s.minClicks} 且花費 < ${s.minSpend}）`, basis };
-  }
+  if (inc.length) return hold(`待補資料：${m[inc[0]].r.replace(/^已知小計・/, '')}`);
+  if (m.spend.v < s.minSpend && m.link_clicks.v < s.minClicks) return hold(`樣本不足（點擊 < ${s.minClicks} 且花費 < ${s.minSpend}）`);
   const p = m[m.primaryKey];
-  const cpl = p.v > 0 ? m.spend.v / p.v : null;
-  if (inc.length) {
-    // 資料不完整：只允許「觀察」或明確的「調整」（花費已遠超目標時），不給「持續」
-    if (p.v === 0 && !inc.includes(m.primaryKey)) return { label: '調整', reason: `有花費但沒有${label(m.primaryKey)}（${m[inc[0]].r}）`, basis };
-    return { label: '觀察', reason: `資料不完整（${m[inc[0]].r}），暫不判斷`, basis };
-  }
-  if (p.v === 0) return { label: '調整', reason: `有花費但沒有${label(m.primaryKey)}`, basis };
-  if (!targetCpl) return { label: '觀察', reason: '未設定目標成本', basis };
+  if (p.v === 0) return { label: '調整', reason: `資料完整，有花費但沒有付費廣告${label(m.primaryKey)}`, basis };
+  if (!targetCpl) return hold('未設定目標成本');
+  const cpl = m.spend.v / p.v;
   if (cpl <= targetCpl) return { label: '持續', reason: `每筆${label(m.primaryKey)}成本 ${Math.round(cpl)} ≤ 目標 ${targetCpl}`, basis };
   if (cpl > targetCpl * s.adjustRatio) return { label: '調整', reason: `每筆成本 ${Math.round(cpl)} 高於目標 ${s.adjustRatio} 倍`, basis };
   return { label: '觀察', reason: `每筆成本 ${Math.round(cpl)} 略高於目標 ${targetCpl}`, basis };

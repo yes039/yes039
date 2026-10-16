@@ -58,10 +58,10 @@ export function Kpi({ label, m, f, sub, children }) {
   </div>`;
 }
 
-const JUDGE_CLASS = { 持續: 'good', 觀察: 'neutral', 調整: 'serious', '—': 'muted' };
+const JUDGE_CLASS = { 持續: 'good', 觀察: 'neutral', 調整: 'serious', 暫不判斷: 'hold', 已結束: 'ended', '—': 'muted' };
 export function Judge({ j }) {
   if (!j) return null;
-  return html`<span class=${'judge j-' + (JUDGE_CLASS[j.label] || 'muted')} title=${j.reason}>${j.label === '持續' ? '▲ ' : j.label === '調整' ? '▼ ' : ''}${j.label}</span>`;
+  return html`<span class=${'judge j-' + (JUDGE_CLASS[j.label] || 'muted')} title=${j.reason}>${j.label === '持續' ? '▲ ' : j.label === '調整' ? '▼ ' : j.label === '暫不判斷' ? '… ' : ''}${j.label === '暫不判斷' ? '待補資料／暫不判斷' : j.label}</span>`;
 }
 
 const LEVEL = { critical: ['嚴重', '■'], serious: ['注意', '▲'], warning: ['提醒', '●'], manual: ['待辦', '□'] };

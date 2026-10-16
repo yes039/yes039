@@ -2,7 +2,8 @@
 import { useState } from 'preact/hooks';
 import { html, api, useApi, V, Kpi, Badge, Modal, Form, Field, Loading, Empty } from './ui.js';
 import { fmt, md, ymd, rangeText } from './format.js';
-import { OrganicTable, CountRules, PostStatus } from './shared.js';
+import { OrganicTable, CountRules, PostStatus, Reconcile } from './shared.js';
+import { BUCKETS } from '../src/organic.js';
 
 const STATUSES = ['待製作', '待審核', '待發布', '已發布', '取消'];
 const WD = ['一', '二', '三', '四', '五', '六', '日'];
@@ -13,7 +14,8 @@ function qs(params) {
 }
 
 export function OrganicPage({ q, params }) {
-  const view = params.view === 'list' ? 'list' : 'calendar';
+  const bucket = params.bucket in BUCKETS ? params.bucket : '';
+  const view = params.view === 'list' || bucket ? 'list' : 'calendar';
   const filters = { type: params.type || '', outlet: params.outlet || '', project: params.project || '' };
   const st = useApi('/organic?' + q + qs(filters).replace('?', '&'));
   const [modal, setModal] = useState(null);
@@ -62,13 +64,18 @@ export function OrganicPage({ q, params }) {
         <${Kpi} label="按讚" m=${d.total.likes} /><${Kpi} label="留言" m=${d.total.comments} /><${Kpi} label="分享" m=${d.total.shares} />
         <${Kpi} label="可確認詢問" m=${d.total.inquiries} sub="人工確認來源" />
       </section>
+      <section class="panel" aria-labelledby="h-rc">
+        <h2 class="sec" id="h-rc">發文數核對</h2>
+        <${Reconcile} c=${d.total.counts} linkOf=${(k) => '#/organic' + qs({ view: 'list', ...filters, bucket: k })} />
+      </section>
       <section class="panel">
         <${OrganicTable} first=${filters.type ? '帳號或社團' : '發布主體'} rows=${summaryRows} total=${d.total}
           linkOf=${(r) => '#/organic' + qs({ view, project: filters.project, ...(filters.type ? { type: filters.type, outlet: r.id } : { type: r.type }) })} />
         <${CountRules} />
       </section>
       <section class="panel">
-        ${view === 'calendar' ? html`<${Calendar} posts=${d.posts} range=${d.range} today=${d.today} subjects=${d.subjects} />` : html`<${PostList} posts=${d.posts} subjects=${d.subjects} />`}
+        ${view === 'calendar' ? html`<${Calendar} posts=${d.posts} range=${d.range} today=${d.today} subjects=${d.subjects} />` : html`${bucket ? html`<div class="filter-note" role="status">只顯示「${BUCKETS[bucket]}」${d.posts.filter((p) => p.flags[bucket]).length} 篇 <a class="btn tiny" href=${'#/organic' + qs({ view: 'list', ...filters })}>顯示全部</a></div>` : null}
+          <${PostList} posts=${bucket ? d.posts.filter((p) => p.flags[bucket]) : d.posts} subjects=${d.subjects} />`}
       </section>
       ${modal === 'post' ? html`<${PostForm} meta=${d} preset=${{ outlet_id: filters.outlet, project_id: filters.project !== 'none' ? filters.project : '' }} onClose=${() => setModal(null)} onDone=${(id) => { setModal(null); location.hash = '#/post/' + id; }} />` : null}
       ${modal === 'outlet' ? html`<${Modal} title="新增帳號或社團" onClose=${() => setModal(null)}>
@@ -116,11 +123,24 @@ function Calendar({ posts, range, today, subjects }) {
             <span class="cal-title">${p.title.replace('【測試】', '')}</span>
             <span class="cal-meta">${subjects[p.outlet?.type]}・${p.outlet?.name.replace('【測試】', '')}・${p.owner || '待指派'}</span>
             ${p.status === '已發布' && p.planned_date && p.planned_date !== p.published_date ? html`<span class="cal-meta">預定 ${md(p.planned_date)}</span>` : null}
+            ${!p.planned_date ? html`<span class="cal-meta">臨時加發（無預定日）</span>` : null}
           </a>`)}
         </div>`;
       })}
     </div>
   </div>`;
+}
+
+/** 每篇在本期的歸類（與「發文數核對」同一套口徑） */
+function bucketOf(f) {
+  if (f.cancelled) return '取消';
+  if (f.onPlan) return '依期發布';
+  if (f.crossIn) return '跨期補發';
+  if (f.extra) return '臨時加發';
+  if (f.plannedOut) return '期外發布';
+  if (f.overdue) return '待發・逾期';
+  if (f.pending) return '待發';
+  return '';
 }
 
 function PostList({ posts, subjects }) {
@@ -133,8 +153,8 @@ function PostList({ posts, subjects }) {
       <tbody>${rows.map((p) => html`<tr>
         <td><a href=${'#/post/' + p.id}><b>${p.title}</b></a><div class="muted small">${subjects[p.outlet?.type]}・${p.outlet?.name}${p.project ? html`・<span class="proj-code">${p.project.code}</span>` : ''}</div>
           <div class="show-sm small muted">讚 ${p.likes ?? '—'}・留言 ${p.comments ?? '—'}・分享 ${p.shares ?? '—'}</div></td>
-        <td class="small nowrap">${p.published_date ? '發布 ' + md(p.published_date) : '預定 ' + md(p.planned_date)}${p.published_date && p.planned_date && p.planned_date !== p.published_date ? html`<div class="muted">預定 ${md(p.planned_date)}</div>` : null}</td>
-        <td><${PostStatus} status=${p.status} late=${p.flags.overdue} /></td>
+        <td class="small nowrap">${p.published_date ? '發布 ' + md(p.published_date) : p.planned_date ? '預定 ' + md(p.planned_date) : '—'}${p.published_date && p.planned_date && p.planned_date !== p.published_date ? html`<div class="muted">預定 ${md(p.planned_date)}</div>` : null}</td>
+        <td><${PostStatus} status=${p.status} late=${p.flags.overdue} /><div class="small muted">${bucketOf(p.flags)}</div></td>
         <td class="small hide-sm">${p.owner || '待指派'}</td>
         ${['likes', 'comments', 'shares', 'inquiries'].map((k) => html`<td class="num hide-sm">${p.status !== '已發布' ? html`<span class="muted">—</span>` : p[k] == null ? html`<span class="state s-not_connected sm" title="尚未登錄（人工登錄）">未登錄</span>` : fmt.int(p[k])}</td>`)}
         <td class="hide-sm">${p.url ? html`<a href=${p.url} target="_blank" rel="noopener">開啟</a>` : '—'}</td>
@@ -160,7 +180,7 @@ export function PostPage({ id }) {
         <div class="head-actions"><button class="btn primary small" onClick=${() => setEdit(true)}>編輯／登錄成效</button></div>
       </div>
       <section class="facts">
-        <div><span>預定日期</span><b>${ymd(p.planned_date)}</b></div>
+        <div><span>預定日期</span><b>${p.planned_date ? ymd(p.planned_date) : '無（臨時加發）'}</b></div>
         <div><span>實際發布日期</span><b>${ymd(p.published_date)}</b></div>
         <div><span>共同題材</span><b>${d.topic?.title || '無'}</b></div>
         <div><span>支援專案</span><b>${d.project ? html`<a href=${'#/p/' + d.project.id}>${d.project.code}｜${d.project.name}</a>` : '無（日常發文）'}</b></div>
@@ -179,7 +199,7 @@ export function PostPage({ id }) {
         <h2 class="sec">同一題材的其他發布位置 <span class="count">${d.siblings.length}</span></h2>
         <p class="sec-note">每個位置各自一筆紀錄與成效，發文數依實際筆數計算。</p>
         <div class="tbl"><table class="data"><thead><tr><th>位置</th><th>日期</th><th>狀態</th><th class="num">讚</th><th class="num">留言</th><th class="num">分享</th></tr></thead>
-          <tbody>${d.siblings.map((x) => html`<tr><td><a href=${'#/post/' + x.id}>${d.subjects[x.outlet_type]}・${x.outlet_name}</a></td><td class="small">${x.published_date ? '發布 ' + md(x.published_date) : '預定 ' + md(x.planned_date)}</td>
+          <tbody>${d.siblings.map((x) => html`<tr><td><a href=${'#/post/' + x.id}>${d.subjects[x.outlet_type]}・${x.outlet_name}</a></td><td class="small">${x.published_date ? '發布 ' + md(x.published_date) : x.planned_date ? '預定 ' + md(x.planned_date) : '—'}</td>
             <td><${PostStatus} status=${x.status} /></td>${['likes', 'comments', 'shares'].map((k) => html`<td class="num">${x[k] ?? html`<span class="muted">—</span>`}</td>`)}</tr>`)}</tbody></table></div>
       </section>` : null}
       ${edit ? html`<${PostForm} meta=${d} post=${p} onClose=${() => setEdit(false)} onDone=${() => { setEdit(false); st.reload(); }} />` : null}
