@@ -1,0 +1,97 @@
+case: club（社區讀書會 10 月場報名繳費對帳）
+status: READY
+goal: 對帳 10 月場的報名與繳費。產出有效報名人數與應收金額、實收金額（全部收款與可對應有效報名的收款）、未繳與短繳名單、需退款或無法對應的收款，以及資料品質異常清單。
+definition_of_done: |
+  1. 所有數字都可由兩份 CSV 重算，並註明計算口徑。
+  2. 有效報名人數、應收、實收（全部）、實收（可對應）、未繳名單、短繳名單、退款或無法對應名單、品質異常清單都已產出。
+  3. 每筆異常都標明來源檔案與列號。
+  4. 恆等式成立：全部收款 = 可對應有效報名收款 + 退款或無法對應收款。
+tasks:
+  - id: T1
+    title: 資料品質稽核（報名與收款兩檔）
+    brief: |
+      讀取 cases/club/data/registrations.csv（欄位 reg_id,name,email,session,fee,status）和 cases/club/data/payments.csv（欄位 pay_id,email,amount,paid_at,method）。表頭為第 1 列，列號以檔案實際行號計算，資料從第 2 列開始。
+      請逐項檢查並列出所有異常，不要修改資料。
+      - email 前後空白或大小寫不一致。比對時以 trim 加小寫為正規化 email，並列出原值與正規化值。
+      - 同一正規化 email 在報名檔重複出現。
+      - 同一正規化 email 在收款檔重複出現。
+      - session 不是「10月場」。
+      - status 不是「報名」或「取消」。
+      - fee 或 amount 為空、非數字、0、負數，或與其他列明顯不一致。
+      - 疑似測試資料，例如 email 含 test 或 example 以外的怪異網域、姓名為 test/測試。
+      - paid_at 日期格式錯誤，或不在合理範圍。
+      - method 空白。
+      - 必填欄位為空。
+      遇到無法判斷的情況，請照實列為「待確認」，不要自行刪除或合併。
+      只做稽核，不計算應收與實收。
+    inputs: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    output_schema: {file: string, row: int, record_id: string, issue_type: string, raw_value: string, normalized_value: string, suggested_handling: string}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - 兩個檔案的每一列都已檢查，輸出註明各檔檢查的總列數，且與實際資料列數一致。
+      - 每筆異常都含 file、row、record_id、issue_type。
+      - 列出所有 email 正規化後與原值不同的列號。
+      - 列出所有正規化 email 重複的組別及其列號，包含報名檔與收款檔。
+      - 若某類問題沒有發現，明確寫「0 筆」，不可省略該類。
+    suggested_agent: sk-worker
+  - id: T2
+    title: 有效報名人數與應收金額
+    brief: |
+      讀取 cases/club/data/registrations.csv。
+      有效報名的定義是 status=「報名」且 session=「10月場」。
+      email 以 trim 加小寫正規化。
+      同一正規化 email 若有多筆有效報名，視為重複報名。人數以不重複 email 計，並保留重複列清單，不要擅自刪除。每個 email 的應收取該 email 重複列中最先出現那列的 fee。
+      應收金額 = 每個不重複有效報名 email 的 fee 加總，fee 以檔案欄位為準，不可假設 600。
+      同時輸出每個有效報名 email 的應收明細，供其他卡使用。
+      若 fee 為空或非數字，該列不計入並列入異常。
+      另外輸出取消人數，以及已取消但有收款的 email 清單留給 T3 處理，這裡只列取消名單。
+    inputs: [cases/club/data/registrations.csv]
+    output_schema: {valid_headcount: int, expected_total: number, receivable_detail: "list of {norm_email, name, reg_ids, fee}", duplicate_rows: "list of {norm_email, reg_ids, rows}", cancelled_list: "list of {reg_id, norm_email, row}", excluded_rows: "list of {row, reason}"}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - valid_headcount 等於 receivable_detail 的筆數。
+      - expected_total 等於 receivable_detail 的 fee 加總，並附上加總算式。
+      - 報名檔每一列都歸入以下其中一類：有效、重複、取消、排除，各類列數加總等於資料總列數。
+      - 列出所有被視為重複的 reg_id 及其列號。
+    suggested_agent: sk-worker
+  - id: T3
+    title: 收款對帳（實收、未繳、短繳、退款或無法對應）
+    brief: |
+      讀取 cases/club/data/payments.csv，並使用 T2 的 receivable_detail 與 cancelled_list。
+      email 以 trim 加小寫正規化。同一 email 的多筆收款先加總，並保留逐筆明細。
+      1. 全部實收 = payments.csv 所有 amount 加總。
+      2. 可對應實收 = 正規化 email 屬於有效報名名單的收款加總。
+      3. 未繳 = 有效報名 email 在收款檔中沒有任何收款。列出 name、email、應收金額。
+      4. 短繳 = 該 email 累計收款 < 應收，並列出差額。
+      5. 溢繳 = 該 email 累計收款 > 應收，列為需退款，並列出差額。
+      6. 取消者有收款，列為需退款，退款額為全部已收金額。
+      7. 收款 email 不在報名檔任何列，列為無法對應。
+      8. 同一 email 重複收款，列出所有 pay_id，並判斷是溢繳或分期補足。
+      9. amount 非數字或空白的列不計入加總，並列入異常。
+      退款金額合計與無法對應金額合計要分開列出。
+    inputs: [cases/club/data/payments.csv]
+    output_schema: {total_received: number, matched_received: number, unpaid_list: "list of {name, email, expected}", underpaid_list: "list of {name, email, expected, paid, shortfall}", refund_list: "list of {email, pay_ids, paid, refund_amount, reason}", unmatched_list: "list of {pay_id, email, amount}", refund_total: number, unmatched_total: number}
+    depends_on: [T2]
+    parallel_group: B
+    acceptance:
+      - total_received 等於 payments.csv 所有可解析 amount 加總，並附上逐筆算式。
+      - total_received = matched_received + refund_list 中取消者與其他不屬於有效報名的收款 + unmatched_total，並顯示拆解算式。
+      - 每個有效報名 email 恰好出現在以下其中一處：已繳足、未繳、短繳、溢繳。
+      - 每筆收款的 pay_id 都有歸類，歸類筆數加總等於收款檔資料總列數。
+      - 每個短繳者列出 expected、paid、shortfall，且 shortfall = expected - paid。
+    suggested_agent: sk-worker
+key_figures: [有效報名人數, 應收金額, 全部實收金額, 可對應有效報名實收金額, 未繳人數與名單, 短繳人數、名單與短繳合計, 需退款金額合計, 無法對應收款金額合計, 資料品質異常筆數]
+risks:
+  - 報名檔已見 R05 的 email 為「 Ming@Example.com 」，與 R01 正規化後相同，可能是重複報名；是否合併須依 T2 規則處理並在成果單說明。
+  - R03 為取消但 P03 已收款，可能需要退款。
+  - P04 為 500，低於 fee 600，疑似短繳。
+  - P05 的 kai@example.com 目前看來不在報名檔前幾列，需全檔確認是否無法對應。
+  - 只看了前 5 列，其餘列可能有未預期的格式、空值、測試資料與日期問題。
+  - 同一人重複報名時，應收只計一份是假設口徑，需調度官在成果單說明。
+  - T3 依賴 T2，且同時需要報名名單，所以 T2 的輸出必須完整交付。
+open_questions:
+  - 同一人（正規化 email 相同）重複報名，應收是否只計一份？目前假設只計一份並單獨列出，請確認。
+  - 取消者若已付款，是否一律全額退款？目前假設是。
+  - 溢繳或重複收款，是否一律視為需退款，還是可能是下一場預繳？目前假設需退款。

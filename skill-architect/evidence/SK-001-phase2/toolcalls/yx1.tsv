@@ -1,0 +1,74 @@
+who	tool	result	argument	error
+sub	Read	OK	cases/yx/CASE.md	
+sub	Glob	OK	cases/yx/data/*	
+sub	Glob	OK	tools/tabcalc.py	
+sub	Read	OK	cases/yx/data/工作表1.csv	
+sub	Read	OK	cases/yx/data/小購_暫存單據_V01.csv	
+sub	Read	OK	cases/yx/data/小購_採購主表_V02.csv	
+sub	Read	OK	cases/yx/data/小購_測試資料_V01.csv	
+sub	Grep	OK	add_parser|add_argument	
+sub	Read	OK	tools/tabcalc.py	
+sub	Grep	OK	.	
+main	Skill	OK	sk-01-decompose	
+main	Write	OK	runs/yx1/01-拆解單.yaml	
+main	Agent	OK	sk-worker	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/工作表1.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_暫存單據_V01.csv --key 單據編號	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_採購主表_V02.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_測試資料_V01.csv	
+main	Agent	OK	sk-worker	
+sub	Bash	ERR	python3 tools/tabcalc.py --help 2>&1 | head -30	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/工作表1.csv --group 日期	
+sub	Read	OK	cases/yx/data/工作表1.csv	
+sub	Bash	OK	python3 tools/tabcalc.py --help	
+main	Agent	OK	sk-worker	
+sub	Bash	ERR	cd 〔暫存〕/sandbox; for c in 營收 訂單數 退款金額; do python3 tools/tabcalc.py sum --col $c cases/yx/data/工作表1.csv --where "日期=2026	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Read	OK	cases/yx/data/小購_採購主表_V02.csv	
+sub	Bash	ERR	python3 tools/tabcalc.py count cases/yx/data/小購_採購主表_V02.csv --where "日期~^2026-09-0[1-9]$"; python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where "日期~^2026-09-0[1-9]$"; python3	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py sum --col 營收 cases/yx/data/工作表1.csv --where "日期=2026/09/03"	
+main	Agent	OK	sk-worker	
+sub	Bash	OK	python3 tools/tabcalc.py sum --col 訂單數 cases/yx/data/工作表1.csv --where "日期=2026/09/03"	
+sub	Bash	OK	python3 tools/tabcalc.py sum --col 退款金額 cases/yx/data/工作表1.csv --where "日期=2026/09/03"	
+sub	Bash	OK	python3 tools/tabcalc.py ratio 59942 220 --round 2	
+sub	Bash	ERR	python3 tools/tabcalc.py count cases/yx/data/小購_採購主表_V02.csv --where "日期~^2026-09-0[1-9]$"	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	ERR	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where "日期~^2026-09-0[1-9]$"	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --group 狀態	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_採購主表_V02.csv --group 日期	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 總價 --where "品名=油蔥酥(切片)"	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"	
+main	Agent	OK	sk-worker	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_測試資料_V01.csv	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where "日期=2026-09-02"	
+sub	Bash	ERR	cd /tmp; T=python3\ tools/tabcalc.py; cd - >/dev/null; F=cases/yx/data/小購_暫存單據_V01.csv; python3 tools/tabcalc.py sum $F --col "辨識結果.金額" --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"; python3 tool	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 總價 --where "品名=客家切片豬油蔥"	
+sub	Bash	OK	python3 tools/tabcalc.py match cases/yx/data/小購_測試資料_V01.csv 單據編號 cases/yx/data/小購_暫存單據_V01.csv 單據編號	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 稅金 --where "品名=客家切片豬油蔥"	
+sub	Read	OK	cases/yx/data/小購_測試資料_V01.csv	
+sub	Read	OK	cases/yx/data/小購_暫存單據_V01.csv	
+sub	Read	OK	cases/yx/data/小購_暫存單據_V01.csv	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col "辨識結果.金額" --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col "辨識結果.total_amount" --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col "辨識結果.金額" --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳"	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col "辨識結果.total_amount" --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳"	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳"	
+sub	Bash	OK	python3 tools/tabcalc.py match --help	
+main	Write	OK	runs/yx1/02-派工紀錄.md	
+main	Write	OK	runs/yx1/03-整合成果單.md	
+sub	Read	OK	cases/yx/CASE.md	
+sub	Glob	OK	runs/yx1/*	
+sub	Read	OK	runs/yx1/01-拆解單.yaml	
+sub	Read	OK	runs/yx1/02-派工紀錄.md	
+sub	Read	OK	runs/yx1/03-整合成果單.md	
+sub	Bash	ERR	cd 〔暫存〕/sandbox; ls cases/yx/data; python3 tools/tabcalc.py --help 2>&1 | head -40	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/工作表1.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_暫存單據_V01.csv --key 單據編號	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_採購主表_V02.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_測試資料_V01.csv	
+sub	Read	OK	cases/yx/data/小購_暫存單據_V01.csv	
+sub	Read	OK	cases/yx/data/小購_採購主表_V02.csv	
+sub	Read	OK	cases/yx/data/工作表1.csv	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"	
+sub	Bash	ERR	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where "日期~^2026-09-0[1-9]$"	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where 日期=2026-09-02	
+main	Skill	OK	sk-03-verify	
+main	Write	OK	runs/yx1/04-驗收判定書.yaml	

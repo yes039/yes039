@@ -1,0 +1,33 @@
+```yaml
+verdict: FAIL
+recomputed:
+  - {name: 有效報名人數, expected: 5, actual: 5, tabcalc: "python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名 (registrations 列 2/6 同 email，不重複共 ming、mei、ya、chi、fen = 5)", result: PASS}
+  - {name: 應收金額, expected: 3000, actual: 3000, tabcalc: "同上；5 人 × fee 600（人工對 registrations.csv 的 fee 欄）", result: PASS}
+  - {name: 全部實收金額, expected: 3500, actual: 3600, tabcalc: "python3 tools/tabcalc.py sum --col amount cases/club/data/payments.csv", result: FAIL}
+  - {name: 可對應有效報名實收, expected: 2300, actual: 2300, tabcalc: "python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名 (matched 列 2、3、5、7 = 600+600+500+600)", result: PASS}
+  - {name: 未繳, expected: "1 人，黃淑芬 fen@example.com，應收 600", actual: "1 人，黃淑芬 fen@example.com，應收 600", tabcalc: "同 match 指令，b_unmatched 列 8", result: PASS}
+  - {name: 短繳, expected: "1 人，張雅婷 ya@example.com，短繳 100，合計 100", actual: "1 人，張雅婷，短繳 100，合計 100", tabcalc: "同 match 指令，payments 列 5 amount=500，fee=600", result: PASS}
+  - {name: 需退款金額合計, expected: 600, actual: 600, tabcalc: "同 match 指令，a_unmatched 列 4 tung（R03 取消）", result: PASS}
+  - {name: 無法對應收款金額合計, expected: 600, actual: 600, tabcalc: "同 match 指令，a_unmatched 列 6 kai", result: PASS}
+  - {name: 資料品質異常筆數, expected: 1, actual: "成果單未給總數；各類相加為 5（email 正規化 1、報名重複 1、金額不一致 1、收款不在報名檔 1、報名無收款 1）", tabcalc: "python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email；python3 tools/tabcalc.py profile cases/club/data/payments.csv --key pay_id", result: FAIL}
+mechanical_anomalies: {expected_total: 1, actual_total: 5, result: FAIL}
+checks:
+  - {gate: 1, item: 全部實收金額, expected: 3500, actual: 3600, result: FAIL, evidence: "payments.csv 六筆 amount 為 600、600、600、500、600、600，合計 3500。成果單寫 3600，連算式「600+600+600+500+600+600」都與結果不符。派工紀錄也寫 T3 第 2 次採用的數字是 3500／2300，成果單抄錯。"}
+  - {gate: 1, item: 恆等式 全部收款 = 可對應 + 退款 + 無法對應, expected: "3500 = 2300 + 600 + 600", actual: "3600 = 2300 + 600 + 600（等號不成立，2300+600+600=3500）", result: FAIL, evidence: "成果單摘要宣稱恆等式成立，但自身數字就不成立。"}
+  - {gate: 2, item: 口徑語意, expected: "有效報名 = 報名且 10月場；重複 email 應收只計一份；取消者收款列退款", actual: "口徑與需求相符，並已揭露假設", result: PASS, evidence: "R03 取消列為退款，未計入有效報名。R01 與 R05 合併為 1 人。"}
+  - {gate: 3, item: 缺檔誠實, expected: "兩份資料都存在，沒有缺檔", actual: "沒有缺檔，也沒有填「缺」", result: PASS, evidence: "Glob 確認 registrations.csv 和 payments.csv 都存在。"}
+  - {gate: 4, item: 機械異常, expected: "registrations 1（列 6 F3，dup_of 列 2）+ payments 0 = 1", actual: "成果單的分類相加為 5，且沒有寫出總數", result: FAIL, evidence: "tabcalc profile 的 anomaly_count 是 registrations 1、payments 0。成果單把未繳、短繳、無法對應也算成品質異常，與機械結果不一致。"}
+  - {gate: 5, item: "抽查 1：registrations 列 6（R05）", expected: "email 為 ' Ming@Example.com '，與列 2 正規化後相同", actual: "與成果單相符", result: PASS, evidence: "回到原始列核對。"}
+  - {gate: 5, item: "抽查 2：payments 列 5（P04）與列 6（P05）", expected: "P04 ya 500；P05 kai 600 不在報名檔", actual: "與成果單相符", result: PASS, evidence: "回到原始列核對，列號正確。"}
+  - {gate: 6, item: 判讀異常 J1–J4, expected: "沒有影響 key_figures 的漏列", actual: "沒有發現", result: PASS, evidence: "兩份資料很小，除上述項目外沒有發現其他異常。"}
+  - {gate: 7, item: 紀律, expected: "每張卡有最終狀態，BLOCKED 皆已揭露", actual: "T1、T2、T3 皆 DONE，沒有 BLOCKED", result: PASS, evidence: "派工紀錄與成果單一致。T3 重派的原因也有揭露。"}
+independent_anomalies:
+  - "成果單第 11 行與摘要的「全部實收 3600」是算術錯誤，正確值為 3500。"
+  - "成果單把非資料品質的對帳結果（未繳、無法對應、取消有收款）混入異常筆數。"
+rejected_tasks: []
+notes:
+  - "全部實收錯誤屬於 key_figure 數值不一致，依規定直接判 FAIL，不得降為 NOTE。"
+  - "異常筆數沒有給出明確總數，也與 tabcalc 的 1 筆不符。"
+  - "其餘 key_figures（5 人、3000、2300、未繳、短繳、退款 600、無法對應 600）都正確。"
+  - "檔案：〔暫存〕/sandbox/runs/fx-club-amount/03-整合成果單.md"
+```

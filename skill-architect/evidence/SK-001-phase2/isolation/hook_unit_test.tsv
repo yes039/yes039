@@ -1,0 +1,10 @@
+python3 tools/tabcalc.py sum a --where "x~(?i)a|b"	ALLOW
+echo hi	BLOCK
+cat /etc/passwd	BLOCK
+python3 tools/tabcalc.py x | cat	BLOCK
+python3 tools/tabcalc.py x > f	BLOCK
+python3 tools/tabcalc.py x && ls	BLOCK
+python3 tools/tabcalc.py $(id)	BLOCK
+python3 -c 1	BLOCK
+python3 tools/tabcalc.py count "a;b"	ALLOW
+python3 tools/tabcalc.py sum f --where "d~^2026$"	BLOCK

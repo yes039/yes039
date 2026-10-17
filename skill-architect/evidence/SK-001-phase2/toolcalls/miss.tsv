@@ -1,0 +1,32 @@
+who	tool	result	argument	error
+sub	Read	OK	cases/club-missing/CASE.md	
+sub	Glob	OK	cases/club/data/registrations.csv	
+sub	Glob	OK	cases/club-missing/data/payments.csv	
+sub	Glob	OK	tools/tabcalc.py	
+sub	Read	OK	cases/club/data/registrations.csv	
+main	Skill	OK	sk-01-decompose	
+main	Write	OK	runs/miss/01-拆解單.yaml	
+main	Agent	OK	sk-worker	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email	
+main	Agent	OK	sk-worker	
+sub	Read	OK	cases/club/data/registrations.csv	
+sub	Bash	OK	python3 tools/tabcalc.py --help	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/club/data/registrations.csv --where "session=10月場" --where "status=報名" --distinct email	
+sub	Bash	OK	python3 tools/tabcalc.py sum --help	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/club/data/registrations.csv --where "session=10月場" "status=報名" --distinct email	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where "session=10月場" "status=報名"	
+sub	Bash	OK	python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where "reg_id=R05"	
+main	Write	OK	runs/miss/02-派工紀錄.md	
+main	Write	OK	runs/miss/03-整合成果單.md	
+sub	Read	OK	cases/club-missing/CASE.md	
+sub	Glob	OK	**/*	
+sub	Read	OK	runs/miss/01-拆解單.yaml	
+sub	Read	OK	runs/miss/02-派工紀錄.md	
+sub	Read	OK	runs/miss/03-整合成果單.md	
+sub	Glob	OK	cases/club*/data/*	
+sub	Bash	ERR	cd 〔暫存〕/sandbox; cat -A cases/club/data/registrations.csv; python3 tools/tabcalc.py profile cases/club/data/registratio	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Read	OK	cases/club/data/registrations.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email	
+sub	Bash	OK	python3 tools/tabcalc.py count cases/club/data/registrations.csv --where "session=10月場" "status=報名" --distinct email	
+main	Skill	OK	sk-03-verify	
+main	Write	OK	runs/miss/04-驗收判定書.yaml	

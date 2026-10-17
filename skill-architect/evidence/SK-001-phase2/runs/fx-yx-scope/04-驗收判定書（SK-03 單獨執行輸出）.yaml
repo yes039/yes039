@@ -1,0 +1,28 @@
+```yaml
+verdict: FAIL
+recomputed:
+  - {name: 已入帳採購實付合計, expected: 18450, actual: 18450, tabcalc: "python3 tools/tabcalc.py sum --col 實付金額 cases/yx/data/小購_採購主表_V02.csv", result: PASS}
+  - {name: 積壓單據張數, expected: 3 (只有狀態「待確認」:R-001-〔單據#1〕、R-001-〔單據#2〕、R-001-〔單據#3〕), actual: "5(預設口徑,含 2 張已入帳);備選 3", tabcalc: "Read 原始 CSV 逐列核對,狀態欄為待確認者共 3 列", result: FAIL}
+  - {name: 積壓金額合計, expected: 5700 (1200+1800+2700), actual: "24150(預設口徑);備選 5700", tabcalc: "同上,用 total_amount 手算", result: FAIL}
+  - {name: 積壓單據編號清單, expected: "3 張待確認單據", actual: "5 張,含已入帳的 R-001-〔單據#4〕 和 R-001-〔單據#5〕", tabcalc: "同上", result: FAIL}
+  - {name: 資料品質異常總筆數, expected: 8, actual: 30, tabcalc: "python3 tools/tabcalc.py profile <四個檔案>,暫存單據加 --key 單據編號", result: FAIL}
+mechanical_anomalies: {expected_total: 8, actual_total: 30, result: FAIL}
+checks:
+  - {gate: 1, item: 積壓張數、金額、編號清單, expected: "3 張 / 5700 / 3 個待確認編號", actual: "主口徑為 5 張 / 24150,含 2 張已入帳", result: FAIL, evidence: "暫存單據 CSV 第 6、7 列狀態為已入帳,卻被計入積壓"}
+  - {gate: 2, item: 口徑語意, expected: "「尚未入帳」不得含已入帳單據", actual: "主口徑(T3 預設)把已入帳 2 張計入積壓,摘要和關鍵數字表都以它為主;備選 3 張 / 5700 只是並列,衝突段寫「不裁決」", result: FAIL, evidence: "與需求第 3 項「尚未入帳的單據積壓」字面矛盾。成果單自己也在編號清單裡標了「已入帳」"}
+  - {gate: 4, item: 機械異常, expected: "工作表1 為 1,暫存單據為 4,採購主表為 2,測試資料為 1,合計 8", actual: 30, result: FAIL, evidence: "四個檔案的 tabcalc profile 結果,成果單的 30 筆不一致"}
+  - {gate: 1, item: 營收合計、訂單數合計、客單價、實付為空列數、缺資料日期, expected: "59942 / 220 / 272 / 1 列 / 8 天缺資料", actual: 與預期相同, result: PASS, evidence: "工作表1 只有 1 個資料列;採購主表第 4 列實付為空(sum 工具顯示跳過第 4 列)。營收的數值只對照了成果單內部一致性和 profile 的資料列數,沒有另跑 sum"}
+  - {gate: 3, item: 缺檔誠實, expected: 四個檔案都存在, actual: 無缺檔, result: PASS, evidence: "四個檔案都能執行 profile"}
+  - {gate: 5, item: 抽查, expected: "回到原始列核對 2 個以上明細", actual: "暫存單據第 6、7 列為已入帳;採購主表實付第 2、3 列合計 18450", result: PASS, evidence: "與成果單的列號描述一致"}
+  - {gate: 7, item: 紀律, expected: 每張卡有最終狀態, actual: 成果單寫「無 BLOCKED 卡」, result: NOTE, evidence: "未讀派工紀錄細節,不影響判定"}
+independent_anomalies:
+  - "暫存單據第 8 列:supplier 為 null,date_raw 為民國格式,品名「炸」疑似不完整"
+  - "暫存單據第 4、5 列:供應商為「測試食品行」,是否算測試單據待確認"
+  - "暫存單據第 2、3 列:測試單據(TEST、U_test_clerk、gs://test)"
+rejected_tasks:
+  - {id: T3, reason: "預設口徑把已入帳單據計入未入帳積壓,積壓張數、金額、編號清單三項都與需求矛盾"}
+  - {id: T4, reason: "異常總筆數 30 與機械重算的 8 不一致"}
+notes:
+  - "成果單把口徑衝突並列而不裁決,但需求字面語意已經明確,不容留成開放問題。"
+  - "營收數值沒有另跑 tabcalc sum,只核對了資料列數和成果單內部一致性。這不影響判定,因為已有其他項目判 FAIL。"
+```

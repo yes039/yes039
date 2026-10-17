@@ -1,0 +1,25 @@
+verdict: PASS
+recomputed:
+  - {name: 有效報名人數, expected: 6, actual: 6, tabcalc: "python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where status=報名 (rows_used 2,3,5,6,7,8)", result: PASS}
+  - {name: 應收金額, expected: 3600, actual: 3600, tabcalc: "python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where status=報名", result: PASS}
+  - {name: 實收金額(全部收款), expected: 3500, actual: 3500, tabcalc: "python3 tools/tabcalc.py sum cases/club/data/payments.csv --col amount", result: PASS}
+  - {name: 實收金額(可對應有效報名), expected: 2300, actual: 2300, tabcalc: "python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名 (matched P01,P02,P04,P06 = 600+600+500+600)", result: PASS}
+  - {name: 未繳人數, expected: 1, actual: 1, tabcalc: "python3 tools/tabcalc.py match cases/club/data/registrations.csv email cases/club/data/payments.csv email --where-a status=報名 (a_unmatched 只有 fen@example.com)", result: PASS}
+  - {name: 短繳人數, expected: 1, actual: 1, tabcalc: "ya@example.com 付 500,fee 600 (資料 5 列),其餘有收款者合計都不小於 fee", result: PASS}
+  - {name: 需退款或無法對應的收款筆數, expected: 2, actual: 2, tabcalc: "python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名 (a_unmatched 為 tung 與 kai,即 P03、P05;沒有溢收)", result: PASS}
+  - {name: 機械異常筆數, expected: 1, actual: 1, tabcalc: "python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email (1);python3 tools/tabcalc.py profile cases/club/data/payments.csv --key pay_id (0)", result: PASS}
+mechanical_anomalies: {expected_total: 1, actual_total: 1, result: PASS}
+checks:
+  - {gate: 1 關鍵數字, item: 全部 8 項 key_figures, expected: "6 / 3600 / 3500 / 2300 / 1 / 1 / 2 / 1", actual: 同左, result: PASS, evidence: 每項都已用 tabcalc 自行重算,數值、筆數、列號都一致}
+  - {gate: 2 口徑語意, item: 主口徑與備選口徑, expected: 與需求字面語意一致, actual: 已入帳與未入帳、有效與取消的區分都符合字面;重複報名的另一種算法(5 人 / 3000)只寫在口徑說明,沒有取代主口徑, result: PASS, evidence: 成果單依字面採 status=報名}
+  - {gate: 3 缺檔誠實, item: 兩個資料檔, expected: 都存在, actual: 都存在,沒有缺檔項目, result: PASS, evidence: 兩份 profile 都執行成功}
+  - {gate: 4 機械異常, item: 總數與各檔數量, expected: "registrations 1(F3 在第 6 列,dup_of 第 2 列);payments 0", actual: 同左, result: PASS, evidence: profile 輸出}
+  - {gate: 5 抽查, item: "P03 與 P05 的原始列", expected: "P03 tung@example.com 對到取消的 R03;P05 kai@example.com 在報名檔找不到", actual: 成果單敘述一致, result: PASS, evidence: 已讀 payments.csv 第 4、6 列與 registrations.csv 第 4 列}
+  - {gate: 5 抽查, item: ming 重複報名, expected: "第 6 列 email 是 ' Ming@Example.com ',與第 2 列正規化後相同", actual: 成果單列為 J3 並在口徑說明揭露, result: PASS, evidence: registrations.csv 第 2、6 列}
+  - {gate: 6 判讀異常, item: J1–J4 掃描, expected: "J3 為 registrations 第 6 列;J4 為 kai 與 chi 的配對(payments 第 6 列、registrations 第 7 列)", actual: 成果單全部列出, result: PASS, evidence: 沒有漏列。session 全是 10月場,fee 全是 600,金額與日期正常}
+  - {gate: 7 紀律, item: 各卡最終狀態, expected: 每張卡都有狀態, actual: T0 到 T3 皆 DONE,沒有 BLOCKED 卡, result: PASS, evidence: 02-派工紀錄.md}
+independent_anomalies: []
+rejected_tasks: []
+notes:
+  - T2 的判讀是目視讀檔,不是 tabcalc 產出;成果單已在缺口揭露。我自己掃描後確認 payments 沒有 J2 或 J3 異常。
+  - 成果單把「ming 是否重複報名」列為待決事項,沒有自行裁決。這個處理合理,不影響 key_figures。

@@ -1,0 +1,26 @@
+verdict: PASS_WITH_NOTES
+recomputed:
+  - {name: 每日營收 09-03, expected: 59942 (only row 2 in file; the other 8 dates have no data), actual: 59942; other 8 dates marked 缺, tabcalc: "Read of 工作表1.csv (1 data row; 59942 is the full-width value ５９９４２) and profile of 工作表1.csv", result: PASS}
+  - {name: 每日訂單數 09-03, expected: 220, actual: 220, tabcalc: "Read of 工作表1.csv (full-width ２２０)", result: PASS}
+  - {name: 每日客單價 09-03, expected: 272.46, actual: 272.46, tabcalc: "python3 tools/tabcalc.py ratio 59942 220 --round 2", result: PASS}
+  - {name: 已入帳採購支出合計, expected: 18450 (rows 2 and 3 used, row 4 skipped), actual: 18450, tabcalc: "python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where \"日期~^2026-09-0[1-9]\"", result: PASS}
+  - {name: 未入帳張數, expected: 4 (rows 2, 4, 5, 8), actual: 4, tabcalc: "python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --where \"狀態!=已入帳\" \"狀態!=已作廢\" \"建立時間~^2026-09-0[1-9]\"", result: PASS}
+  - {name: 未入帳金額 舊格式, expected: 350, actual: 350, tabcalc: "python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col 辨識結果.金額 --where \"狀態!=已入帳\" \"狀態!=已作廢\" \"建立時間~^2026-09-0[1-9]\" \"辨識結果.金額?\"", result: PASS}
+  - {name: 未入帳金額 新格式, expected: 5700 (rows 4, 5, 8), actual: 5700, tabcalc: "python3 tools/tabcalc.py sum cases/yx/data/小購_暫存單據_V01.csv --col 辨識結果.total_amount --where \"狀態!=已入帳\" \"狀態!=已作廢\" \"建立時間~^2026-09-0[1-9]\" \"辨識結果.total_amount?\"", result: PASS}
+mechanical_anomalies: {expected_total: 8, actual_total: 8, result: PASS}
+checks:
+  - {gate: 1 關鍵數字, item: all key_figures, expected: see recomputed, actual: all match, result: PASS, evidence: "The 6050 combined backlog amount (350+5700) matches my own sum. The TEST-excluded comparison of 3 receipts and 5700 is also consistent: R-TEST-001 is the only receipt with TEST in its ID, and it is the old-format 350 receipt."}
+  - {gate: 2 口徑語意, item: backlog scope, expected: 已入帳 and 已作廢 excluded, actual: rows 6 and 7 (已入帳) and row 3 (已作廢) excluded; 已確認 counted as not yet posted and flagged as J1, result: PASS, evidence: "The scope matches the literal wording of the requirement."}
+  - {gate: 3 缺檔誠實, item: the 8 dates with no 工作表1 data, expected: 缺, actual: 缺 (no numbers invented), result: PASS, evidence: "All 4 files exist. 工作表1.csv has only 1 data row."}
+  - {gate: 4 機械異常, item: profile per file, expected: "1 + 4 + 2 + 1 = 8", actual: "1 + 4 + 2 + 1 = 8; rows and categories match line by line", result: PASS, evidence: "Only the 暫存單據 profile was run with --key 單據編號, as CASE.md declares."}
+  - {gate: 5 抽查, item: "暫存單據 row 8 (R-001-〔單據#3〕): 2026-09-09 00:31:51, 待確認, total_amount 2700; 採購主表 row 2: 實付 3900", expected: matches the report, actual: matches, result: PASS, evidence: "Checked against the raw CSV."}
+  - {gate: 6 判讀異常, item: "採購主表 row 3: 總價 9238 + 稅金 693 = 9931, but 實付金額 is 14550", expected: J2 listed, actual: not in the J list; the gaps section says the J2 arithmetic check was not done for rows 2 and 3, result: NOTE, evidence: "14550 = 13857 + 693, which suggests row 3's 實付 includes row 4's 總價 4619 (row 4 has 實付 empty). The 18450 figure is correct under the stated scope, so no key_figure is affected."}
+  - {gate: 7 紀律, item: card status, expected: every card has a final status, actual: T0 to T3 all DONE; no BLOCKED cards, result: PASS, evidence: "02-派工紀錄.md"}
+independent_anomalies:
+  - "採購主表 row 3 J2: 總價+稅金 (9931) does not equal 實付金額 (14550). Row 4 is possibly a split line or duplicate of row 3 with empty 稅金 and 實付; this was not listed in the report."
+  - "採購主表 row 3 also has 數量×單價 = 9238.1 against 總價 9238, a rounding difference only."
+rejected_tasks: []
+notes:
+  - "All key_figures match the independent recomputation."
+  - "The report openly says that the 6050 and the 8 were added within the cards, not output by tabcalc. This is disclosed and the values are correct."
+  - "The missing J2 for 採購主表 row 3 is a NOTE only, because it does not change any key_figure."

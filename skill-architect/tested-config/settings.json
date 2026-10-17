@@ -2,8 +2,8 @@
  "permissions": {
   "defaultMode": "dontAsk",
   "allow": [
-   "Read(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/cases/**)",
-   "Read(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/runs/**)",
+   "Read(/<SCRATCH>/sandbox/cases/**)",
+   "Read(/<SCRATCH>/sandbox/runs/**)",
    "Glob",
    "Grep",
    "Skill(sk-01-decompose)",
@@ -15,10 +15,9 @@
    "Agent(sk-planner)",
    "Agent(sk-worker)",
    "Agent(sk-verifier)",
-   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/runs/**)"
+   "Edit(/<SCRATCH>/sandbox/runs/**)"
   ],
   "deny": [
-   "Bash",
    "NotebookEdit",
    "WebFetch",
    "WebSearch",
@@ -37,8 +36,8 @@
    "Task(claude)",
    "Agent(general-purpose)",
    "Agent(claude)",
-   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/.claude/**)",
-   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/cases/**)",
+   "Edit(/<SCRATCH>/sandbox/.claude/**)",
+   "Edit(/<SCRATCH>/sandbox/cases/**)",
    "Edit(//home/**)",
    "Edit(//root/**)",
    "Edit(//mnt/**)",
@@ -48,7 +47,10 @@
    "Agent(statusline-setup)",
    "Task(Explore)",
    "Task(Plan)",
-   "Task(statusline-setup)"
+   "Task(statusline-setup)",
+   "Edit(/<SCRATCH>/sandbox/tools/**)",
+   "Edit(/<SCRATCH>/sandbox/fixtures/**)",
+   "ListAgents"
   ]
  },
  "env": {

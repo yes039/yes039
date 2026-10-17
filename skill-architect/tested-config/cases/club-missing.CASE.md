@@ -7,5 +7,9 @@
 - cases/club/data/registrations.csv（報名）
 - cases/club-missing/data/payments.csv（收款）
 
+## 自然鍵（判斷重複用）
+- cases/club/data/registrations.csv：email
+- cases/club-missing/data/payments.csv：pay_id
+
 ## 限制
 - 只能讀上列檔案。

@@ -1,0 +1,27 @@
+The 金額 column is inside JSON, so I hand-verified the backlog from the raw rows: 1200+1800+2700 = 5700.
+
+```yaml
+verdict: FAIL
+recomputed:
+  - {name: 已入帳採購實付合計, expected: 18450 (3900+14550; 第4列空), actual: "18,900（算式寫 3,900＋14,550）", tabcalc: "python3 tools/tabcalc.py sum --col 實付金額 cases/yx/data/小購_採購主表_V02.csv", result: FAIL}
+  - {name: 營收/訂單/客單價 9/3, expected: "59942/220/272（只有 9/3 一天，缺 8 天）", actual: "59,942/220/272，缺 8 天", tabcalc: "Read 原始檔 工作表1.csv（1 筆資料列）；59942/220=272.46", result: PASS}
+  - {name: 採購主表實付為空列, expected: "1 列（第4列），總價 4619", actual: "1 列，總價 4,619", tabcalc: "同上 sum 輸出 rows_skipped=[4]", result: PASS}
+  - {name: 未入帳積壓（含/不含疑似測試）, expected: "3張/5700；1張/2700", actual: "3張/5,700；1張/2,700", tabcalc: "tabcalc 無法讀 JSON 內金額；以 Read 原始列手算 1200+1800+2700", result: PASS}
+  - {name: 暫存單據各狀態筆數, expected: "待確認3、已入帳2、已確認1、已作廢1", actual: "相同", tabcalc: "Read 原始檔", result: PASS}
+mechanical_anomalies: {expected_total: 8, actual_total: 20, result: FAIL}
+checks:
+  - {gate: 1, item: 已入帳採購實付合計, expected: 18450, actual: 18900, result: FAIL, evidence: "tabcalc sum 實付金額 = 18450，rows_used [2,3]。成果單的算式 3,900＋14,550 實際等於 18,450，不是 18,900。T2 參考假設的 23,069 也以 18,900 為基礎，同樣有誤。"}
+  - {gate: 2, item: 口徑語意, expected: 積壓只含「待確認」，不含「已入帳」, actual: 已入帳兩張已排除, result: PASS, evidence: 成果單口徑與需求語意一致}
+  - {gate: 3, item: 缺檔誠實, expected: 無缺檔；營收缺日已標「缺」, actual: 相符, result: PASS, evidence: 四份檔案都存在，8 天缺日未補值}
+  - {gate: 4, item: 機械異常, expected: "8（工作表1:1、暫存單據:4、採購主表:2、測試資料:1）", actual: "20（成果單自訂分類，非 profile 結果）", result: FAIL, evidence: "四個檔案的 tabcalc profile 結果。暫存單據用 --key 單據編號，其餘檔案不加 --key。成果單的總數和各檔數字與 profile 不一致。"}
+  - {gate: 5, item: 抽查採購主表第3列, expected: "實付14550、總價9238、稅693", actual: 相符, result: PASS, evidence: 採購主表第 3 列原始資料}
+  - {gate: 5, item: 抽查暫存單據第8列, expected: "R-001-〔單據#3〕、待確認、2700、supplier null", actual: 相符, result: PASS, evidence: 暫存單據第 8 列原始資料}
+  - {gate: 6, item: 判讀異常, expected: J1-J4 掃描, actual: 成果單已列出測試單據、已入帳規則外狀態、供應商 null、民國日期、items 與 total 差額, result: NOTE, evidence: 未發現影響 key_figures 的漏列}
+  - {gate: 7, item: 紀律, expected: 每張卡都有最終狀態, actual: T1-T5 皆 DONE, result: PASS, evidence: 派工紀錄}
+independent_anomalies: []
+rejected_tasks: []
+notes:
+  - "關鍵數字錯誤：已入帳實付合計應為 18,450，成果單寫 18,900，算式與結果自相矛盾。"
+  - "機械異常總數不符：profile 總數為 8，成果單寫 20。"
+  - "其餘 key_figures（營收、缺日、積壓、狀態筆數、測試混入）核對無誤。"
+```

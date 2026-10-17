@@ -1,7 +1,7 @@
 ---
 name: sk-verifier
-description: SK-03 成果驗收官使用的唯讀驗收代理。依任務卡驗收條件與原始資料獨立重算，只判定、不修補。
-tools: Read, Glob, Grep
+description: SK-03 成果驗收官使用的唯讀驗收代理。依案件需求從原始資料獨立重算（Bash 僅限 python3 tools/tabcalc.py），只判定、不修補。
+tools: Read, Glob, Grep, Bash
 model: sonnet
 maxTurns: 30
 ---

@@ -1,0 +1,22 @@
+verdict: PASS
+recomputed:
+  - {name: 有效報名人數, expected: 5, actual: 5, tabcalc: "python3 tools/tabcalc.py count cases/club/data/registrations.csv --where status=報名 --distinct email", result: PASS}
+  - {name: 應收金額, expected: 3000, actual: 3000, tabcalc: "同上 distinct_rows [2,3,5,7,8]，fee 皆為 600，5×600（我依原始列手算）", result: PASS}
+  - {name: 實收金額（全部）, expected: 3500, actual: "3500（6 筆）", tabcalc: "python3 tools/tabcalc.py sum cases/club/data/payments.csv --col amount", result: PASS}
+  - {name: 實收金額（可對應有效報名）, expected: 2300, actual: 2300, tabcalc: "python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名", result: PASS}
+  - {name: 未繳與短繳人數, expected: "2（未繳 R07，短繳 R04 差 100）", actual: "2（未繳 1、短繳 1）", tabcalc: "match 的 b_unmatched 為列 8（R07）；P04 收 500，fee 600，所以短繳", result: PASS}
+  - {name: 機械異常筆數, expected: 1, actual: 1, tabcalc: "python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email；python3 tools/tabcalc.py profile cases/club/data/payments.csv --key pay_id", result: PASS}
+mechanical_anomalies: {expected_total: 1, actual_total: 1, result: PASS}
+checks:
+  - {gate: 2, item: 口徑語意, expected: "取消和重複列不計入應收，取消報名的收款不算可對應", actual: "一致", result: PASS, evidence: "成果單口徑說明與我的重算相符"}
+  - {gate: 3, item: 缺檔誠實, expected: "兩檔都存在，沒有缺檔", actual: "成果單未寫缺", result: PASS, evidence: "兩個 CSV 都已讀取"}
+  - {gate: 5, item: 重複處理, expected: "registrations 列 6 依 email 去重", actual: "成果單說明並去重，人數 5、應收 3000，並附未去重的對照值", result: PASS, evidence: "distinct_count=5，duplicate_rows 為列 6，重複自列 2"}
+  - {gate: 6, item: 抽查, expected: "P03 對應已取消的 R03；P05 的 kai@example.com 不在報名名單", actual: "一致", result: PASS, evidence: "payments 列 4 和列 6、registrations 列 4 與全表，都已回原始列核對"}
+  - {gate: 7, item: 判讀異常, expected: "J1 P03；J2 P04；J3 R05；J4 P05 和 R07", actual: "成果單均已列出", result: PASS, evidence: "成果單還加了一條 ming 條件式 J2，不影響 key_figures"}
+  - {gate: 8, item: 紀律, expected: "每張卡有最終狀態，缺口已揭露", actual: "所有卡 DONE，缺口段列出需人工確認的事項", result: PASS, evidence: "成果單「缺口」段"}
+independent_anomalies: []
+rejected_tasks: []
+notes:
+  - "成果單的「單據狀態」欄位，即 P03 建議退款、P05 待查，與原始資料一致。"
+  - "成果單把 ming 的條件式 J2（若 R05 也算有效報名則短收 600）列入判讀異常。它是假設性的，不影響 key_figures。"
+  - "我沒有讀 02-派工紀錄.md，也沒有另外驗證卡內的逐筆指令輸出。"

@@ -1,0 +1,14 @@
+who	tool	result	argument	error
+sub	Read	OK	cases/yx/CASE.md	
+sub	Glob	OK	runs/fx-yx-scope/*	
+sub	Read	OK	runs/fx-yx-scope/03-整合成果單.md	
+sub	Read	OK	runs/fx-yx-scope/01-拆解單.yaml	
+sub	Bash	ERR	cd 〔暫存〕/sandbox; ls cases/yx/data; python3 tools/tabcalc.py --help 2>&1 | head -30	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Bash	OK	python3 tools/tabcalc.py --help	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/工作表1.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_暫存單據_V01.csv --key 單據編號	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_採購主表_V02.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/yx/data/小購_測試資料_V01.csv	
+sub	Read	OK	cases/yx/data/小購_暫存單據_V01.csv	
+sub	Bash	ERR	python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv 實付金額	Exit code 2 usage: tabcalc.py sum [-h] --col COL [--where [WHERE ...]] csv tabcalc.py sum:
+sub	Bash	OK	python3 tools/tabcalc.py sum --col 實付金額 cases/yx/data/小購_採購主表_V02.csv	

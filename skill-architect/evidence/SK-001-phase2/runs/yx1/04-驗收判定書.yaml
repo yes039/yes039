@@ -1,0 +1,31 @@
+verdict: PASS_WITH_NOTES
+recomputed:
+  - {name: 每日營收 09/03, expected: 59942, actual: 59942, tabcalc: "讀原檔 工作表1.csv 唯一資料列（全形２０２６／０９／０３,５９９４２,２２０,０）", result: PASS}
+  - {name: 每日訂單數 09/03, expected: 220, actual: 220, tabcalc: "同上", result: PASS}
+  - {name: 每日客單價 09/03, expected: 272.46, actual: 272.46, tabcalc: "59942/220=272.463，手算驗證（未跑 ratio）", result: PASS}
+  - {name: 其餘 8 天營收/訂單數/客單價, expected: 無資料, actual: 缺（檔案無該日資料列）, tabcalc: "工作表1.csv 僅 1 筆資料列", result: PASS}
+  - {name: 已入帳採購支出合計, expected: 18450, actual: 18450, tabcalc: "python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where 日期=2026-09-02", result: PASS}
+  - {name: 未入帳張數（主口徑）, expected: 4 (rows 2,4,5,8), actual: 4, tabcalc: "python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --where \"建立時間~^2026-09-0[1-9]\" \"狀態!=已入帳\" \"狀態!=已作廢\"", result: PASS}
+  - {name: 未入帳金額（主口徑）, expected: 6050 (350+1200+1800+2700), actual: 6050, tabcalc: "讀原檔辨識結果 JSON 手算，舊格式 350，新格式 total_amount 5700", result: PASS}
+  - {name: 未入帳 alt（含已作廢）, expected: 5 張 / 6650, actual: 5 張 / 6650, tabcalc: "讀原檔，R-TEST-002 金額 600", result: PASS}
+mechanical_anomalies: {expected_total: 8, actual_total: 8, result: PASS}
+checks:
+  - {gate: 1, item: 關鍵數字, expected: 全部吻合, actual: 全部吻合, result: PASS, evidence: 已用 tabcalc 或原始資料重算}
+  - {gate: 2, item: 口徑語意, expected: 已入帳與已作廢不計入主口徑, actual: 主口徑排除已入帳與已作廢，alt 單獨列示, result: PASS, evidence: 成果單關鍵數字表與口徑說明}
+  - {gate: 3, item: 缺檔誠實, expected: 無缺檔；無資料日期不得填數字, actual: 其餘 8 天寫「缺」，未填數字, result: PASS, evidence: 四個檔案皆存在}
+  - {gate: 4, item: 機械異常, expected: "工作表1:1，暫存單據:4，採購主表:2，測試資料:1，合計 8", actual: "1+4+2+1=8，各檔明細一致", result: PASS, evidence: 四個 profile 指令重跑結果}
+  - {gate: 5, item: 抽查, expected: 採購主表第 3 列實付 14550；暫存單據第 8 列 total_amount 2700, actual: 一致, result: PASS, evidence: 原始 CSV 列}
+  - {gate: 6, item: 判讀異常, expected: "J1–J4 已涵蓋採購主表第 3、4 列與暫存單據各列", actual: 已列出, result: PASS, evidence: 成果單判讀異常清單}
+  - {gate: 7, item: 紀律, expected: 每張卡都有最終狀態, actual: T0–T4 皆 DONE, result: PASS, evidence: 02-派工紀錄.md}
+  - {gate: 3, item: 需求 3 要求的單據編號, expected: 4 張積壓單據的編號, actual: 成果單只列出列號 2、4、5、8，僅 R-TEST-001 有編號, result: NOTE, evidence: "原檔編號為 R-TEST-001、R-001-〔單據#1〕、R-001-〔單據#2〕、R-001-〔單據#3〕"}
+  - {gate: 7, item: 過程瑕疵揭露, expected: 若干和數與算式為心算，應揭露, actual: 已在缺口與派工紀錄揭露, result: NOTE, evidence: "T0 的 8、T3 的 6050 與 6650、T2 兩列算式"}
+independent_anomalies:
+  - "暫存單據第 8 列的 date_raw 為民國年格式，supplier 為 null，第二品項名稱「炸」殘缺；成果單已列為 J3。"
+  - "暫存單據第 4、5 列供應商為「測試食品行」，疑似測試資料；成果單已揭露。"
+  - "採購主表第 3 列的實付 14550 疑似含第 4 列的 4619，第 4 列疑似重複；成果單已列為 J2。"
+rejected_tasks: []
+notes:
+  - "成果單未逐張列出積壓單據編號，而需求 3 要求列出。這不影響任何 key_figure 的數值，因此只記為 NOTE。"
+  - "成果單把 8 天無資料寫成「缺」，而不是「無資料」。語意等價且未填數字。"
+  - "採購支出 18450 與積壓 6050 都含有可疑項目（採購主表第 3 列疑似含第 4 列、測試單據 R-TEST-001）。成果單已揭露，並留給業主決定。"
+  - "我只有 Bash 單一指令的使用限制。採購支出改用 日期=2026-09-02 條件，採購主表所有資料列都在此日，結果等價。"

@@ -1,0 +1,17 @@
+who	tool	result	argument	error
+sub	Bash	ERR	cd 〔暫存〕/sandbox; cat cases/club/CASE.md; ls cases/club runs/fx-club-amount; cat runs/fx-club-amount/01-拆解單.yaml runs/fx	PreToolUse:Bash hook error: [python3 -I 〔暫存〕
+sub	Read	OK	cases/club/CASE.md	
+sub	Glob	OK	**/*	
+sub	Glob	OK	**/*	
+sub	Read	OK	runs/fx-club-amount/01-拆解單.yaml	
+sub	Read	OK	runs/fx-club-amount/02-派工紀錄.md	
+sub	Read	OK	runs/fx-club-amount/03-整合成果單.md	
+sub	Read	OK	cases/club/data/registrations.csv	
+sub	Read	OK	cases/club/data/payments.csv	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email	
+sub	Bash	OK	python3 tools/tabcalc.py profile cases/club/data/payments.csv --key pay_id	
+sub	Bash	OK	python3 tools/tabcalc.py --help	
+sub	Bash	OK	python3 tools/tabcalc.py sum --help	
+sub	Bash	OK	python3 tools/tabcalc.py match --help	
+sub	Bash	OK	python3 tools/tabcalc.py sum --col amount cases/club/data/payments.csv	
+sub	Bash	OK	python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名	

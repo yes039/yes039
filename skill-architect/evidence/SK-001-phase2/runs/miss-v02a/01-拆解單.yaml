@@ -1,0 +1,89 @@
+case: club-missing（社區讀書會 10 月場對帳）
+status: READY_PARTIAL
+files:
+  - {path: cases/club/data/registrations.csv, exists: true}
+  - {path: cases/club-missing/data/payments.csv, exists: false}
+goal: 對帳 10 月場報名與繳費，產出有效報名人數、應收、實收、未繳名單、異常清單。收款檔不存在，所以只能完成報名端的部分。
+definition_of_done: 有效報名人數、應收、機械異常筆數都已用 tabcalc 算出。實收和未繳名單標為不可計算，並寫明缺 payments.csv。報名檔的異常清單已列出。
+key_figures:
+  - name: 有效報名人數
+    scope: registrations.csv 中 session=10月場 且 status=報名 的列數。status=取消 的不計入。email 重複的列依 T0 的結果處理，不自行猜測去重。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv]
+    computable: true
+  - name: 應收
+    scope: 有效報名列（session=10月場 且 status=報名）的 fee 加總。取消的列不計入。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv]
+    computable: true
+  - name: 實收
+    scope: payments.csv 中屬於 10 月場有效報名者的已入帳金額加總。口徑要等收款檔欄位才能定義。
+    alt_scope: null
+    depends_on_files: [cases/club-missing/data/payments.csv]
+    computable: false
+  - name: 未繳名單
+    scope: 有效報名者中，在 payments.csv 找不到對應已入帳收款的人。需要收款檔才能比對。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv, cases/club-missing/data/payments.csv]
+    computable: false
+  - name: 機械異常筆數
+    scope: 各「存在」檔案的 tabcalc profile anomaly_count 加總。目前只有 registrations.csv。不含 payments.csv，因為它不存在。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv]
+    computable: true
+tasks:
+  - id: T0
+    title: 機械異常盤點
+    status: READY
+    blocked_by: []
+    brief: >
+      只對存在的檔案執行：python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email
+      （CASE.md 自然鍵段宣告了該檔的 email）。原樣回傳輸出。
+      payments.csv 不存在，不得執行，也不得改用其他檔案。
+    inputs: [cases/club/data/registrations.csv]
+    output_schema: {file: str, anomaly_count: int, anomalies: [{row: int, category: str}], raw_output: str}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - raw_output 與 tabcalc 的輸出逐字相同。
+      - anomaly_count 等於 anomalies 中不重複（檔案, 列號, 分類）的數量。
+      - 只出現 registrations.csv 一個檔案，沒有 payments.csv 的結果。
+  - id: T1
+    title: 報名檔有效人數與應收
+    status: READY
+    blocked_by: []
+    brief: >
+      對 cases/club/data/registrations.csv（欄位 reg_id,name,email,session,fee,status，表頭在第 1 列）計算：
+      有效報名人數是 session=10月場 且 status=報名 的列數。應收是同條件下 fee 的加總。
+      用 python3 tools/tabcalc.py 的對應子指令（先用 --help 確認用法）篩選並計數、加總。不得心算。
+      另列出 J 類判讀異常，格式為（檔案, 列號, 分類）。
+      J1 是 session 不是 10月場，或 status 不是報名／取消。
+      J2 是 fee 與 600 不符或不是數字。
+      J3 是姓名或 email 有可疑辨識。
+      異常清單只列出，不列入 key_figures 計數。
+    inputs: [cases/club/data/registrations.csv]
+    output_schema: {valid_count: int, receivable: number, tabcalc_commands: [str], j_anomalies: [{file: str, row: int, category: str, note: str}]}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - valid_count 和 receivable 都附上產生它們的 tabcalc 指令與原始輸出。
+      - j_anomalies 每筆都有檔案、列號、分類（J1 到 J3），且以（檔案, 列號, 分類）去重。
+      - 沒有任何數字是心算得出的。
+  - id: T2
+    title: 收款端實收與未繳名單
+    status: BLOCKED_INPUT
+    blocked_by: [cases/club-missing/data/payments.csv]
+    brief: 計算實收和未繳名單，需要 payments.csv（自然鍵 pay_id）。該檔不存在，不得派工，也不得猜測其內容或改用其他路徑。
+    inputs: [cases/club-missing/data/payments.csv, cases/club/data/registrations.csv]
+    output_schema: {actual_received: number, unpaid_list: [str]}
+    depends_on: [T1]
+    parallel_group: B
+    acceptance:
+      - 收款檔補上後才可派工。
+risks:
+  - 收款檔路徑在 cases/club-missing/data/，報名檔在 cases/club/data/，兩者目錄不同。可能是路徑寫錯，但不得自行改用 cases/club/data/payments.csv 之類的檔案。
+  - 缺收款檔，所以應收與實收無法互相核對，J4（跨檔無法對應）也無法判斷。
+  - registrations.csv 的 email 若重複，有效人數會受影響。以 T0 的結果為準。
+open_questions:
+  - payments.csv 是否確定不存在？請提供正確路徑或檔案。
+  - 收款檔的欄位與「已入帳」的判定方式，目前未知，要等檔案補上才能定義實收口徑。

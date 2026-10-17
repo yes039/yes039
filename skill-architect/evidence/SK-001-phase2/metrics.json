@@ -1,0 +1,104 @@
+{
+ "yx1": {
+  "cost_usd": 0.8033,
+  "wall_s": 214.7,
+  "main_turns": 5,
+  "verdict": "PASS_WITH_NOTES",
+  "parallel_waves": [
+   5
+  ],
+  "bash_blocked_by_hook": 8,
+  "permission_denials": 8
+ },
+ "yx2": {
+  "cost_usd": 0.7446,
+  "wall_s": 202.5,
+  "main_turns": 5,
+  "verdict": "PASS_WITH_NOTES",
+  "parallel_waves": [
+   4
+  ],
+  "bash_blocked_by_hook": 4,
+  "permission_denials": 4
+ },
+ "club": {
+  "cost_usd": 0.5987,
+  "wall_s": 154.7,
+  "main_turns": 5,
+  "verdict": "PASS",
+  "parallel_waves": [
+   5
+  ],
+  "bash_blocked_by_hook": 4,
+  "permission_denials": 4
+ },
+ "miss": {
+  "cost_usd": 0.3072,
+  "wall_s": 105.0,
+  "main_turns": 5,
+  "verdict": "PARTIAL",
+  "parallel_waves": [
+   2
+  ],
+  "bash_blocked_by_hook": 1,
+  "permission_denials": 1
+ },
+ "club-v02a": {
+  "cost_usd": 0.567,
+  "wall_s": 177.9,
+  "main_turns": 5,
+  "verdict": "PASS",
+  "parallel_waves": [
+   4
+  ],
+  "bash_blocked_by_hook": 3,
+  "permission_denials": 3
+ },
+ "miss-v02a": {
+  "cost_usd": 0.3019,
+  "wall_s": 101.7,
+  "main_turns": 5,
+  "verdict": "PARTIAL",
+  "parallel_waves": [
+   2
+  ],
+  "bash_blocked_by_hook": 2,
+  "permission_denials": 2
+ },
+ "fx-yx-scope": {
+  "cost_usd": 0.0822,
+  "wall_s": 29.4,
+  "main_turns": 0,
+  "verdict": "FAIL",
+  "parallel_waves": [],
+  "bash_blocked_by_hook": 2,
+  "permission_denials": 2
+ },
+ "fx-yx-amount": {
+  "cost_usd": 0.1009,
+  "wall_s": 35.7,
+  "main_turns": 0,
+  "verdict": "FAIL",
+  "parallel_waves": [],
+  "bash_blocked_by_hook": 4,
+  "permission_denials": 4
+ },
+ "fx-club-amount": {
+  "cost_usd": 0.0868,
+  "wall_s": 35.3,
+  "main_turns": 0,
+  "verdict": "FAIL",
+  "parallel_waves": [],
+  "bash_blocked_by_hook": 1,
+  "permission_denials": 1
+ },
+ "P7-bash": {
+  "cost_usd": 0.1207,
+  "wall_s": 18.1
+ },
+ "P8-hook": {
+  "cost_usd": 0.0552,
+  "wall_s": 13.6
+ },
+ "_total_phase2_usd": 3.768
+}

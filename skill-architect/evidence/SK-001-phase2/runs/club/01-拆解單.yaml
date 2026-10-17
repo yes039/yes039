@@ -1,0 +1,154 @@
+case: club（社區讀書會 10 月場報名繳費對帳）
+status: READY
+files:
+  - {path: cases/club/data/registrations.csv, exists: true}
+  - {path: cases/club/data/payments.csv, exists: true}
+goal: 對帳 10 月場報名與繳費，產出有效報名人數與應收、實收（全部／可對應有效報名）、未繳與短繳名單、需退款或無法對應的收款，以及資料品質異常清單。
+definition_of_done: key_figures 全部由 tabcalc 輸出算得並附指令與原始輸出。未繳／短繳名單與退款／無法對應清單逐列附檔案與列號。機械異常（F）只取 T0 的 profile 結果。判讀異常（J）另列清單，不計入 key_figures。
+key_figures:
+  - name: 有效報名人數
+    scope: registrations.csv 中 status=報名 的列，依自然鍵 email（正規化、不分大小寫、去前後空白）去重後的不重複人數。被去重的列要列出。
+    alt_scope: 未去重的 status=報名 列數，只作對照。
+    depends_on_files: [cases/club/data/registrations.csv]
+    computable: true
+  - name: 應收金額
+    scope: 有效報名（status=報名，依 email 去重後保留第一次出現的列）的 fee 加總。status=取消 的列與重複列不計入。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv]
+    computable: true
+  - name: 實收金額（全部收款）
+    scope: payments.csv 全部列的 amount 加總，不論能否對應報名。
+    alt_scope: null
+    depends_on_files: [cases/club/data/payments.csv]
+    computable: true
+  - name: 實收金額（可對應有效報名）
+    scope: payments.csv 中 email（正規化後）能對應到 status=報名 的報名列的收款 amount 加總。對應到取消報名或對不到任何報名的收款不計入。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    computable: true
+  - name: 未繳與短繳人數
+    scope: 有效報名（已去重）中，同 email 的收款合計為 0（未繳）或小於 fee（短繳）的人數。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    computable: true
+  - name: 機械異常筆數
+    scope: 兩個檔案 profile 的 anomaly_count 加總，數值只取 T0 的輸出。
+    alt_scope: null
+    depends_on_files: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    computable: true
+tasks:
+  - id: T0
+    title: 機械異常盤點
+    status: READY
+    blocked_by: []
+    brief: |
+      在工作目錄依序執行下列兩個指令，並原樣回傳 JSON 輸出，不得增刪或解讀。
+      python3 tools/tabcalc.py profile cases/club/data/registrations.csv --key email
+      python3 tools/tabcalc.py profile cases/club/data/payments.csv --key pay_id
+      （兩檔的自然鍵都有在 CASE.md 宣告。）
+      另外回報兩檔 anomaly_count 的加總（只做這一個加法）。
+    inputs: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    output_schema: {registrations_profile: json, payments_profile: json, total_anomaly_count: int}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - 兩個 profile 輸出皆原樣附上。
+      - total_anomaly_count 等於兩檔 anomaly_count 之和。
+      - 未加入任何 J 類判斷。
+  - id: T1
+    title: 有效報名人數與應收金額
+    status: READY
+    blocked_by: []
+    brief: |
+      檔案為 cases/club/data/registrations.csv，欄位 reg_id,name,email,session,fee,status。
+      口徑：status=報名，依 email 去重。執行下列指令：
+      1. python3 tools/tabcalc.py count cases/club/data/registrations.csv --where status=報名 --distinct email
+         取 distinct_count 為有效人數。列出 duplicate_rows 和被去重的 reg_id、name。
+      2. python3 tools/tabcalc.py count cases/club/data/registrations.csv --where status=取消
+         列出取消的列。
+      3. 應收金額取 distinct_rows 各列的 fee。每列執行一次 python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where status=報名 reg_id=<該列 reg_id>。
+         把各列的 sum 加總，並寫出算式。
+      4. 對照 python3 tools/tabcalc.py sum cases/club/data/registrations.csv --col fee --where status=報名，只放 alt。
+      另列 J 清單（檔案、列號、分類），例如同一人但 email 大小寫或空白不同。
+    inputs: [cases/club/data/registrations.csv]
+    output_schema: {valid_count: int, receivable: number, deduped_rows: list, cancelled_rows: list, J_items: list, commands: list}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - valid_count 來自 count --distinct email 的 distinct_count。
+      - 被去重的列已逐一列出（reg_id、列號）。
+      - receivable 附逐列 sum 指令及算式。
+      - 取消的列沒有計入。
+  - id: T2
+    title: 實收金額（全部與可對應）
+    status: READY
+    blocked_by: []
+    brief: |
+      檔案為 cases/club/data/payments.csv（pay_id,email,amount,paid_at,method）和 cases/club/data/registrations.csv。
+      1. 全部收款：python3 tools/tabcalc.py sum cases/club/data/payments.csv --col amount，並用 count 取筆數。
+      2. 可對應有效報名的收款：執行
+         python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=報名
+         matched 的 a_row 就是可對應的收款列。
+      3. 對每個 matched 的 pay_id，執行 sum cases/club/data/payments.csv --col amount --where pay_id=<id>，把結果加總並寫出算式。
+      4. 未對應的收款列，列出 a_unmatched 並標註原因，只列清單，不做退款判斷（T4 負責）。
+    inputs: [cases/club/data/payments.csv, cases/club/data/registrations.csv]
+    output_schema: {total_received: number, payment_count: int, matched_received: number, matched_rows: list, unmatched_rows: list, commands: list}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - total_received 和 payment_count 來自 tabcalc 的輸出。
+      - matched_received 附逐筆 sum 指令與算式。
+      - matched 與 unmatched 的列號合起來涵蓋 payments 全部資料列，沒有重疊。
+  - id: T3
+    title: 未繳與短繳名單
+    status: READY
+    blocked_by: []
+    brief: |
+      以有效報名（registrations.csv，status=報名，依 email 去重，保留第一次出現的列）為母體，對照 payments.csv（以 email 對應）。
+      1. python3 tools/tabcalc.py count cases/club/data/registrations.csv --where status=報名 --distinct email
+         取 distinct_rows 作母體。
+      2. python3 tools/tabcalc.py match cases/club/data/registrations.csv email cases/club/data/payments.csv email --where-a status=報名
+         a_unmatched 且在母體內的列＝未繳。
+      3. 對 matched 的每位，用 sum cases/club/data/payments.csv --col amount --where pay_id=<id> 取收款金額。同一 email 有多筆時，把各筆 sum 加總。
+         與該列 fee 比較（fee 用 sum registrations --col fee --where reg_id=<id> 取得）。收款合計小於 fee 為短繳，並寫出差額算式。
+      4. 輸出未繳名單和短繳名單，每人附 reg_id、name、email、fee、已收、差額。
+      不用心算金額，所有數字都要附 tabcalc 輸出。
+    inputs: [cases/club/data/registrations.csv, cases/club/data/payments.csv]
+    output_schema: {unpaid: list, underpaid: list, commands: list}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - 名單中每人附 reg_id、列號、fee、已收和差額。
+      - 母體等於 T1 的 distinct_rows，重複列不重複計入。
+      - 取消報名的人不在名單內。
+      - 每個金額都附 tabcalc 指令。
+  - id: T4
+    title: 需退款或無法對應的收款，以及判讀異常（J）清單
+    status: READY
+    blocked_by: []
+    brief: |
+      1. 對應取消報名的收款（疑似需退款）：
+         python3 tools/tabcalc.py match cases/club/data/payments.csv email cases/club/data/registrations.csv email --where-b status=取消
+         取 matched。再確認該 email 沒有 status=報名 的有效報名（用 --where-b status=報名 再 match 一次比對）。
+      2. 無法對應的收款：以 match 的 --where-b status=報名 的 a_unmatched，再排除屬於步驟 1 的列。這些列在 registrations 任何狀態都找不到 email。
+      3. 另外列出超收（收款合計大於 fee）。用 sum 取得金額並寫出算式。
+      4. 每筆列出 pay_id、列號、email、amount、原因，以及建議（退款或待查）。
+      5. 彙整 J 類判讀異常，以（檔案、列號、分類）去重：J1 狀態與口徑不符，J2 金額不平，J3 可疑辨識，J4 跨檔無法對應。只列清單，不計入 key_figures。
+      F 類機械異常不在此重列，以 T0 為準。
+    inputs: [cases/club/data/payments.csv, cases/club/data/registrations.csv]
+    output_schema: {refund_candidates: list, unmatched_payments: list, overpaid: list, J_items: list, commands: list}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - 每筆列出 pay_id、檔案列號、amount 和分類原因。
+      - 退款候選與無法對應兩份清單沒有重疊。
+      - 每個 J 項標有 J1 至 J4 的分類，且（檔案、列號、分類）沒有重複。
+      - 沒有重列 F 類異常。
+risks:
+  - registrations 同一人（姓名相同）的 email 只差大小寫與空白。tabcalc 的正規化與去重會視為同一人，但是否真為同一人需人工確認。
+  - 收款以 email 對應，若報名者用了不同 email 付款，會被歸為無法對應。
+  - 同一 email 可能有多筆收款，或收款對應取消的報名，退款判斷要由人確認。
+  - tabcalc sum 不支援依列去重，應收金額需逐列 sum 後加總。
+open_questions:
+  - 無法對應的收款（email 不在報名名單）是否視為需退款，還是待查？CASE.md 未說明。
+  - 重複報名的兩列若 fee 不同，以哪一列為準？本案預設保留第一次出現的列。

@@ -1,0 +1,157 @@
+case: 〔店家A〕 9 月上旬營運與採購彙整（測試案例 1）
+status: READY
+files:
+  - {path: cases/yx/data/工作表1.csv, exists: true}
+  - {path: cases/yx/data/小購_暫存單據_V01.csv, exists: true}
+  - {path: cases/yx/data/小購_採購主表_V02.csv, exists: true}
+  - {path: cases/yx/data/小購_測試資料_V01.csv, exists: true}
+goal: 彙整 2026-09-01 至 2026-09-09 的每日營收、訂單數、客單價，已入帳採購支出（含稅實付），尚未入帳單據積壓，以及資料品質異常清單。
+definition_of_done: 4 項需求各有數字或清單，每個數字都附 tabcalc 指令與輸出；機械異常以 tabcalc profile 原樣呈現；判讀異常另列清單，不列入計數。
+key_figures:
+  - name: 每日營收
+    scope: 工作表1.csv 中日期（NFKC 正規化後格式為 2026/09/DD）落在 2026/09/01–2026/09/09 的每列，取「營收」欄。不扣退款，退款金額另列。
+    alt_scope: 營收扣除退款金額。需求只寫「營收」，所以預設不扣；若業主要淨營收再算。
+    depends_on_files: [cases/yx/data/工作表1.csv]
+    computable: true
+  - name: 每日訂單數
+    scope: 同上日期範圍，取「訂單數」欄。
+    alt_scope: null
+    depends_on_files: [cases/yx/data/工作表1.csv]
+    computable: true
+  - name: 每日客單價
+    scope: 每日營收除以每日訂單數，用 tabcalc ratio 計算，取小數 2 位。訂單數為 0 或缺資料的日期標「無資料」，不得推算。
+    alt_scope: null
+    depends_on_files: [cases/yx/data/工作表1.csv]
+    computable: true
+  - name: 已入帳採購支出合計（含稅實付）
+    scope: 小購_採購主表_V02.csv 中日期落在 2026-09-01–2026-09-09 的每列，加總「實付金額」欄。該檔視為已入帳明細，這是 CASE.md 的宣告。實付金額為空的列不補算，列入 J2 清單。
+    alt_scope: null
+    depends_on_files: [cases/yx/data/小購_採購主表_V02.csv]
+    computable: true
+  - name: 尚未入帳單據張數與金額
+    scope: 小購_暫存單據_V01.csv 中建立時間落在 2026-09-01–2026-09-09，且「狀態」不是「已入帳」也不是「已作廢」的單據。張數用 count，金額加總辨識結果內的金額。辨識結果有兩種 JSON 格式，舊格式欄位是「金額」，新格式欄位是「total_amount」，兩種都要處理。金額缺漏的單據列入 J2，不補值。
+    alt_scope: 把「已作廢」也算入積壓。需求沒有定義作廢單據是否算未入帳，所以另列一組數字供調度官裁決。
+    depends_on_files: [cases/yx/data/小購_暫存單據_V01.csv]
+    computable: true
+  - name: 機械異常筆數
+    scope: 4 個檔案的 tabcalc profile anomaly_count 加總。
+    alt_scope: null
+    depends_on_files: [cases/yx/data/工作表1.csv, cases/yx/data/小購_暫存單據_V01.csv, cases/yx/data/小購_採購主表_V02.csv, cases/yx/data/小購_測試資料_V01.csv]
+    computable: true
+tasks:
+  - id: T0
+    title: 機械異常盤點
+    status: READY
+    blocked_by: []
+    brief: |
+      在工作目錄 〔暫存〕/sandbox 依序執行下列 4 個指令，輸出原樣回傳，不加詮釋、不增減項目：
+      1. python3 tools/tabcalc.py profile cases/yx/data/工作表1.csv
+      2. python3 tools/tabcalc.py profile cases/yx/data/小購_暫存單據_V01.csv --key 單據編號
+      3. python3 tools/tabcalc.py profile cases/yx/data/小購_採購主表_V02.csv
+      4. python3 tools/tabcalc.py profile cases/yx/data/小購_測試資料_V01.csv
+      只有暫存單據在 CASE.md 宣告了自然鍵，其他檔案不加 --key。最後把 4 個 anomaly_count 加總，加總也用 tabcalc 或逐項列出，不得心算。
+    inputs: [cases/yx/data/工作表1.csv, cases/yx/data/小購_暫存單據_V01.csv, cases/yx/data/小購_採購主表_V02.csv, cases/yx/data/小購_測試資料_V01.csv]
+    output_schema: {profiles: [{file: str, data_rows: int, anomaly_count: int, by_category: {F1: int, F2: int, F3: int, F4: int}, items: list}], total_anomaly_count: int}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - profiles 剛好 4 筆，file 與上列 4 個路徑一一對應
+      - 每筆的 items 與 tabcalc 輸出逐字一致
+      - total_anomaly_count 等於 4 個 anomaly_count 之和
+      - 只有暫存單據的指令帶 --key 單據編號
+  - id: T1
+    title: 每日營收、訂單數、客單價
+    status: READY
+    blocked_by: []
+    brief: |
+      資料：cases/yx/data/工作表1.csv，欄位為 日期、營收、訂單數、退款金額。日期是全形字元，例如２０２６／０９／０３，tabcalc 會做 NFKC 正規化，條件要寫成半形。
+      1. 先確認有哪些日期：python3 tools/tabcalc.py count cases/yx/data/工作表1.csv --group 日期
+      2. 對 2026/09/01 到 2026/09/09 每一天，各執行 sum --col 營收、sum --col 訂單數、sum --col 退款金額，--where 寫「日期=2026/09/0N」。
+      3. 客單價：python3 tools/tabcalc.py ratio <當日營收> <當日訂單數> --round 2
+      4. 檔案中沒有資料的日期輸出「無資料」，不得推算或補值。
+      5. 日期重複、營收或訂單數為空或非數字的列，列入 J 清單（J2 或 J3），不列入計數。
+    inputs: [cases/yx/data/工作表1.csv]
+    output_schema: {daily: [{date: str, revenue: num|null, orders: num|null, refund: num|null, aov: num|null, note: str}], j_items: [{file: str, row: int, cat: str, reason: str}], commands: [str]}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - daily 剛好 9 筆，涵蓋 2026-09-01 至 2026-09-09
+      - 每個非空數字都有對應的 tabcalc 指令與輸出
+      - 無資料的日期 revenue、orders、aov 皆為 null 且 note 為「無資料」
+      - j_items 的 cat 只能是 J1 到 J4
+  - id: T2
+    title: 已入帳採購支出合計
+    status: READY
+    blocked_by: []
+    brief: |
+      資料：cases/yx/data/小購_採購主表_V02.csv，欄位為 日期、廠商、品類、品名、數量、單位、單價、總價、稅金、實付金額、備註。
+      1. 範圍內列數：python3 tools/tabcalc.py count cases/yx/data/小購_採購主表_V02.csv --where "日期~^2026-09-0[1-9]$"
+      2. 合計：python3 tools/tabcalc.py sum cases/yx/data/小購_採購主表_V02.csv --col 實付金額 --where "日期~^2026-09-0[1-9]$"
+      3. 範圍外日期的列另用 count --group 日期 列出，不計入合計。
+      4. 判讀異常 J2：逐列檢查「總價+稅金」是否等於「實付金額」，實付金額為空，或同一品項重複列（例如 2026-09-02 〔供應商S1〕 客家切片豬油蔥 兩列）。J3 檢查品名殘缺或可疑。逐列檢查時，算術用 tabcalc sum 取得，不得心算。
+      5. 實付金額為空的列不補算，只列入 j_items。
+    inputs: [cases/yx/data/小購_採購主表_V02.csv]
+    output_schema: {in_range_rows: int, total_paid: num, rows_used: [int], rows_skipped: [int], out_of_range_rows: [int], j_items: [{file: str, row: int, cat: str, reason: str}], commands: [str]}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - total_paid 等於 tabcalc sum 的輸出
+      - rows_used 與 rows_skipped 之聯集等於 in_range_rows 的列號
+      - j_items 每筆以（file, row, cat）唯一
+      - 未引用任何其他檔案的資料
+  - id: T3
+    title: 尚未入帳單據積壓
+    status: READY
+    blocked_by: []
+    brief: |
+      資料：cases/yx/data/小購_暫存單據_V01.csv，欄位為 單據編號、門市、店員、圖片位置、辨識結果（JSON）、狀態、建立時間。
+      1. 先列出所有狀態值：python3 tools/tabcalc.py count cases/yx/data/小購_暫存單據_V01.csv --group 狀態
+      2. 主口徑：建立時間在 2026-09-01 到 2026-09-09，且狀態不是「已入帳」也不是「已作廢」。
+         張數：count --where "建立時間~^2026-09-0[1-9]" "狀態!=已入帳" "狀態!=已作廢"
+         單據編號清單取自輸出的 rows，再對照原檔讀編號。
+      3. 金額：辨識結果有兩種格式，舊格式欄位為「辨識結果.金額」，新格式欄位為「辨識結果.total_amount」。對同一組 where 條件各執行一次 sum，並分別列出 rows_used 與 rows_skipped，合併時確認每張單據只被一種格式計到。兩種格式都取不到金額的單據，列入 J2，不補值。
+      4. alt_scope：另算「含已作廢」的張數與金額，單獨呈現，不與主口徑混合。
+      5. 判讀異常：J1 是狀態與口徑不符，例如狀態「已確認」是否已入帳，不得自行認定，只列出。J3 是品名誤讀或殘缺。J4 是單據編號與採購主表或測試資料無法對應，可用 match 指令比對，但採購主表沒有單據編號欄，所以只能比對測試資料檔。
+      6. 測試單據（單據編號含 TEST）仍照口徑計算，同時在 j_items 標示，由調度官決定是否排除。
+    inputs: [cases/yx/data/小購_暫存單據_V01.csv]
+    output_schema: {status_counts: {str: int}, backlog: {count: int, amount: num, receipts: [{id: str, row: int, status: str, amount: num|null}]}, alt_with_voided: {count: int, amount: num}, j_items: [{file: str, row: int, cat: str, reason: str}], commands: [str]}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - backlog.count 等於 tabcalc count 的輸出
+      - receipts 的筆數等於 backlog.count
+      - 每張 receipts 皆有單據編號與列號
+      - backlog.amount 等於兩種格式 tabcalc sum 輸出之和，並寫出兩個分項
+      - 主口徑與 alt_with_voided 分開列示
+  - id: T4
+    title: 測試資料檔判讀與跨檔對應
+    status: READY
+    blocked_by: []
+    brief: |
+      資料：cases/yx/data/小購_測試資料_V01.csv，欄位為 單據編號、門市、供應商、日期、品項、數量、單價、金額、確認人、確認時間。
+      1. 用 python3 tools/tabcalc.py count cases/yx/data/小購_測試資料_V01.csv 取得列數與列號。
+      2. 以單據編號比對暫存單據：python3 tools/tabcalc.py match cases/yx/data/小購_測試資料_V01.csv 單據編號 cases/yx/data/小購_暫存單據_V01.csv 單據編號
+      3. 對 matched 的列，逐一比較供應商、日期、品項、數量、單價、金額，與暫存單據的辨識結果是否一致，不一致的列為 J2 或 J3。無法對應的列為 J4。
+      4. 此檔是測試資料，不納入任何 key_figure 的金額或筆數。
+    inputs: [cases/yx/data/小購_測試資料_V01.csv, cases/yx/data/小購_暫存單據_V01.csv]
+    output_schema: {rows: int, match: {matched: list, a_unmatched: list, b_unmatched: list}, j_items: [{file: str, row: int, cat: str, reason: str}], commands: [str]}
+    depends_on: []
+    parallel_group: A
+    acceptance:
+      - match 欄位與 tabcalc match 輸出逐字一致
+      - 每個 matched 列都有逐欄比對結果
+      - j_items 每筆以（file, row, cat）唯一，且 cat 為 J1 到 J4
+risks:
+  - 工作表1.csv 只有 1 筆資料列（2026/09/03），9 月 1 到 9 日大部分日期會是「無資料」，每日營收與客單價多半無法產出。
+  - 暫存單據的辨識結果有舊格式（中文欄位）與新格式（英文欄位 total_amount）兩種，只取其中一種會漏算金額。
+  - 「已確認」狀態是否等同「已入帳」，CASE.md 沒有定義。主口徑暫把它算入未入帳，這點可能影響積壓數字。
+  - 採購主表沒有單據編號欄，無法與暫存單據逐筆對應。
+  - 測試單據（R-TEST-*）混在暫存單據內，主口徑未排除，需由調度官決定。
+  - 採購主表有同品項重複列與實付金額為空的列，會影響支出合計。
+  - 工作表1.csv 的日期與數字為全形，tabcalc 會正規化，但判讀時必須知道原檔是全形。
+open_questions:
+  - 「尚未入帳」要不要包含已作廢單據？主口徑排除，alt_scope 另列。
+  - 「已確認」狀態的單據是否視為已入帳？
+  - 每日營收要不要扣除退款金額？主口徑不扣。
+  - 測試單據（R-TEST-*）與測試資料檔是否要從積壓與支出中排除？
+  - 暫存單據的日期範圍要依「建立時間」還是辨識結果內的「日期」？目前用建立時間。
