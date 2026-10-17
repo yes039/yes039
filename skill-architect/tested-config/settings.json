@@ -1,0 +1,57 @@
+{
+ "permissions": {
+  "defaultMode": "dontAsk",
+  "allow": [
+   "Read(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/cases/**)",
+   "Read(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/runs/**)",
+   "Glob",
+   "Grep",
+   "Skill(sk-01-decompose)",
+   "Skill(sk-02-dispatch)",
+   "Skill(sk-03-verify)",
+   "Task(sk-planner)",
+   "Task(sk-worker)",
+   "Task(sk-verifier)",
+   "Agent(sk-planner)",
+   "Agent(sk-worker)",
+   "Agent(sk-verifier)",
+   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/runs/**)"
+  ],
+  "deny": [
+   "Bash",
+   "NotebookEdit",
+   "WebFetch",
+   "WebSearch",
+   "Workflow",
+   "CronCreate",
+   "CronDelete",
+   "RemoteTrigger",
+   "ScheduleWakeup",
+   "EnterWorktree",
+   "SendMessage",
+   "Read(//home/**)",
+   "Read(//root/**)",
+   "Read(//mnt/**)",
+   "Read(//etc/**)",
+   "Task(general-purpose)",
+   "Task(claude)",
+   "Agent(general-purpose)",
+   "Agent(claude)",
+   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/.claude/**)",
+   "Edit(//tmp/claude-0/-home-user-yes039/65dea492-7131-5723-b3d6-7c9e8ef34688/scratchpad/sk001/sandbox/cases/**)",
+   "Edit(//home/**)",
+   "Edit(//root/**)",
+   "Edit(//mnt/**)",
+   "Edit(//etc/**)",
+   "Agent(Explore)",
+   "Agent(Plan)",
+   "Agent(statusline-setup)",
+   "Task(Explore)",
+   "Task(Plan)",
+   "Task(statusline-setup)"
+  ]
+ },
+ "env": {
+  "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0"
+ }
+}

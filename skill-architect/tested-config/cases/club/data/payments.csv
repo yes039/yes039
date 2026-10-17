@@ -1,0 +1,7 @@
+pay_id,email,amount,paid_at,method
+P01,ming@example.com,600,2026-10-01,轉帳
+P02,mei@example.com,600,2026-10-02,現金
+P03,tung@example.com,600,2026-10-02,轉帳
+P04,ya@example.com,500,2026-10-03,轉帳
+P05,kai@example.com,600,2026-10-03,轉帳
+P06,chi@example.com,600,2026-10-04,現金

@@ -1,0 +1,8 @@
+reg_id,name,email,session,fee,status
+R01,陳小明,ming@example.com,10月場,600,報名
+R02,林美華,mei@example.com,10月場,600,報名
+R03,王大同,tung@example.com,10月場,600,取消
+R04,張雅婷,ya@example.com,10月場,600,報名
+R05,陳小明, Ming@Example.com ,10月場,600,報名
+R06,李志強,chi@example.com,10月場,600,報名
+R07,黃淑芬,fen@example.com,10月場,600,報名
