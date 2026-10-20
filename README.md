@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🏗️ 水電 × 營造 AI 系統架構規劃（C-001，規劃稿）：[engineering-ai/](engineering-ai/)
