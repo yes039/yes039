@@ -1,0 +1,7 @@
+## T1 public web via Jina Reader (Agent-Reach documented path)
+$ curl -sS "https://r.jina.ai/https://www.python.org/about/"
+curl: (56) CONNECT tunnel failed, response 403
+HTTP 000
+## T1b direct fetch (control)
+curl: (56) CONNECT tunnel failed, response 403
+HTTP 000

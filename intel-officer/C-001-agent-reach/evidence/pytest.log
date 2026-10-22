@@ -1,0 +1,5 @@
+=========================== short test summary info ============================
+FAILED tests/test_config.py::TestConfig::test_get_configured_features - asser...
+1 failed, 606 passed in 5.59s
+...............................                                          [100%]
+607 passed in 5.27s

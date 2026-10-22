@@ -1,0 +1,30 @@
+Agent Reach 状态
+========================================
+图例：✅ 可用  [!] 已装但需配置/登录  [X] 未安装
+
+✅ 装好即用：
+  [!]  GitHub 仓库和代码 — gh CLI 可执行，但未检测到显式认证配置。运行 `gh auth 
+login` 完成登录；Doctor 不会自动执行 `gh auth status`。
+  [!]  YouTube 视频和字幕 — yt-dlp 已安装但未配置 JS runtime。运行：
+  mkdir -p 
+<scratch>/
+fakehome/.config/yt-dlp && { grep -qxF -- '--js-runtimes node' 
+<scratch>/
+fakehome/.config/yt-dlp/config 2>/dev/null || printf '%s\n' '--js-runtimes node'
+>> 
+<scratch>/
+fakehome/.config/yt-dlp/config; }
+  [!]  V2EX 节点、主题与回复 — V2EX API 连接失败（可能需要代理）：<urlopen error
+Tunnel connection failed: 403 Forbidden>
+  ✅ RSS/Atom 订阅源 — 可读取 RSS/Atom 源
+  [X]  全网语义搜索 — 需要 mcporter + Exa MCP。安装：
+  npm install -g mcporter
+  mcporter config add exa https://mcp.exa.ai/mcp --scope home
+  ✅ 任意网页 — 通过 Jina Reader 读取任意网页（curl https://r.jina.ai/URL）
+
+状态：2/16 个渠道可用
+还有 10 个可选渠道可以解锁（Twitter/X 推文、Reddit 帖子和评论、Facebook 
+帖子、主页和群组、Instagram 
+用户、主页和指定用户帖子、B站视频、字幕和搜索、小红书笔记、小宇宙播客转文字、雪
+球股票行情与社区动态、LinkedIn 职业社交、Boss直聘 职位搜索与 JD），告诉你的 
+Agent「帮我装 XXX」即可

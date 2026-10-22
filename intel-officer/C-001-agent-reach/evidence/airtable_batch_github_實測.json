@@ -1,0 +1,37 @@
+{
+  "records": [
+    {
+      "fields": {
+        "標題": "yt-dlp/yt-dlp（最新提交 43a45ae：[docs] Add changelog entries for dropping Py3.10 & Win8 support (#17889)）",
+        "來源平台": "GitHub",
+        "來源網址": "https://github.com/yt-dlp/yt-dlp",
+        "作者或頻道": "bashonly",
+        "發布時間": "2026-10-21T22:17:41+00:00",
+        "採集時間": "2026-10-22T11:26:17+00:00",
+        "原文節錄": "yt-dlp is a feature-rich command-line audio/video downloader with support for [thousands of sites](supportedsites.md). The project is a fork of [youtube-dl](https://github.com/ytdl-org/youtube-dl) based on the now inactive [youtube-dlc](https://github.com/blackjack4494/yt-dlc).\n\n* [INSTALLATION](#in…（此檔為節錄；實際輸出最多 2000 字）",
+        "摘要": "",
+        "標籤": [],
+        "採集工具": "git clone（Agent-Reach gh 路徑需登入，見實測 T3）",
+        "狀態": "待審",
+        "去重鍵": "511a5089717fad8a"
+      }
+    },
+    {
+      "fields": {
+        "標題": "Panniantong/Agent-Reach（最新提交 94f06c1：Merge pull request #787 from Panniantong/chore/step0-hotfixes）",
+        "來源平台": "GitHub",
+        "來源網址": "https://github.com/Panniantong/Agent-Reach",
+        "作者或頻道": "Pnant",
+        "發布時間": "2026-10-08T01:17:26+08:00",
+        "採集時間": "2026-10-22T11:26:18+00:00",
+        "原文節錄": "👁️ Agent Reach\n\n  给你的 AI Agent 一键装上互联网能力\n\n  当下最稳的接入方式，替你选好、装好、体检好——接入方式会换代，你不用操心\n\n  \n  \n\n  \n  \n  \n\n  快速开始 · English · 日本語 · 한국어 · 支持平台 · 设计理念\n\n---\n\n## ❤️赞助商\n\n> [想出现在这里？](mailto:pnt01@foxmail.com)\n\n点击折叠\n\nBrowserAct 支持从 Amazon、LinkedIn、X、Google Maps 等复杂网站提取你需要的任意数据。你只需用自然语言描述抓取需求，Agent 就会基于真实浏览器自动探索并测…（此檔為節錄；實際輸出最多 2000 字）",
+        "摘要": "",
+        "標籤": [],
+        "採集工具": "git clone（Agent-Reach gh 路徑需登入，見實測 T3）",
+        "狀態": "待審",
+        "去重鍵": "3852ba1a81d2f266"
+      }
+    }
+  ],
+  "typecast": true
+}
