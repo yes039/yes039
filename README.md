@@ -19,3 +19,4 @@ Here are some ideas to get you started:
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
 - 🛰️ AI 情報官 C-001 Agent-Reach 技術實測：[intel-officer/C-001-agent-reach/](intel-officer/C-001-agent-reach/)
+- 🗂️ AI 產品武器庫與市場出擊準備總表 V1.0（C-001-ORDER-002）：[product-inventory/C-001-ORDER-002/](product-inventory/C-001-ORDER-002/)
