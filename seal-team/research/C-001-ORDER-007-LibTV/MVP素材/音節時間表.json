@@ -1,0 +1,110 @@
+{
+  "bpm": 96,
+  "beat_sec": 0.625,
+  "slot_sec": 0.3125,
+  "duration": 5.0,
+  "fps_ref": 30,
+  "lyric": "天天忙到半夜，月底錢咧？",
+  "syllables": [
+    {
+      "idx": 1,
+      "char": "天",
+      "pinyin": "tiān",
+      "start": 0.625,
+      "end": 0.914,
+      "mouth": "開-展唇",
+      "frame30_start": 19,
+      "frame30_end": 27
+    },
+    {
+      "idx": 2,
+      "char": "天",
+      "pinyin": "tiān",
+      "start": 0.938,
+      "end": 1.226,
+      "mouth": "開-展唇",
+      "frame30_start": 28,
+      "frame30_end": 37
+    },
+    {
+      "idx": 3,
+      "char": "忙",
+      "pinyin": "máng",
+      "start": 1.25,
+      "end": 1.532,
+      "mouth": "閉→大開",
+      "frame30_start": 38,
+      "frame30_end": 46
+    },
+    {
+      "idx": 4,
+      "char": "到",
+      "pinyin": "dào",
+      "start": 1.562,
+      "end": 1.775,
+      "mouth": "開→圓",
+      "frame30_start": 47,
+      "frame30_end": 53
+    },
+    {
+      "idx": 5,
+      "char": "半",
+      "pinyin": "bàn",
+      "start": 1.875,
+      "end": 2.136,
+      "mouth": "閉→開",
+      "frame30_start": 56,
+      "frame30_end": 64
+    },
+    {
+      "idx": 6,
+      "char": "夜",
+      "pinyin": "yè",
+      "start": 2.188,
+      "end": 2.437,
+      "mouth": "展唇-半開",
+      "frame30_start": 66,
+      "frame30_end": 73
+    },
+    {
+      "idx": 7,
+      "char": "月",
+      "pinyin": "yuè",
+      "start": 3.125,
+      "end": 3.323,
+      "mouth": "圓→半開",
+      "frame30_start": 94,
+      "frame30_end": 100
+    },
+    {
+      "idx": 8,
+      "char": "底",
+      "pinyin": "dǐ",
+      "start": 3.438,
+      "end": 3.726,
+      "mouth": "展唇-小開",
+      "frame30_start": 103,
+      "frame30_end": 112
+    },
+    {
+      "idx": 9,
+      "char": "錢",
+      "pinyin": "qián",
+      "start": 3.75,
+      "end": 4.05,
+      "mouth": "展唇→開",
+      "frame30_start": 112,
+      "frame30_end": 121
+    },
+    {
+      "idx": 10,
+      "char": "咧",
+      "pinyin": "lie",
+      "start": 4.062,
+      "end": 4.289,
+      "mouth": "半開-上揚語氣",
+      "frame30_start": 122,
+      "frame30_end": 129
+    }
+  ]
+}
