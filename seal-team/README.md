@@ -11,7 +11,7 @@
 | C. 武器配置表 | [武器配置表.md](武器配置表.md) |
 | D. MVP Runtime | 本檔下半部 |
 | E. 第一場實戰 | [missions/M001/README.md](missions/M001/README.md) |
-| 研究｜C-001-ORDER-007 LibTV 對接 | [research/C-001-ORDER-007-LibTV/](research/C-001-ORDER-007-LibTV/LibTV-AI製片對接與駕馭可行性報告-V1.0.md)（報告 V1.0＋5 秒 MVP 實驗方案；ORDER-008：[MVP 執行準備報告 V1.1](research/C-001-ORDER-007-LibTV/LibTV-MVP執行準備報告-V1.1.md)＋[測試素材包](research/C-001-ORDER-007-LibTV/MVP素材/README.md)；ADD-008A：[Battle MV 節點工作流拆解圖 V1.0](research/C-001-ORDER-007-LibTV/LibTV-BattleMV節點工作流拆解圖-V1.0.md)；ORDER-010：[拆解圖 V1.1＋四附件](research/C-001-ORDER-007-LibTV/BattleMV-V1.1/LibTV-BattleMV節點工作流拆解圖-V1.1.md)） |
+| 研究｜C-001-ORDER-007 LibTV 對接 | [research/C-001-ORDER-007-LibTV/](research/C-001-ORDER-007-LibTV/LibTV-AI製片對接與駕馭可行性報告-V1.0.md)（報告 V1.0＋5 秒 MVP 實驗方案；ORDER-008：[MVP 執行準備報告 V1.1](research/C-001-ORDER-007-LibTV/LibTV-MVP執行準備報告-V1.1.md)＋[測試素材包](research/C-001-ORDER-007-LibTV/MVP素材/README.md)；ADD-008A：[Battle MV 節點工作流拆解圖 V1.0](research/C-001-ORDER-007-LibTV/LibTV-BattleMV節點工作流拆解圖-V1.0.md)；ORDER-010：[拆解圖 V1.1＋四附件](research/C-001-ORDER-007-LibTV/BattleMV-V1.1/LibTV-BattleMV節點工作流拆解圖-V1.1.md)；ORDER-012：[MCP／Skill 實際對接報告 V1.0](research/C-001-ORDER-007-LibTV/ORDER-012-實測/C-001-LibTV-MCP-Skill實際對接報告-V1.0.md)） |
 
 ---
 
