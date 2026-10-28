@@ -1,0 +1,26 @@
+const { chromium } = require('playwright');
+const fs=require('fs'), path=require('path');
+// Artifact 發布時會自動加上 viewport meta；本機測試先補上，才會用手機寬度排版
+fs.writeFileSync(path.join(__dirname,'mobiletest.html'),'<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'+fs.readFileSync(path.join(__dirname,'../prototype/MIN003獲客戰情室.html'),'utf8'));
+(async()=>{const b=await chromium.launch(); const errs=[]; const out=[];
+ const u='file://'+require('path').join(__dirname,'mobiletest.html');
+ const p=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); p.on('pageerror',e=>errs.push(e.message));
+ const sw=async()=>await p.evaluate(()=>document.documentElement.scrollWidth);
+ const small=async()=>await p.evaluate(()=>[...document.querySelectorAll('main button, main select, main input')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.height<26}).map(e=>(e.className||e.tagName)+':'+Math.round(e.getBoundingClientRect().height)).join(' '));
+ const tap=async(sel)=>{await p.tap(sel); await p.waitForTimeout(120)};
+ const go=async(v)=>{await p.goto(u+'#'+v); await p.reload(); await p.waitForTimeout(250)};
+ const rec=async(name,action,ok)=>{out.push({name,action,ok,sw:await sw(),small:await small()}); };
+ await go('war'); await rec('戰情室','捲動到業務待辦、點「看全部待辦」',true); await tap('[data-go="tasks"]');
+ await rec('待辦跟進','點「回報結果」→填結果→完成',true); await tap('[data-topen]'); await p.fill('[id^="tr-"]','已通話'); await tap('[data-tdone]');
+ await go('crm'); await p.fill('#q','水電'); await tap('tr.click'); const dr=await p.evaluate(()=>{const d=document.querySelector('.drawer').getBoundingClientRect();return d.top>=0&&d.bottom<=844&&d.width<=390});
+ await rec('客戶名冊','搜尋→打開客戶抽屜（底部彈出）',dr); await tap('.x');
+ await go('board'); const bw=await p.evaluate(()=>{const b=document.querySelector('.board');return b.scrollWidth>b.clientWidth}); await tap('.opp'); await rec('商機看板','看板橫向捲動在框內→點商機卡',bw&&!!(await p.$('.drawer'))); await tap('.x');
+ await go('notify'); await tap('[data-rule="daily"]'); await rec('通知','切換規則開關、看訊息範例與紀錄表',true);
+ await go('sim'); await tap('#simOpen'); await tap('[data-consent="同意記錄操作"]'); await tap('[data-feat]'); await tap('[data-task="1"]'); await rec('客戶體驗模擬','開啟→同意→點功能→完成任務',(await p.$$('.ev')).length>=3);
+ await go('partners'); await tap('tr[data-partner="P001"]'); await rec('推薦夥伴','點夥伴→抽屜',!!(await p.$('.drawer'))); await tap('.x'); await tap('[data-dsd="DS-0001"][data-v="維持原歸屬"]');
+ await go('commission'); await tap('[data-cmpaid="CM-0001"]'); await rec('佣金結算','標記已撥付、參數表單可填',!!(await p.$('#cfg-rate')));
+ await go('case'); for(let i=0;i<6;i++) await tap(`[data-cstep="${i}"]`); await rec('模擬案例','六步全部執行',(await p.textContent('main')).includes('案例完成'));
+ await go('arch'); await rec('架構與規則','架構圖、規則表、權限表',true);
+ await p.selectOption('#asUser','p1'); await p.waitForTimeout(150); await tap('[data-pcopy="water"]'); await p.fill('#rp-co','模擬水電行 66'); await p.check('#rp-ok'); await tap('#rpSend'); await rec('我的推薦（夥伴）','複製連結、報備客戶',(await p.textContent('#rpOut')).includes('歸因成立'));
+ const hh=await p.evaluate(()=>Math.round(document.querySelector('header.top').getBoundingClientRect().height));
+ console.log(JSON.stringify({out,hh,errs})); await b.close();})();
