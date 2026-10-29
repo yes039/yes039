@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head><body>
+<title>R-001 餐飲經營特助</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 手機優先單欄，480px 內容寬；首頁 3×3 九宮格，中央深藍「經營總覽」，點卡進入全頁詳細 */
+:root{
+  --bg:#FFFFFF; --surface:#F3F5F8; --card:#FFFFFF; --ink:#1E2A37; --ink-2:#5B6979; --ink-3:#8794A3;
+  --line:#E0E5EB; --navy:#22344A; --navy-ink:#F3F5F8; --navy-2:#AFC0D2;
+  --gold:#B8860B; --gold-strong:#C99A1E; --gold-soft:#FBF3DC; --gold-ink:#7A5A06;
+  --ok:#23845A; --ok-soft:#E3F3EB; --warn:#B87500; --warn-soft:#FDF1DC; --bad:#C2412D; --bad-soft:#FBE7E3;
+  --bar:#5B7896; --bar-2:#C9D3DE;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"Barlow Semi Condensed","Noto Sans TC",system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171E; --surface:#18212B; --card:#1C2631; --ink:#E7ECF1; --ink-2:#A3B0BE; --ink-3:#77869A;
+  --line:#2B3744; --navy:#24384F; --navy-ink:#F3F5F8; --navy-2:#A9BCD0;
+  --gold:#E2B33E; --gold-strong:#E2B33E; --gold-soft:#2D2614; --gold-ink:#F0CF77;
+  --ok:#4CC08A; --ok-soft:#14302A; --warn:#E8A93A; --warn-soft:#33280F; --bad:#F07560; --bad-soft:#3A1E1A;
+  --bar:#7F9DBC; --bar-2:#334252; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171E; --surface:#18212B; --card:#1C2631; --ink:#E7ECF1; --ink-2:#A3B0BE; --ink-3:#77869A;
+  --line:#2B3744; --navy:#24384F; --navy-ink:#F3F5F8; --navy-2:#A9BCD0;
+  --gold:#E2B33E; --gold-strong:#E2B33E; --gold-soft:#2D2614; --gold-ink:#F0CF77;
+  --ok:#4CC08A; --ok-soft:#14302A; --warn:#E8A93A; --warn-soft:#33280F; --bad:#F07560; --bad-soft:#3A1E1A;
+  --bar:#7F9DBC; --bar-2:#334252; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:480px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.3}
+h2{font-size:19px;font-weight:900}
+h3{font-size:15px;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold-strong);outline-offset:2px}
+a{color:var(--gold-ink)}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.top .back{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;font-weight:500;flex:none}
+.top .ttl{min-width:0;flex:1}
+.top .ttl b{display:block;font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .ttl small{display:block;color:var(--ink-2);font-size:11.5px}
+.sim{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--gold-ink);background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.top .menu{border:none;background:none;padding:6px;flex:none;color:var(--ink-2);font-size:12px}
+
+/* 30 秒摘要 */
+.brief{margin-top:12px;background:var(--surface);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px}
+.brief .row{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:baseline}
+.brief .k{font-size:11.5px;color:var(--ink-2);font-weight:700;letter-spacing:.04em}
+.brief .v{min-width:0}
+.brief .v b{font-family:var(--f-num);font-size:17px}
+
+/* 九宮格 */
+.grid9{margin-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{position:relative;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 9px 9px;min-height:112px;display:flex;flex-direction:column;gap:2px;transition:transform .12s ease,border-color .12s}
+.tile:hover{border-color:var(--ink-3)}
+.tile:active{transform:scale(.97)}
+.tile .t{font-size:12.5px;font-weight:700;line-height:1.25;padding-right:14px}
+.tile .v{font-family:var(--f-num);font-size:21px;font-weight:700;line-height:1.15;margin-top:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile .v small{font-size:12px;font-weight:600;color:var(--ink-2)}
+.tile .s{font-size:11px;color:var(--ink-2);line-height:1.35}
+.tile .dot{position:absolute;top:10px;right:9px;width:10px;height:10px;border-radius:50%}
+.tile.hl{box-shadow:0 0 0 3px var(--gold-strong)}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.info{background:var(--bar)}
+.tile.center{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+.tile.center .s{color:var(--navy-2)}
+.tile.center .t{color:var(--gold-strong)}
+.tile.center .v{font-size:20px}
+.tile.center .mini{display:grid;gap:1px;font-size:11px;color:var(--navy-2);margin-top:auto}
+.tile.center .mini span b{font-family:var(--f-num);font-size:14px;color:var(--navy-ink);font-weight:600}
+.tile.ai{background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.tile .light{font-size:10.5px;font-weight:700}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--ink-2);margin-top:8px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:1px}
+
+/* sections */
+.sec{margin-top:18px;display:grid;gap:10px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec-h small{color:var(--ink-2);font-size:12px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0}
+.box.soft{background:var(--surface);border-color:transparent}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surface);border-radius:10px;padding:10px 12px;min-width:0}
+.kpi .l{font-size:11.5px;color:var(--ink-2)}
+.kpi .n{font-family:var(--f-num);font-size:22px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:11.5px}
+.up{color:var(--ok)} .down{color:var(--bad)} .flat{color:var(--ink-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.info{background:var(--surface);color:var(--ink-2)}
+.alert{border-radius:var(--r);padding:11px 13px;display:grid;gap:4px;border:1px solid}
+.alert.bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.alert.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+.alert.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.alert b{font-size:13.5px}
+.alert p{font-size:12.5px;color:var(--ink)}
+.tbl-wrap{overflow-x:auto;margin-inline:-2px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:7px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;color:var(--ink-2);font-weight:700;letter-spacing:.03em}
+td{font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink-3)}
+tr.em td{background:var(--bad-soft)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+.btn.gold{background:var(--gold-strong);border-color:var(--gold-strong);color:#1E2A37}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:default}
+.seg{display:inline-flex;background:var(--surface);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:none;background:none;border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.note{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.cascade{display:grid;gap:0}
+.cascade .r{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.cascade .r .n{font-family:var(--f-num);font-size:15px;font-variant-numeric:tabular-nums}
+.cascade .r.sub{padding-left:12px;color:var(--ink-2);font-size:12.5px}
+.cascade .r.sub .n{font-size:14px}
+.cascade .r.res{border-bottom:2px solid var(--ink);font-weight:900}
+.cascade .r.res .n{font-size:18px;font-weight:700}
+.cascade .r.gold{background:var(--gold-soft);padding-inline:8px;border-radius:8px;border-bottom:none;margin-block:4px}
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;text-align:left;width:100%}
+.item .ic{width:8px;height:8px;border-radius:50%;margin-top:7px}
+.item .txt{min-width:0}
+.item .txt b{display:block;font-size:13.5px}
+.item .txt span{font-size:12px;color:var(--ink-2)}
+.item .go{color:var(--ink-3);font-size:13px;align-self:center}
+.sugg{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.sugg .hd{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.sugg .no{font-family:var(--f-num);font-weight:700;color:var(--gold-ink);font-size:13px}
+.sugg .imp{font-size:12px;color:var(--ink-2)}
+.evid{background:var(--surface);border-radius:10px;padding:10px 12px;font-size:12.5px;display:grid;gap:4px}
+.evid .src{font-size:11px;color:var(--ink-2)}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--ink-2);font-size:10px;font-family:var(--f-num)}
+.chart .lbl{fill:var(--ink);font-weight:600}
+.range{width:100%}
+label.f{display:grid;gap:4px;font-size:12.5px;font-weight:700}
+label.f span.h{font-weight:400;color:var(--ink-2);font-size:11.5px}
+select,input[type=text],input[type=number],textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--navy-ink)}
+pre.code{background:var(--surface);border-radius:10px;padding:10px;font-size:11px;overflow-x:auto;margin:0;line-height:1.45;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:var(--navy-ink);padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.cta{margin-top:18px;background:var(--navy);color:var(--navy-ink);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.cta p{color:var(--navy-2);font-size:12.5px}
+.cta .btns .btn{border-color:var(--navy-2);background:transparent;color:var(--navy-ink)}
+.cta .btns .btn.gold{background:var(--gold-strong);border-color:var(--gold-strong);color:#1E2A37}
+.adv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.adv button{background:var(--surface);border:1px dashed var(--ink-3);border-radius:var(--r);padding:10px 8px;text-align:left;font-size:12.5px;font-weight:700;display:grid;gap:2px}
+.adv button small{font-weight:400;color:var(--ink-2);font-size:11px}
+.foot{margin-top:22px;font-size:11px;color:var(--ink-3);display:grid;gap:6px}
+.foot .btns{justify-content:flex-start}
+.callout{background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);border-radius:var(--r);padding:10px 12px;font-size:12.5px;display:grid;gap:6px}
+.callout b{color:var(--gold-ink)}
+.gantt .lane{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:6px;font-size:11.5px;min-height:20px}
+.split2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px}
+.done{text-decoration:line-through;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.tile .v{font-size:18px}.tile{padding:9px 7px}.brief .row{grid-template-columns:64px 1fr}}
+</style>
+
+<div class="app" id="app"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ============================================================
+   R-001 餐飲老闆 AI 經營特助｜G1 互動原型
+   全部為模擬資料；不連接 POS、不呼叫 AI API、不送出任何通知。
+   ============================================================ */
+'use strict';
+const TEMPLATE_ID = 'R-001';
+const PROTO_VER = 'G1-005A';
+const STORE_KEY = 'r001-proto-v1';
+
+/* ---------- 店型樣板（模擬） ----------
+   每個品項：n 名稱, p 售價, c 正常配方食材成本, u 關鍵食材用量(單位/份), role, q 今日份數(@107單), lw 上週同日份數(@110單) */
+const PRESETS = {
+  teppan:{label:'鐵板熱炒',store:'示範小館',kind:'meal',
+    ing:{name:'高麗菜',unit:'公斤',base:32,now:58,why:'颱風後產地減產（模擬）'},
+    chan:[52,24,31],lwChan:[58,22,30],
+    items:[
+      ['招牌牛排套餐',380,152,.08,'set',31,38],['雞腿排套餐',280,92,.08,'set',53,50],['豬里肌套餐',250,80,.08,'set',32,30],
+      ['鐵板鮮蝦',220,88,0,'dish',15,18],['炒高麗菜',120,30,.35,'dish',35,40],['鐵板豆腐',90,18,0,'dish',25,28],
+      ['蒜香炒飯',110,26,.05,'main',36,34],['鐵板麵',100,22,.08,'main',27,26],['紅茶／飲品',40,6,0,'drink',52,72],['加點荷包蛋',20,5,0,'addon',35,45]],
+    target:58000,foodTarget:.32,defOrders:107,defStaff:8},
+  noodle:{label:'小吃麵店',store:'示範麵館',kind:'meal',
+    ing:{name:'青蔥',unit:'公斤',base:80,now:190,why:'颱風後蔥價飆漲（模擬）'},
+    chan:[60,32,15],lwChan:[64,30,16],
+    items:[
+      ['紅燒牛肉麵',190,74,.012,'set',31,38],['招牌乾拌麵',75,22,.01,'set',53,50],['鮮蝦餛飩麵',110,38,.01,'set',32,30],
+      ['滷味拼盤',120,40,.006,'dish',15,18],['蔥油餅',45,9,.035,'dish',35,40],['燙青菜',50,14,0,'dish',25,28],
+      ['滷肉飯',45,13,.006,'main',36,34],['酸辣湯',45,11,.006,'main',27,26],['冬瓜茶',25,4,0,'drink',52,72],['加滷蛋',15,4,0,'addon',35,45]],
+    target:30000,foodTarget:.33,defOrders:160,defStaff:5},
+  cafe:{label:'咖啡廳',store:'示範咖啡',kind:'cafe',
+    ing:{name:'雞蛋',unit:'顆',base:4.2,now:6.6,why:'蛋價上漲（模擬）'},
+    chan:[70,25,12],lwChan:[74,24,12],
+    items:[
+      ['經典早午餐盤',320,105,2,'set',31,38],['厚鬆餅',240,62,1,'set',53,50],['總匯三明治',180,55,1,'set',32,30],
+      ['青醬義大利麵',280,88,0,'dish',15,18],['凱薩沙拉',200,58,1,'dish',35,40],['司康',90,22,.5,'dish',25,28],
+      ['拿鐵',150,32,0,'main',36,34],['美式咖啡',120,18,0,'main',27,26],['季節果汁',160,40,0,'drink',52,72],['加購甜點',80,22,.5,'addon',35,45]],
+    target:25000,foodTarget:.30,defOrders:75,defStaff:5,qMult:.55},
+  bento:{label:'便當店',store:'示範便當',kind:'meal',
+    ing:{name:'雞腿肉',unit:'公斤',base:150,now:215,why:'雞肉批發價上漲（模擬）'},
+    chan:[25,58,24],lwChan:[26,60,24],
+    items:[
+      ['招牌雞腿便當',130,50,.22,'set',31,38],['排骨便當',115,40,0,'set',53,50],['控肉便當',115,40,0,'set',32,30],
+      ['鯖魚便當',125,46,0,'dish',15,18],['三寶飯',140,52,.1,'dish',35,40],['燙青菜',35,10,0,'dish',25,28],
+      ['雞肉飯',45,15,.04,'main',36,34],['滷肉飯',40,12,0,'main',27,26],['紅茶',20,3,0,'drink',52,72],['加滷蛋',15,4,0,'addon',35,45]],
+    target:32000,foodTarget:.38,defOrders:210,defStaff:5,qMult:.6}
+};
+const ROLE_LABEL={set:'套餐/主餐',dish:'單點',main:'主食',drink:'飲品',addon:'加點'};
+
+/* 營業時段（每小時：今日單數、上週同日單數、時段別 L午 O離峰 D晚 B早） */
+const HOURS = {
+  meal:[[11,5,6,'L'],[12,22,23,'L'],[13,14,15,'L'],[14,3,3,'O'],[15,2,2,'O'],[16,3,2,'O'],[17,9,10,'D'],[18,21,22,'D'],[19,17,18,'D'],[20,9,8,'D'],[21,2,1,'D']],
+  cafe:[[9,6,6,'B'],[10,14,15,'B'],[11,17,18,'L'],[12,18,18,'L'],[13,15,15,'L'],[14,12,13,'O'],[15,11,12,'O'],[16,8,8,'O'],[17,6,5,'O']]
+};
+const BAND_MULT={B:.92,L:.86,O:.62,D:1.18};
+const OPEN={meal:[10,22],cafe:[8,18]};
+const SEG_PRESETS={
+  meal:{all:[['全日',10,22]],two:[['午餐',11,14],['晚餐',17,21.5]],three:[['午餐',11,14],['下午',14,17],['晚餐',17,21.5]]},
+  cafe:{all:[['全日',8,18]],two:[['上午',8.5,13],['下午',13,17.5]],three:[['早午餐',8.5,11],['午餐',11,14],['下午茶',14,17.5]]}
+};
+/* 人員池：ft 正職(月薪) / pt 兼職(時薪)，ranges 為實際在班時段，ot 為超出排定的時數 */
+const STAFF = {
+  meal:[
+    {n:'阿明',r:'店長',t:'ft',m:45000,rg:[[10,14],[17,21.5]]},
+    {n:'老陳',r:'主廚',t:'ft',m:42000,rg:[[10,14.5],[16.5,21.5]]},
+    {n:'阿傑',r:'二廚',t:'ft',m:34000,rg:[[10.5,14.5],[16.5,21]]},
+    {n:'小芳',r:'外場',t:'ft',m:31000,rg:[[10.5,14],[17,21]]},
+    {n:'小林',r:'外場兼職',t:'pt',rg:[[11,14],[17.5,20.5]]},
+    {n:'阿凱',r:'內場兼職',t:'pt',rg:[[11,16]]},
+    {n:'佳佳',r:'外場兼職',t:'pt',rg:[[14,19]]},
+    {n:'美美',r:'外場兼職',t:'pt',rg:[[17,22]],ot:1},
+    {n:'小宇',r:'內場兼職',t:'pt',rg:[[11,14],[17,20]]},
+    {n:'阿芬',r:'洗滌兼職',t:'pt',rg:[[12,15],[18,21]]}],
+  cafe:[
+    {n:'阿明',r:'店長',t:'ft',m:42000,rg:[[8,17]]},
+    {n:'小芳',r:'吧台',t:'ft',m:33000,rg:[[8,16.5]]},
+    {n:'阿傑',r:'廚房',t:'ft',m:34000,rg:[[8.5,17]]},
+    {n:'小雯',r:'外場',t:'ft',m:30000,rg:[[9,18]]},
+    {n:'小林',r:'外場兼職',t:'pt',rg:[[10,14]]},
+    {n:'阿凱',r:'廚房兼職',t:'pt',rg:[[13,18]]},
+    {n:'佳佳',r:'吧台兼職',t:'pt',rg:[[14,18]]},
+    {n:'美美',r:'外場兼職',t:'pt',rg:[[11,15]],ot:1},
+    {n:'小宇',r:'外場兼職',t:'pt',rg:[[9,13]]},
+    {n:'阿芬',r:'洗滌兼職',t:'pt',rg:[[11,15]]}]
+};
+const RULE = {
+  minWage:196,ptLoad:1.11,ftLoad:1.17,ftDays:26,otMult:1.34,
+  commission:.32,packPerOrder:12,payFee:.006,
+  laborTarget:.25,deliveryMarginWarn:.35,deliveryMarginBad:.25,
+  monthDays:26.5,wasteGap:.022
+};
+
+/* ---------- 狀態（僅存在此裝置） ---------- */
+const DEFAULT_PROFILE={preset:'teppan',name:'',orders:107,ticket:0,delivery:true,staff:8};
+let S = load();
+function freshState(){return {profile:{...DEFAULT_PROFILE},todos:[],later:[],feedback:null,events:[],scen:{},seg:'two',custom:[[11,14],[17,21]],period:'day',alloc:false,session:'s_'+Math.random().toString(36).slice(2,10)}}
+function load(){try{const raw=localStorage.getItem(STORE_KEY);if(raw){const o=JSON.parse(raw);return Object.assign(freshState(),o)}}catch(e){}return freshState()}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(S))}catch(e){}}
+const REF=(()=>{try{return new URLSearchParams(location.search).get('ref')||'P-DEMO'}catch(e){return 'P-DEMO'}})();
+
+/* ---------- 事件（只寫入本機紀錄，不送出） ---------- */
+function track(event,props={}){
+  S.events.push({template_id:TEMPLATE_ID,proto:PROTO_VER,ref:REF,session_id:S.session,event,props,ts:new Date().toISOString()});
+  if(S.events.length>200)S.events=S.events.slice(-200);
+  save();
+}
+
+/* ---------- 工具 ---------- */
+const fmt=n=>Math.round(n).toLocaleString('zh-TW');
+const $=n=>'$'+fmt(n);
+const pct=(n,d=1)=>(n*100).toFixed(d)+'%';
+const sgn=(n,f=fmt)=>(n>0?'+':n<0?'−':'±')+f(Math.abs(n));
+const chg=(a,b)=>b?a/b-1:0;
+const cls=v=>v>0.0005?'up':v<-0.0005?'down':'flat';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LIGHT_TXT={ok:'正常',warn:'注意',bad:'異常',info:'資訊'};
+const worst=a=>a.includes('bad')?'bad':a.includes('warn')?'warn':'ok';
+const hh=h=>{const H=Math.floor(h),M=Math.round((h-H)*60);return String(H).padStart(2,'0')+':'+String(M).padStart(2,'0')};
+function split3(total,shares){const s=shares.reduce((a,b)=>a+b,0);const a=Math.round(total*shares[0]/s),c=Math.round(total*shares[2]/s);return [a,total-a-c,c]}
+function apportion(total,weights){const s=weights.reduce((a,b)=>a+b,0)||1;const raw=weights.map(w=>total*w/s);const fl=raw.map(Math.floor);let rem=total-fl.reduce((a,b)=>a+b,0);raw.map((r,i)=>[r-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(rem>0){fl[i]++;rem--}});return fl}
+
+/* ============================================================
+   計算核心：由店家設定產生一致的一天模擬資料
+   ============================================================ */
+function build(pf){
+  const P=PRESETS[pf.preset]||PRESETS.teppan;
+  const BASE_O=107,LW_O=110;
+  const qm=P.qMult||1;const items0=P.items.map(a=>({n:a[0],p:a[1],c:a[2],u:a[3],role:a[4],q:a[5]*qm,lw:a[6]*qm}));
+  const baseGross=items0.reduce((s,i)=>s+i.q*i.p,0);
+  const baseDisc=Math.round(baseGross*.0115);
+  const baseTicket=(baseGross-baseDisc)/BASE_O;
+  const O=Math.max(10,Math.round(pf.orders||BASE_O));
+  const T=pf.ticket>0?pf.ticket:baseTicket;
+  const k=(O/BASE_O)*(T/baseTicket);
+  let chan=P.chan.slice(),lwChan=P.lwChan.slice();
+  if(!pf.delivery){chan=[chan[0]+chan[2]*.6,chan[1]+chan[2]*.4,0];lwChan=[lwChan[0]+lwChan[2]*.6,lwChan[1]+lwChan[2]*.4,0]}
+  const orders=split3(O,chan);
+  const lwO=Math.round(LW_O*O/BASE_O),lwOrders=split3(lwO,lwChan);
+  const ing=P.ing,dIng=ing.now-ing.base;
+  const items=items0.map(i=>{
+    const qty=Math.max(0,Math.round(i.q*k)),lwq=Math.max(0,Math.round(i.lw*k));
+    const ch=split3(qty,chan);
+    const unitNow=i.c+i.u*dIng;
+    return {...i,qty,lwq,ch,unitNow,rev:qty*i.p,lwRev:lwq*i.p,costNow:qty*unitNow,costBase:qty*i.c,ingUse:qty*i.u};
+  });
+  const gross=items.reduce((s,i)=>s+i.rev,0);
+  const disc=Math.round(baseDisc*k);
+  const chanGross=[0,1,2].map(c=>items.reduce((s,i)=>s+i.ch[c]*i.p,0));
+  const chanRev=[chanGross[0]-disc,chanGross[1],chanGross[2]];
+  const rev=gross-disc;
+  const lwGross=items.reduce((s,i)=>s+i.lwRev,0),lwDisc=Math.round(disc*.87),lwRev=lwGross-lwDisc;
+  const r=rev/(baseGross-baseDisc);
+  const yRev=Math.round(rev*.9374),yO=Math.round(O*103/107);
+  const target=Math.round(P.target*(O/P.defOrders)*(T/baseTicket)/100)*100;
+  const food=items.reduce((s,i)=>s+i.costNow,0),foodBase=items.reduce((s,i)=>s+i.costBase,0);
+  const ingKg=items.reduce((s,i)=>s+i.ingUse,0),ingImpact=food-foodBase;
+  const gp=rev-food;
+
+  /* 人員：取前 N 位；以 0.5 小時為格計算各時段成本 */
+  const pool=STAFF[P.kind];const N=Math.min(pool.length,Math.max(2,pf.staff||8));
+  const staff=pool.slice(0,N).map(s=>{
+    const hours=s.rg.reduce((a,[f,t])=>a+(t-f),0);
+    let rate,daily;
+    if(s.t==='ft'){daily=s.m*RULE.ftLoad/RULE.ftDays;rate=daily/hours}else{rate=RULE.minWage*RULE.ptLoad;daily=0}
+    const slots=[];// [start, cost]
+    const last=s.rg[s.rg.length-1][1],ot=s.ot||0;
+    s.rg.forEach(([f,t])=>{for(let x=f;x<t-1e-9;x+=.5){const isOt=s.t==='pt'&&x>=last-ot-1e-9;slots.push([x,.5*rate*(isOt?RULE.otMult:1),isOt])}});
+    const cost=slots.reduce((a,b)=>a+b[1],0);
+    return {...s,hours,rate,cost,slots};
+  });
+  const labor=staff.reduce((a,s)=>a+s.cost,0);
+  const laborHours=staff.reduce((a,s)=>a+s.hours,0);
+
+  /* 每小時訂單與營收 */
+  const H=HOURS[P.kind];
+  const hO=apportion(O,H.map(h=>h[1])),hLw=apportion(lwO,H.map(h=>h[2]));
+  const wRev=H.map((h,i)=>hO[i]*BAND_MULT[h[3]]);const sumW=wRev.reduce((a,b)=>a+b,0)||1;
+  const hRevRaw=wRev.map(w=>Math.round(rev*w/sumW));hRevRaw[hRevRaw.length-1]+=rev-hRevRaw.reduce((a,b)=>a+b,0);
+  const hours=H.map((h,i)=>({h:h[0],o:hO[i],lw:hLw[i],band:h[3],rev:hRevRaw[i]}));
+
+  /* 費用 */
+  const deliRev=chanRev[2],commission=deliRev*RULE.commission;
+  const pack=(orders[1]+orders[2])*RULE.packPerOrder;
+  const payFee=rev*RULE.payFee;
+  const fs=Math.sqrt(rev/53190); /* 固定費用以示範店為基準，依營收規模平方根縮放 */
+  const fixed={rent:Math.round(4000*fs),util:Math.round(2200*fs),depr:Math.round(667*fs),misc:Math.round(800*fs),mkt:300};
+  const fixedSum=Object.values(fixed).reduce((a,b)=>a+b,0);
+  const op=gp-labor-commission-pack-payFee-fixedSum;
+
+  /* 本月（模擬：10/1–10/29，26.5 個營業日） */
+  const md=RULE.monthDays;
+  const mRev=rev*md*1.0004;
+  const mFoodTheo=(foodBase/rev+ (ingImpact/rev)*.35)*mRev;
+  const mFood=mFoodTheo+mRev*RULE.wasteGap;
+  const mLabor=labor*md*1.01,mComm=commission*md,mPack=pack*md,mPay=payFee*md;
+  const mFixed={rent:fixed.rent*30,util:fixed.util*30,depr:fixed.depr*30,misc:fixed.misc*30,mkt:fixed.mkt*30};
+  const mFixedSum=Object.values(mFixed).reduce((a,b)=>a+b,0);
+  const mGp=mRev-mFood,mOp=mGp-mLabor-mComm-mPack-mPay-mFixedSum;
+  const mInterest=Math.round(12000*fs);
+  const mPretax=mOp-mInterest,mTax=Math.max(0,mPretax*.2),mNet=mPretax-mTax;
+
+  /* 外送 */
+  const deliItems=items.map(i=>{const pr=i.p;const com=pr*RULE.commission;return {...i,dineCm:pr-i.unitNow,deliCm:pr-i.unitNow-com,com}});
+  const deliFood=items.reduce((s,i)=>s+i.ch[2]*i.unitNow,0);
+  const chanFood=[0,1,2].map(c=>items.reduce((s,i)=>s+i.ch[c]*i.unitNow,0));
+  const chanPack=[0,orders[1]*RULE.packPerOrder,orders[2]*RULE.packPerOrder];
+  const chanCom=[0,0,commission];
+  const chanCm=[0,1,2].map(c=>chanRev[c]-chanFood[c]-chanPack[c]-chanCom[c]);
+  const deliCmRate=deliRev?chanCm[2]/deliRev:null;
+
+  /* 產品：加點率、菜單工程 */
+  const drink=items.find(i=>i.role==='drink'),addon=items.find(i=>i.role==='addon');
+  const attach=drink.qty/O,lwAttach=drink.lwq/lwO;
+  const addonRate=addon.qty/O,lwAddonRate=addon.lwq/lwO;
+  const totQty=items.reduce((s,i)=>s+i.qty,0);
+  const avgCm=items.reduce((s,i)=>s+i.qty*(i.p-i.unitNow),0)/totQty;
+  const popTh=(1/items.length)*.7;
+  items.forEach(i=>{i.cm=i.p-i.unitNow;i.cmRate=i.cm/i.p;i.pop=i.qty/totQty>=popTh;i.hiCm=i.cm>=avgCm;
+    i.quad=i.pop&&i.hiCm?'明星':i.pop?'主力低毛利':i.hiCm?'潛力':'待檢討'});
+
+  /* 會員（模擬） */
+  const mem={friends:Math.round(1286*Math.sqrt(r)),newMonth:Math.round(142*Math.sqrt(r)),memberOrders:Math.round(O*.383),newToday:Math.round(O*.084),
+    rep30:.34,rep30Last:.38,dormant:Math.round(214*Math.sqrt(r)),
+    camp:{name:'平日晚餐飲品買一送一（LINE 券）',sent:Math.round(1200*Math.sqrt(r)),claimed:Math.round(310*Math.sqrt(r)),redeemed:Math.round(58*Math.sqrt(r))}};
+  mem.memberShare=mem.memberOrders/O;mem.campRev=Math.round(mem.camp.redeemed*T*1.05);mem.campCost=Math.round(mem.camp.redeemed*drink.unitNow);
+
+  /* 歷史 7 天 */
+  const hist=[['五',1.1505],['六',1.3611],['日',1.2953],['一',null],['二',.8892],['三',.9374],['四',1]].map(([d,f])=>({d:'週'+d,r:f==null?null:Math.round(rev*f)}));
+  hist[6].today=true;
+
+  /* 離峰排班：營業中、單數 ≤ 尖峰 15% 的小時 */
+  const peak=Math.max(...hours.map(h=>h.o));
+  const offHours=hours.filter(h=>h.o<=peak*.15&&h.band==='O').map(h=>h.h);
+  let offStaffHours=0,offPtCost=0;
+  staff.forEach(s=>s.slots.forEach(([x,c])=>{if(offHours.includes(Math.floor(x))){offStaffHours+=.5;if(s.t==='pt')offPtCost+=c}}));
+  const offOrders=hours.filter(h=>offHours.includes(h.h)).reduce((a,h)=>a+h.o,0);
+  const otStaff=staff.filter(s=>s.ot);
+  const otCost=staff.reduce((a,s)=>a+s.slots.filter(x=>x[2]).reduce((b,x)=>b+x[1]*(1-1/RULE.otMult),0),0);
+
+  const D={P,pf,foodTarget:P.foodTarget,storeName:pf.name||P.store,label:P.label,kind:P.kind,O,orders,lwO,lwOrders,yO,items,gross,disc,rev,lwRev,yRev,target,chanRev,chanGross,
+    food,foodBase,ing,ingKg,ingImpact,gp,staff,labor,laborHours,hours,deliRev,commission,pack,payFee,fixed,fixedSum,op,
+    month:{rev:mRev,foodTheo:mFoodTheo,food:mFood,gp:mGp,labor:mLabor,comm:mComm,pack:mPack,pay:mPay,fixed:mFixed,fixedSum:mFixedSum,op:mOp,interest:mInterest,pretax:mPretax,tax:mTax,net:mNet},
+    deliItems,chanFood,chanPack,chanCom,chanCm,deliCmRate,drink,addon,attach,lwAttach,addonRate,lwAddonRate,avgCm,mem,hist,offHours,offStaffHours,offPtCost,offOrders,otStaff,otCost};
+  D.ticket=rev/O;D.lwTicket=lwRev/lwO;D.yTicket=yRev/yO;
+  D.foodRate=food/rev;D.foodBaseRate=foodBase/rev;D.laborRate=labor/rev;D.gpRate=gp/rev;D.opRate=op/rev;
+  D.achieve=rev/target;D.vsLw=chg(rev,lwRev);D.vsY=chg(rev,yRev);D.salesPerHour=rev/laborHours;
+  D.lights=lights(D);D.sugg=suggestions(D);
+  return D;
+}
+
+/* 燈號規則（同步寫在「計算邏輯說明」） */
+function lights(D){
+  const L={};
+  L.revenue=D.achieve>=1?'ok':D.achieve>=.9?'warn':'bad';
+  L.orders=D.vsLw>=-.03?'ok':D.vsLw>=-.10?'warn':'bad';
+  const drop=1-D.attach/D.lwAttach;
+  L.products=drop>.2?'bad':drop>.1?'warn':'ok';
+  const spike=D.ing.now/D.ing.base-1;
+  let f=D.foodRate<=D.foodTarget?'ok':D.foodRate<=D.foodTarget+.015?'warn':'bad';
+  if(spike>=.5)f='bad';else if(spike>=.3&&f==='ok')f='warn';
+  L.food=f;
+  let l=D.laborRate<=RULE.laborTarget?'ok':D.laborRate<=.30?'warn':'bad';
+  if(l==='ok'&&(D.otStaff.length||D.offPtCost>0))l='warn';
+  L.labor=l;
+  L.delivery=D.deliRev?(D.deliCmRate<RULE.deliveryMarginBad?'bad':D.deliCmRate<RULE.deliveryMarginWarn?'warn':'ok'):'info';
+  L.members=D.mem.rep30>=.30?'ok':D.mem.rep30>=.25?'warn':'bad';
+  const others=['revenue','orders','products','food','labor','delivery','members'].map(k=>L[k]);
+  L.overview=D.op<0?'bad':worst(others);
+  L.ai='info';
+  return L;
+}
+
+/* 規則式「模擬建議」：每條都附可追溯的計算依據，依每月影響金額排序取前三 */
+function suggestions(D){
+  const md=RULE.monthDays,out=[];
+  const dish=D.items.filter(i=>i.u>0).sort((a,b)=>b.u*b.qty-a.u*a.qty)[0];
+  if(D.ingImpact>0){
+    const keep=D.ingImpact*md;
+    out.push({id:'food',area:'食材成本',route:'food',title:`${D.ing.name}進價上漲，${dish.n} 暫時調價或換配菜`,
+      act:`${dish.n} 暫調 +10 元；套餐配菜改用當季便宜蔬菜，兩週後依進價再檢討`,impact:keep,
+      basis:[`${D.ing.name}進價 ${D.ing.base} → ${D.ing.now} 元/${D.ing.unit}（${sgn((D.ing.now/D.ing.base-1)*100,n=>n.toFixed(0))}%）`,
+        `今日用量約 ${D.ingKg.toFixed(1)} ${D.ing.unit}，食材成本因此增加 ${$(D.ingImpact)}`,
+        `理論食材成本率 ${pct(D.foodBaseRate)} → ${pct(D.foodRate)}（目標 ${pct(D.foodTarget,0)}）`,
+        `若持續一個月（${md} 營業日）毛利約少 ${$(keep)}`],src:'食材成本卡｜配方用量 × 進價差'});
+  }
+  const lost=(D.lwAttach-D.attach)*D.O*D.drink.p;
+  if(lost>0){
+    out.push({id:'attach',area:'產品銷售',route:'products',title:`${D.drink.n}加點率下滑，點餐時主動推薦`,
+      act:`結帳前一句推薦＋「套餐加 ${Math.round(D.drink.p*.75)} 元升級飲品」，觀察一週加點率`,impact:lost*.6*md,
+      basis:[`${D.drink.n}加點率 ${pct(D.attach,0)}（上週同日 ${pct(D.lwAttach,0)}）`,
+        `若回到上週水準，今日可多 ${fmt((D.lwAttach-D.attach)*D.O)} 份、營收約 ${$(lost)}`,
+        `飲品毛利率 ${pct(D.drink.cmRate,0)}，是全菜單最高之一`,`以回補 6 成估算，每月營收約 +${$(lost*.6*md)}`],src:'產品銷售卡｜飲品份數 ÷ 訂單數'});
+  }
+  if(D.offPtCost>0){
+    const save=D.offPtCost*.5*22;
+    out.push({id:'labor',area:'人事成本',route:'labor',title:`離峰時段在班人數偏多，平日少排 1 位兼職`,
+      act:`平日 ${D.offHours.map(h=>h+'時').join('、')} 改留 1 位兼職備料，其餘改排晚餐尖峰`,impact:save,
+      basis:[`離峰 ${D.offHours.length} 小時只有 ${D.offOrders} 張單`,`同時段在班合計 ${D.offStaffHours} 人時，其中兼職成本 ${$(D.offPtCost)}`,
+        `減半估算，每個平日省約 ${$(D.offPtCost*.5)}，每月約 22 個平日`,`今日人事成本率 ${pct(D.laborRate)}（目標 ${pct(RULE.laborTarget,0)}）`],src:'人事成本卡｜排班 × 每小時訂單'});
+  }
+  if(D.deliRev>0){
+    /* 價格 +10%、單量 −15%：新渠道貢獻 − 原渠道貢獻 */
+    const vol=.85,newCm=D.deliRev*1.1*vol*(1-RULE.commission)-(D.chanFood[2]+D.chanPack[2])*vol;
+    const up=(newCm-D.chanCm[2])*md;
+    if(up>0)out.push({id:'deli',area:'外帶與外送',route:'delivery',title:`外送平台價調高 10%，反映抽成`,
+      act:`外送菜單價格 +10%（多數平台允許外送價與店內價不同）`,impact:up,
+      basis:[`外送營收 ${$(D.deliRev)}，平台抽成 ${pct(RULE.commission,0)} = ${$(D.commission)}`,
+        `外送扣抽成、食材、包材後貢獻率 ${pct(D.deliCmRate)}（內用 ${pct(D.chanCm[0]/D.chanRev[0])}）`,
+        `假設漲價後外送單量 −15%，每月渠道貢獻變化約 ${sgn(up)} 元`],src:'外帶與外送卡｜渠道貢獻'});
+  }
+  return out.sort((a,b)=>b.impact-a.impact).slice(0,3);
+}
+
+let D=build(S.profile);
+
+/* ============================================================
+   畫面
+   ============================================================ */
+const app=document.getElementById('app');
+const TILES=[
+  ['revenue','今日營收'],['orders','訂單與客單'],['products','產品銷售'],
+  ['food','食材成本'],['overview','經營總覽'],['labor','人事成本'],
+  ['delivery','外帶與外送'],['members','會員與回購'],['ai','AI 經營特助']];
+const TITLES=Object.fromEntries(TILES);
+Object.assign(TITLES,{timeslot:'營業時段分析',amoeba:'阿米巴時段核算',multistore:'多店管理',mystore:'換成我的餐廳',contact:'我想了解專屬版本',guide:'體驗導覽',todo:'明天待辦',devlog:'整合事件紀錄',glossary:'名詞與算法'});
+
+function header(title,sub,back=true){
+  return `<header class="top">${back?`<button class="back" data-go="home" aria-label="回首頁">← 首頁</button>`:''}
+  <div class="ttl"><b>${esc(title)}</b><small>${esc(sub)}</small></div>
+  ${back?'<span class="sim">模擬資料</span>':`<button class="menu" data-go="guide">導覽</button>`}</header>`;
+}
+function dateLine(){return `${D.storeName}｜${D.label}｜10/29（四）21:30 打烊後`}
+
+function tileHTML(id,t){
+  const L=D.lights[id];let v='',s='';
+  switch(id){
+    case 'revenue':v=fmt(D.rev);s=`達成 ${pct(D.achieve,0)}・昨日 ${sgn(D.vsY*100,n=>n.toFixed(0))}%`;break;
+    case 'orders':v=`${D.O}<small> 單</small>`;s=`客單 ${$(D.ticket)}・比上週 ${sgn(D.vsLw*100,n=>n.toFixed(0))}%`;break;
+    case 'products':v=pct(D.attach,0);s=`飲品加點率（上週 ${pct(D.lwAttach,0)}）`;break;
+    case 'food':v=pct(D.foodRate);s=`${D.ing.name} ${sgn((D.ing.now/D.ing.base-1)*100,n=>n.toFixed(0))}%`;break;
+    case 'labor':v=pct(D.laborRate);s=`${D.staff.length} 人・${D.laborHours} 工時`;break;
+    case 'delivery':v=D.deliRev?pct(D.deliRev/D.rev,0):pct(D.chanRev[1]/D.rev,0);s=D.deliRev?`外送占比・抽成 ${$(D.commission)}`:'外帶占比（未開外送）';break;
+    case 'members':v=pct(D.mem.rep30,0);s=`30 天回購・LINE ${fmt(D.mem.friends)}`;break;
+    case 'ai':v=`${D.sugg.length}<small> 項</small>`;s=`模擬建議・待辦 ${S.todos.filter(t=>!t.done).length}`;break;
+  }
+  if(id==='overview'){
+    return `<button class="tile center" data-go="overview" id="tile-overview"><span class="t">經營總覽</span>
+      <span class="dot ${L}" aria-hidden="true"></span>
+      <span class="mini"><span>營收 <b>${fmt(D.rev)}</b></span><span>毛利 <b>${fmt(D.gp)}</b></span><span>營業利益(估) <b>${fmt(D.op)}</b></span></span>
+      <span class="s">${countLights()}</span></button>`;
+  }
+  return `<button class="tile${id==='ai'?' ai':''}" data-go="${id}" id="tile-${id}"><span class="t">${t}</span>
+    <span class="dot ${L}" aria-label="${LIGHT_TXT[L]}"></span><span class="v">${v}</span><span class="s">${s}</span></button>`;
+}
+function countLights(){const v=Object.entries(D.lights).filter(([k])=>!['overview','ai'].includes(k)).map(x=>x[1]);
+  const b=v.filter(x=>x==='bad').length,w=v.filter(x=>x==='warn').length;return `異常 ${b}・注意 ${w}`}
+
+function issues(){
+  const out=[];const L=D.lights;
+  if(L.food!=='ok')out.push([L.food,`${D.ing.name}進價 ${sgn((D.ing.now/D.ing.base-1)*100,n=>n.toFixed(0))}%`,`今日食材多花 ${$(D.ingImpact)}`,'food']);
+  if(L.products!=='ok')out.push([L.products,`${D.drink.n}加點率 ${pct(D.attach,0)}`,`上週同日 ${pct(D.lwAttach,0)}`,'products']);
+  if(L.revenue!=='ok')out.push([L.revenue,`營收達成 ${pct(D.achieve,0)}`,`差目標 ${$(D.target-D.rev)}`,'revenue']);
+  if(L.orders!=='ok')out.push([L.orders,`營收比上週同日 ${sgn(D.vsLw*100,n=>n.toFixed(1))}%`,`單數 ${sgn(D.O-D.lwO)}、客單 ${sgn(D.ticket-D.lwTicket)}`,'orders']);
+  if(L.labor!=='ok')out.push([L.labor,`離峰排班偏多${D.otStaff.length?'、有加班':''}`,`人事成本率 ${pct(D.laborRate)}`,'labor']);
+  if(L.delivery==='warn'||L.delivery==='bad')out.push([L.delivery,`外送扣抽成後貢獻率 ${pct(D.deliCmRate,0)}`,`抽成 ${$(D.commission)}`,'delivery']);
+  if(L.members!=='ok')out.push([L.members,`30 天回購 ${pct(D.mem.rep30,0)}`,'低於 30%','members']);
+  const rank={bad:0,warn:1};return out.sort((a,b)=>rank[a[0]]-rank[b[0]]);
+}
+
+function viewHome(){
+  const iss=issues();const top=iss.slice(0,2).map(x=>x[1]).join('、');
+  const todo=S.todos.filter(t=>!t.done);
+  const tomorrow=todo.length?todo[0].text:(D.sugg[0]?D.sugg[0].act:'—');
+  return `${header('今日經營','',false).replace('<small></small>',`<small>${esc(dateLine())} <span class="sim">模擬資料</span></small>`)}
+  <section class="brief" aria-label="30 秒摘要">
+    <div class="row"><span class="k">今天賺多少</span><span class="v">營收 <b>${fmt(D.rev)}</b>・營業利益估 <b>${fmt(D.op)}</b></span></div>
+    <div class="row"><span class="k">哪裡出問題</span><span class="v">${iss.length?esc(top)+(iss.length>2?` 等 ${iss.length} 項`:''):'今天沒有異常'}</span></div>
+    <div class="row"><span class="k">明天做什麼</span><span class="v">${esc(tomorrow)}${todo.length>1?`（另 ${todo.length-1} 項待辦）`:''}</span></div>
+  </section>
+  <div class="grid9" role="list">${TILES.map(([id,t])=>tileHTML(id,t)).join('')}</div>
+  <div class="legend"><span><i style="background:var(--ok)"></i>正常</span><span><i style="background:var(--warn)"></i>注意</span><span><i style="background:var(--bad)"></i>異常</span><span>點任一格看原因</span></div>
+
+  <section class="sec"><div class="sec-h"><h3>需要老闆決定</h3><small>${iss.length} 項</small></div>
+    <div class="list">${iss.map(([l,t,s,go])=>`<button class="item" data-go="${go}"><span class="ic dot ${l}"></span><span class="txt"><b>${esc(t)}</b><span>${esc(s)}</span></span><span class="go">看原因 →</span></button>`).join('')||'<p class="note">沒有待決策事項。</p>'}</div>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h3>進階功能</h3><small>第二層，不在首頁九宮格</small></div>
+    <div class="adv">
+      <button data-go="timeslot">營業時段分析<small>午餐／晚餐自訂</small></button>
+      <button data-go="amoeba">阿米巴核算<small>時段貢獻利益</small></button>
+      <button data-go="multistore">多店管理<small>進階版規劃</small></button>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h3>想看看換成你的店會怎樣？</h3>
+    <p>選店型、大概的來客數和客單價，就能看到同樣的九宮格。不用提供營業數字或任何機密。</p>
+    <div class="btns"><button class="btn gold" data-go="mystore">換成我的餐廳</button><button class="btn" data-go="contact">我想了解專屬版本</button></div>
+  </section>
+
+  <footer class="foot">
+    <p>本頁為 MIN-003 百業 AI 員工體驗原型（${TEMPLATE_ID}・${PROTO_VER}）。所有數字為模擬資料，未連接任何 POS、會計或外送平台；「AI 經營特助」的建議由固定規則依模擬數據產生，不是即時 AI 分析。</p>
+    <div class="btns"><button class="btn sm ghost" data-go="guide">體驗導覽 S01–S05</button><button class="btn sm ghost" data-go="glossary">名詞與算法</button><button class="btn sm ghost" data-go="devlog">整合事件紀錄</button><button class="btn sm ghost" id="resetBtn">重設模擬資料</button></div>
+    <div id="resetConfirm" hidden class="callout"><span>要清除這台裝置上的待辦、問卷與店家設定，回到預設示範店嗎？</span><div class="btns"><button class="btn sm pri" id="resetYes">確定重設</button><button class="btn sm" id="resetNo">取消</button></div></div>
+  </footer>`;
+}
+
+/* ---------- 圖表 ---------- */
+function bars(vals,labels,opt={}){
+  const W=340,H=opt.h||150,pl=30,pr=6,pt=14,pb=22;const max=Math.max(...vals.map(v=>v||0),opt.target||0,...(opt.cmp||[]).map(v=>v||0))*1.1||1;
+  const n=vals.length,bw=(W-pl-pr)/n,y=v=>pt+(H-pt-pb)*(1-v/max);
+  let g='';
+  const ticks=opt.ticks||[0,max/2,max].map(v=>Math.round(v/(opt.round||1000))*(opt.round||1000));
+  ticks.forEach(t=>{if(t>max)return;g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${pl-4}" y="${y(t)+3}" text-anchor="end">${opt.tickFmt?opt.tickFmt(t):fmt(t/1000)+'k'}</text>`});
+  vals.forEach((v,i)=>{const x=pl+i*bw;
+    if(opt.cmp&&opt.cmp[i]!=null){g+=`<rect x="${x+bw*.12}" y="${y(opt.cmp[i])}" width="${bw*.36}" height="${Math.max(0,H-pb-y(opt.cmp[i]))}" fill="var(--bar-2)" rx="2"/>`}
+    if(v==null){g+=`<text x="${x+bw/2}" y="${H-pb-6}" text-anchor="middle">休</text>`}
+    else{const hl=opt.hl===i;const bx=opt.cmp?x+bw*.5:x+bw*.18,bW=opt.cmp?bw*.36:bw*.64;
+      g+=`<rect x="${bx}" y="${y(v)}" width="${bW}" height="${Math.max(0,H-pb-y(v))}" fill="${hl?'var(--gold-strong)':(opt.colors?opt.colors[i]:'var(--bar)')}" rx="2"/>`;
+      if(opt.valLabels)g+=`<text class="lbl" x="${x+bw/2}" y="${y(v)-4}" text-anchor="middle">${opt.valLabels(v,i)}</text>`}
+    g+=`<text x="${x+bw/2}" y="${H-6}" text-anchor="middle">${labels[i]}</text>`});
+  if(opt.target){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(opt.target)}" y2="${y(opt.target)}" stroke="var(--gold-strong)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W-pr}" y="${y(opt.target)-4}" text-anchor="end" style="fill:var(--gold-ink)">目標 ${fmt(opt.target/1000)}k</text>`}
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria||'長條圖')}">${g}</svg>`;
+}
+
+/* ---------- 各卡詳細頁 ---------- */
+function kpi(l,n,d,dc){return `<div class="kpi"><div class="l">${l}</div><div class="n">${n}</div>${d?`<div class="d ${dc||''}">${d}</div>`:''}</div>`}
+function lightPill(id){const L=D.lights[id];return `<span class="pill ${L}">● ${LIGHT_TXT[L]}</span>`}
+
+function viewRevenue(){
+  const h=D.hist,vals=h.map(x=>x.r);const ch=['內用','外帶','外送'];
+  return `${header('今日營收',dateLine())}
+  <section class="sec"><div class="sec-h"><h2 class="num">${$(D.rev)}</h2>${lightPill('revenue')}</div>
+  <p class="note">營收＝顧客實付金額（已扣折扣、未扣外送抽成）。這是收進來的錢，不是賺到的錢。</p>
+  <div class="kpis">${kpi('今日目標',$(D.target),`達成 ${pct(D.achieve)}，差 ${$(Math.max(0,D.target-D.rev))}`,D.achieve>=1?'up':'down')}
+  ${kpi('比昨日（週三）',sgn(D.rev-D.yRev),pct(D.vsY)+'',cls(D.vsY))}
+  ${kpi('比上週四',sgn(D.rev-D.lwRev),pct(D.vsLw),cls(D.vsLw))}
+  ${kpi('折扣金額',$(D.disc),'LINE 券與現場折扣')}</div></section>
+  <section class="sec"><h3>近 7 天營收</h3><div class="box">${bars(vals,h.map(x=>x.d.replace('週','')),{target:D.target,hl:6,aria:'近七天營收長條圖'})}
+  <p class="note">週一公休。週末營收高於平日約 3 成，平日目標可考慮與週末分開設定。</p></div></section>
+  <section class="sec"><h3>收入來源</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th>渠道</th><th>單數</th><th>營收</th><th>占比</th></tr></thead><tbody>
+  ${ch.map((c,i)=>`<tr><td>${c}</td><td>${D.orders[i]}</td><td>${fmt(D.chanRev[i])}</td><td>${pct(D.chanRev[i]/D.rev,0)}</td></tr>`).join('')}
+  <tr class="tot"><td>合計</td><td>${D.O}</td><td>${fmt(D.rev)}</td><td>100%</td></tr></tbody></table></div>
+  <p class="note">內用欄已扣折扣 ${$(D.disc)}。外送平台抽成另列在費用，詳見「外帶與外送」。</p></div></section>
+  ${D.achieve<1?`<div class="callout"><b>下一步</b><span>差距主要來自訂單數與客單價哪一邊？到「訂單與客單」拆解。</span><div class="btns"><button class="btn sm pri" data-go="orders">拆解營收差距 →</button></div></div>`:''}`;
+}
+
+function viewOrders(){
+  /* 營收差 = 單數效果 + 客單效果 */
+  const dRev=D.rev-D.lwRev,volEff=(D.O-D.lwO)*D.lwTicket,tixEff=(D.ticket-D.lwTicket)*D.O;
+  const ch=['內用','外帶','外送'];
+  const lwChRev=[0,1,2].map(c=>{/* 依上週渠道單數與本週渠道客單估 */return D.lwOrders[c]*(D.chanRev[c]/Math.max(1,D.orders[c]))*(D.lwTicket/D.ticket)});
+  const hrs=D.hours;
+  return `${header('訂單與客單',dateLine()+'｜比較：上週同一天')}
+  <section class="sec"><div class="sec-h"><h2>營收 ${sgn(dRev)}，比上週四 ${sgn(D.vsLw*100,n=>n.toFixed(1))}%</h2>${lightPill('orders')}</div>
+  <div class="kpis">${kpi('訂單數',D.O+' 單',`上週 ${D.lwO}（${sgn(D.O-D.lwO)}）`,cls(D.O-D.lwO))}${kpi('客單價',$(D.ticket),`上週 ${$(D.lwTicket)}（${sgn(D.ticket-D.lwTicket)}）`,cls(D.ticket-D.lwTicket))}</div></section>
+  <section class="sec"><h3>營收差距拆解</h3><div class="box"><div class="cascade">
+    <div class="r"><span>上週四營收</span><span class="n">${fmt(D.lwRev)}</span></div>
+    <div class="r sub"><span>單數變化（${sgn(D.O-D.lwO)} 單 × 上週客單）</span><span class="n ${cls(volEff)}">${sgn(volEff)}</span></div>
+    <div class="r sub"><span>客單變化（${sgn(D.ticket-D.lwTicket)} × 今日單數）</span><span class="n ${cls(tixEff)}">${sgn(tixEff)}</span></div>
+    <div class="r res"><span>今日營收</span><span class="n">${fmt(D.rev)}</span></div></div>
+    <p class="note" style="margin-top:8px">營收＝單數 × 客單價。今天${Math.abs(tixEff)>Math.abs(volEff)?'<b>客單價下滑</b>影響較大，代表客人點得比較少，到「產品銷售」看是哪些品項少了':'<b>單數減少</b>影響較大，代表來客變少，可查看各渠道'}。</p>
+    <div class="btns" style="margin-top:8px"><button class="btn sm pri" data-go="products">看產品變化 →</button></div></div></section>
+  <section class="sec"><h3>各渠道</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th>渠道</th><th>今日單</th><th>上週單</th><th>今日客單</th></tr></thead><tbody>
+  ${ch.map((c,i)=>D.orders[i]||D.lwOrders[i]?`<tr><td>${c}</td><td>${D.orders[i]}</td><td>${D.lwOrders[i]}</td><td>${D.orders[i]?fmt(D.chanRev[i]/D.orders[i]):'—'}</td></tr>`:'').join('')}
+  </tbody></table></div></div></section>
+  <section class="sec"><h3>每小時單數</h3><div class="box">${bars(hrs.map(h=>h.o),hrs.map(h=>h.h),{cmp:hrs.map(h=>h.lw),round:5,ticks:[0,10,20],tickFmt:t=>t,aria:'每小時訂單：今日與上週',h:140})}
+  <p class="note"><span style="color:var(--bar)">■</span> 今日　<span style="color:var(--bar-2)">■</span> 上週四。想按自己的營業時段（例如午餐／晚餐）看損益，請到進階功能「營業時段分析」。</p>
+  <div class="btns" style="margin-top:6px"><button class="btn sm" data-go="timeslot">營業時段分析（進階）</button></div></div></section>`;
+}
+
+let prodSort='qty';
+function viewProducts(){
+  const it=[...D.items].sort((a,b)=>prodSort==='qty'?b.qty-a.qty:prodSort==='rev'?b.rev-a.rev:prodSort==='cm'?b.cm*b.qty-a.cm*a.qty:a.cmRate-b.cmRate);
+  const Q={明星:'var(--ok)',主力低毛利:'var(--warn)',潛力:'var(--bar)',待檢討:'var(--bad)'};
+  /* 菜單工程散佈圖 */
+  const W=340,H=210,pl=34,pb=26,pt=10,pr=10;const mx=Math.max(...D.items.map(i=>i.qty))*1.1,my=Math.max(...D.items.map(i=>i.cm))*1.1;
+  const X=v=>pl+(W-pl-pr)*v/mx,Y=v=>pt+(H-pt-pb)*(1-v/my);const avgQ=D.items.reduce((s,i)=>s+i.qty,0)/D.items.length*.7;
+  let g=`<line x1="${X(avgQ)}" x2="${X(avgQ)}" y1="${pt}" y2="${H-pb}" stroke="var(--line)" stroke-dasharray="3 3"/><line x1="${pl}" x2="${W-pr}" y1="${Y(D.avgCm)}" y2="${Y(D.avgCm)}" stroke="var(--line)" stroke-dasharray="3 3"/>`;
+  g+=`<text x="${W-pr}" y="${H-8}" text-anchor="end">銷量（份）→</text><text x="${pl-4}" y="${pt+8}" text-anchor="end">毛利</text><text x="${pl-4}" y="${pt+19}" text-anchor="end">/份</text>`;
+  D.items.forEach(i=>{g+=`<circle cx="${X(i.qty)}" cy="${Y(i.cm)}" r="5" fill="${Q[i.quad]}"/><text class="lbl" x="${Math.min(X(i.qty)+7,W-60)}" y="${Y(i.cm)+3}">${esc(i.n.slice(0,5))}</text>`});
+  const dog=D.items.filter(i=>i.quad==='待檢討');
+  return `${header('產品銷售',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>${D.drink.n}加點率 ${pct(D.attach,0)}</h2>${lightPill('products')}</div>
+  <div class="kpis">${kpi('飲品加點率',pct(D.attach,0),`上週 ${pct(D.lwAttach,0)}`,'down')}${kpi(D.addon.n+'加點率',pct(D.addonRate,0),`上週 ${pct(D.lwAddonRate,0)}`,cls(D.addonRate-D.lwAddonRate))}</div>
+  <div class="alert ${D.lights.products}"><b>客單價掉的主因：加點變少</b><p>${D.drink.n}今天 ${D.drink.qty} 份，上週同日 ${D.drink.lwq} 份。主餐份數接近，但每張單少點了飲料和加點，客單價因此下降。</p></div></section>
+  <section class="sec"><div class="sec-h"><h3>品項排行</h3><div class="seg" role="group" aria-label="排序">
+   ${[['qty','銷量'],['rev','營收'],['cm','毛利額'],['low','低毛利率']].map(([k,l])=>`<button aria-pressed="${prodSort===k}" data-sort="${k}">${l}</button>`).join('')}</div></div>
+  <div class="box"><div class="tbl-wrap"><table><thead><tr><th>品項</th><th>今日</th><th>上週</th><th>營收</th><th>毛利/份</th><th>毛利率</th></tr></thead><tbody>
+  ${it.map(i=>`<tr><td>${esc(i.n)}</td><td>${i.qty}</td><td class="${cls(i.qty-i.lwq)}">${i.lwq}</td><td>${fmt(i.rev)}</td><td>${fmt(i.cm)}</td><td>${pct(i.cmRate,0)}</td></tr>`).join('')}
+  </tbody></table></div><p class="note">毛利/份＝售價 − 依配方計算的食材成本（已含今日${D.ing.name}進價）。毛利還沒扣人事、租金，不是淨賺。</p></div></section>
+  <section class="sec"><h3>菜單結構（銷量 × 每份毛利）</h3><div class="box"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="菜單工程散佈圖">${g}</svg>
+  <div class="legend">${Object.entries(Q).map(([k,c])=>`<span><i style="background:${c}"></i>${k}</span>`).join('')}</div>
+  <p class="note" style="margin-top:6px">明星：賣得好又賺得多，要保住品質與曝光。主力低毛利：賣得好但每份賺得少，可微調份量或價格。潛力：毛利好但少人點，適合店員推薦。${dog.length?`待檢討：${dog.map(d=>esc(d.n)).join('、')}，可考慮換菜或併入套餐。`:''}</p></div></section>`;
+}
+
+let foodSimPrice=null;
+function viewFood(){
+  const ing=D.ing,price=foodSimPrice??ing.now,dd=price-ing.base;
+  const aff=D.items.filter(i=>i.u>0).map(i=>({...i,simUnit:i.c+i.u*dd})).sort((a,b)=>b.u*b.qty-a.u*a.qty);
+  const dayImpact=aff.reduce((s,i)=>s+i.qty*i.u*dd,0);
+  const rate=(D.foodBase+dayImpact)/D.rev;
+  const dish=aff[0];
+  return `${header('食材成本',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>理論食材成本率 ${pct(D.foodRate)}</h2>${lightPill('food')}</div>
+  <div class="kpis">${kpi('今日食材成本',$(D.food),`正常進價下 ${$(D.foodBase)}`)}${kpi('目標',pct(D.foodTarget,0),`超出 ${sgn((D.foodRate-D.foodTarget)*100,n=>n.toFixed(1))} 個百分點`,D.foodRate>D.foodTarget?'down':'up')}
+  ${kpi('本月實際成本率（估）',pct(D.month.food/D.month.rev),'進貨 − 盤點差')}${kpi('實際 vs 理論差距',pct(RULE.wasteGap),'損耗、份量、漏記','down')}</div>
+  <div class="alert bad"><b>${ing.name}進價 ${ing.base} → ${ing.now} 元/${ing.unit}（${sgn((ing.now/ing.base-1)*100,n=>n.toFixed(0))}%）</b><p>${ing.why}。今天用了約 ${D.ingKg.toFixed(1)} ${ing.unit}，食材成本因此多 ${$(D.ingImpact)}；若持續一個月約 ${$(D.ingImpact*RULE.monthDays)}。</p></div></section>
+  <section class="sec"><h3>影響哪些產品</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th>品項</th><th>用量/份</th><th>原成本</th><th>現成本</th><th>毛利率</th></tr></thead><tbody>
+  ${aff.map(i=>`<tr${i===dish?' class="em"':''}><td>${esc(i.n)}</td><td>${i.u} ${ing.unit}</td><td>${fmt(i.c)}</td><td>${fmt(i.simUnit)}</td><td>${pct(1-i.c/i.p,0)} → ${pct(1-i.simUnit/i.p,0)}</td></tr>`).join('')}
+  </tbody></table></div></div></section>
+  <section class="sec"><h3>試算：如果進價變成…</h3><div class="box" style="display:grid;gap:8px">
+  <label class="f" for="ingRange">${ing.name}進價 <span class="num" style="font-size:20px">${price} 元/${ing.unit}</span><input class="range" id="ingRange" type="range" min="${ing.base}" max="${Math.round(ing.now*1.4)}" step="${ing.unit==='顆'?.1:1}" value="${price}"></label>
+  <div class="kpis">${kpi('每天多花',$(dayImpact))}${kpi('理論成本率',pct(rate),'',rate>D.foodTarget?'down':'up')}${kpi('每月毛利少',$(dayImpact*RULE.monthDays))}${kpi(dish.n+' 回本需漲',`${fmt(Math.ceil(dish.u*dd/5)*5)} 元`,'維持原毛利額')}</div>
+  <p class="note">只計算${ing.name}一項；其他食材以正常進價計。理論成本＝銷售份數 × 配方用量 × 進價，不含損耗。</p></div></section>
+  <section class="sec"><h3>可以怎麼做</h3><div class="list">
+   <div class="item"><span class="ic dot warn"></span><span class="txt"><b>${dish.n} 暫時 +10 元</b><span>每天約回補 ${$(dish.qty*10)}，標示「時價菜」較不影響觀感</span></span></div>
+   <div class="item"><span class="ic dot warn"></span><span class="txt"><b>套餐配菜改用當季便宜蔬菜</b><span>減少${ing.name}用量，客人感受較小</span></span></div>
+   <div class="item"><span class="ic dot info"></span><span class="txt"><b>詢問第二家供應商報價</b><span>保留比價紀錄，兩週後依行情再調回</span></span></div></div>
+   <div class="btns"><button class="btn sm pri" data-addtodo="food">加入明天待辦</button><button class="btn sm" data-go="ai">看 AI 特助完整建議</button></div></section>`;
+}
+
+function viewOverview(){
+  const m=D.month;
+  const per=S.ovPeriod||'day';
+  const d=per==='day'?{rev:D.rev,food:D.food,gp:D.gp,labor:D.labor,comm:D.commission,pack:D.pack,pay:D.payFee,fixed:D.fixed,op:D.op}:{rev:m.rev,food:m.food,gp:m.gp,labor:m.labor,comm:m.comm,pack:m.pack,pay:m.pay,fixed:m.fixed,op:m.op};
+  const iss=issues();
+  return `${header('經營總覽',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>今天賺多少</h2><div class="seg" role="group" aria-label="期間"><button aria-pressed="${per==='day'}" data-ov="day">今日</button><button aria-pressed="${per==='month'}" data-ov="month">本月至今</button></div></div>
+  <div class="box"><div class="cascade">
+   <div class="r"><span><b>營收</b>（顧客實付）</span><span class="n">${fmt(d.rev)}</span></div>
+   <div class="r sub"><span>− 食材成本${per==='day'?'（依配方理論值）':'（進貨 − 盤點，估）'}</span><span class="n">${fmt(d.food)}</span></div>
+   <div class="r res"><span>毛利 <small class="note">${pct(d.gp/d.rev)}</small></span><span class="n">${fmt(d.gp)}</span></div>
+   <div class="r sub"><span>− 人事成本（含勞健保）</span><span class="n">${fmt(d.labor)}</span></div>
+   ${d.comm?`<div class="r sub"><span>− 外送平台抽成</span><span class="n">${fmt(d.comm)}</span></div>`:''}
+   <div class="r sub"><span>− 包材、金流手續費</span><span class="n">${fmt(d.pack+d.pay)}</span></div>
+   <div class="r sub"><span>− 租金${per==='day'?'（日攤）':''}</span><span class="n">${fmt(d.fixed.rent)}</span></div>
+   <div class="r sub"><span>− 水電瓦斯、雜支、行銷</span><span class="n">${fmt(d.fixed.util+d.fixed.misc+d.fixed.mkt)}</span></div>
+   <div class="r sub"><span>− 設備折舊${per==='day'?'（日攤）':''}</span><span class="n">${fmt(d.fixed.depr)}</span></div>
+   <div class="r res gold"><span>營業利益 <small class="note">${pct(d.op/d.rev)}・估算</small></span><span class="n">${fmt(d.op)}</span></div>
+   ${per==='month'?`<div class="r sub"><span>− 利息（設備貸款）</span><span class="n">${fmt(m.interest)}</span></div>
+   <div class="r sub"><span>− 所得稅（暫以 20% 提列）</span><span class="n">${fmt(m.tax)}</span></div>
+   <div class="r res"><span>預估淨利 <small class="note">未經會計結算</small></span><span class="n">${fmt(m.net)}</span></div>`:''}
+  </div>
+  <p class="note" style="margin-top:8px">${per==='day'?'每日只算到營業利益。實際淨利要等月底盤點、利息與稅務結算後才知道，請切換「本月至今」看估算。':'實際淨利以會計師結帳為準；稅負依公司、行號或小規模營業人而不同。'}老闆本人的薪資目前<b>未計入</b>人事成本，若有支領，營業利益會再減少。</p></div></section>
+  <section class="sec"><h3>哪裡出問題</h3><div class="list">${iss.map(([l,t,s,go])=>`<button class="item" data-go="${go}"><span class="ic dot ${l}"></span><span class="txt"><b>${esc(t)}</b><span>${esc(s)}</span></span><span class="go">→</span></button>`).join('')}</div></section>
+  <section class="sec"><div class="sec-h"><h3>明天該做什麼</h3><button class="btn sm" data-go="todo">全部待辦</button></div>
+  ${S.todos.filter(t=>!t.done).length?`<div class="list">${S.todos.filter(t=>!t.done).slice(0,3).map(t=>`<div class="item"><span class="ic dot info"></span><span class="txt"><b>${esc(t.text)}</b><span>來源：${esc(t.from)}</span></span></div>`).join('')}</div>`:
+  `<div class="callout"><span>還沒有待辦。AI 經營特助整理了 ${D.sugg.length} 項模擬建議，挑要做的加入明天待辦。</span><div class="btns"><button class="btn sm pri" data-go="ai">看建議 →</button></div></div>`}</section>
+  <section class="sec"><div class="box soft"><h3>四個「利潤」不要混用</h3><div class="note" style="display:grid;gap:4px;margin-top:6px">
+  <span><b>營收</b>：收進來的錢，還沒扣任何成本。</span><span><b>毛利</b>：營收 − 食材成本。只扣了食材，不能叫「淨賺」。</span>
+  <span><b>營業利益</b>：毛利再扣人事、租金、抽成、水電等營業費用，代表本業賺多少。</span><span><b>實際淨利</b>：營業利益再扣利息、稅等，月結後才確定。</span></div></div></section>`;
+}
+
+let laborSim=false;
+function viewLabor(){
+  const hrs=D.hours,open=OPEN[D.kind];const span=open[1]-open[0];
+  const pctX=h=>((h-open[0])/span*100).toFixed(2)+'%';
+  const simSave=D.offPtCost*.5;
+  const lanes=D.staff.map(s=>`<div class="lane"><span>${esc(s.n)}<small class="note"> ${esc(s.r.replace('兼職','兼'))}</small></span><div style="position:relative;height:14px;background:var(--surface);border-radius:4px">
+    ${D.offHours.map(h=>`<span style="position:absolute;left:${pctX(h)};width:calc(${pctX(h+1)} - ${pctX(h)});top:0;bottom:0;background:color-mix(in srgb,var(--warn) 18%,transparent)"></span>`).join('')}
+    ${s.rg.map(([f,t])=>{let segs=[[f,t]];if(laborSim&&s.t==='pt'){segs=[];let cur=null;for(let x=f;x<t-1e-9;x+=.5){const off=D.offHours.includes(Math.floor(x));if(!off){if(cur&&Math.abs(cur[1]-x)<1e-9)cur[1]=x+.5;else{cur=[x,x+.5];segs.push(cur)}}}}
+      return segs.map(([a,b])=>`<span style="position:absolute;left:${pctX(a)};width:calc(${pctX(b)} - ${pctX(a)});top:2px;bottom:2px;border-radius:3px;background:${s.t==='ft'?'var(--navy)':'var(--bar)'}"></span>`).join('')}).join('')}
+    ${s.ot?`<span style="position:absolute;left:${pctX(s.rg[s.rg.length-1][1]-s.ot)};width:calc(${pctX(s.rg[s.rg.length-1][1])} - ${pctX(s.rg[s.rg.length-1][1]-s.ot)});top:2px;bottom:2px;border-radius:3px;background:var(--bad)"></span>`:''}
+  </div></div>`).join('');
+  const maxO=Math.max(...hrs.map(h=>h.o));
+  const ordLane=`<div class="lane"><span class="note">每小時單</span><div style="position:relative;height:34px">${hrs.map(h=>`<span title="${h.h}時 ${h.o} 單" style="position:absolute;left:${pctX(h.h+.1)};width:calc(${pctX(h.h+.9)} - ${pctX(h.h+.1)});bottom:0;height:${(h.o/maxO*100).toFixed(0)}%;background:${D.offHours.includes(h.h)?'var(--warn)':'var(--bar-2)'};border-radius:2px 2px 0 0"></span>`).join('')}</div></div>
+  <div class="lane"><span></span><div style="position:relative;height:14px;font-size:10px;color:var(--ink-2)" class="num">${Array.from({length:Math.floor(span/2)+1},(_,i)=>open[0]+i*2).map(h=>`<span style="position:absolute;left:${pctX(h)};transform:translateX(-50%)">${h}</span>`).join('')}</div></div>`;
+  return `${header('人事成本',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>人事成本率 ${pct(D.laborRate)}</h2>${lightPill('labor')}</div>
+  <div class="kpis">${kpi('今日人事成本',$(D.labor),`目標 ≤ ${pct(RULE.laborTarget,0)}`)}${kpi('每工時營收',$(D.salesPerHour),`${D.laborHours} 工時`)}
+  ${kpi('正職（日攤）',$(D.staff.filter(s=>s.t==='ft').reduce((a,s)=>a+s.cost,0)),`${D.staff.filter(s=>s.t==='ft').length} 人，月薪 ×${RULE.ftLoad} ÷ ${RULE.ftDays} 天`)}${kpi('兼職',$(D.staff.filter(s=>s.t==='pt').reduce((a,s)=>a+s.cost,0)),`時薪 ${RULE.minWage} 元＋雇主負擔`)}</div>
+  ${D.offPtCost>0?`<div class="alert warn"><b>離峰 ${D.offHours.map(h=>h+':00').join('、')} 只有 ${D.offOrders} 張單，在班 ${D.offStaffHours} 人時</b><p>其中兼職人力成本 ${$(D.offPtCost)}。正職的離峰時段多半在備料，兼職可改排到尖峰或縮短。</p></div>`:''}
+  ${D.otStaff.length?`<div class="alert warn"><b>${D.otStaff.map(s=>s.n).join('、')} 今天超時 ${D.otStaff.reduce((a,s)=>a+s.ot,0)} 小時</b><p>加班費多付約 ${$(D.otCost)}（前 2 小時 ×${RULE.otMult}）。請確認是否為打烊清潔拖延。</p></div>`:''}</section>
+  <section class="sec"><div class="sec-h"><h3>今日排班 × 來客</h3><div class="seg" role="group" aria-label="排班試算"><button aria-pressed="${!laborSim}" data-lsim="0">實際</button><button aria-pressed="${laborSim}" data-lsim="1">試算調整</button></div></div>
+  <div class="box gantt" style="display:grid;gap:5px">${lanes}${ordLane}
+  <div class="legend"><span><i style="background:var(--navy)"></i>正職</span><span><i style="background:var(--bar)"></i>兼職</span><span><i style="background:var(--bad)"></i>超時</span><span><i style="background:var(--warn)"></i>離峰</span></div>
+  ${laborSim?`<div class="callout"><b>試算：兼職離峰時段不排班</b><span>每天約省 ${$(D.offPtCost)}（保守以一半 ${$(simSave)} 估），人事成本率 ${pct(D.laborRate)} → ${pct((D.labor-simSave)/D.rev)}。實際排班仍需考量備料與勞基法最低工時。</span></div>`:''}
+  <p class="note">本原型不預設早、中、晚班；排班直接看每個人的上下班時間。若店家有固定班別，可在進階「營業時段分析」自訂。</p></div></section>
+  <div class="btns"><button class="btn sm pri" data-addtodo="labor">把排班調整加入待辦</button></div>`;
+}
+
+let deliMarkup=0;
+function viewDelivery(){
+  const ch=['內用','外帶','外送'];
+  const mk=deliMarkup/100;
+  const newDeliRev=D.deliRev*(1+mk),newCm=newDeliRev-D.chanFood[2]-D.chanPack[2]-newDeliRev*RULE.commission;
+  return `${header('外帶與外送',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>${D.deliRev?`外送扣完抽成，每 100 元剩 ${fmt(D.deliCmRate*100)} 元`:'本店未開外送'}</h2>${lightPill('delivery')}</div>
+  <div class="kpis">${kpi('外帶單',D.orders[1]+' 單',`營收 ${$(D.chanRev[1])}`)}${kpi('外送單',D.orders[2]+' 單',`營收 ${$(D.chanRev[2])}`)}${kpi('平台抽成',$(D.commission),`以 ${pct(RULE.commission,0)} 估`)}${kpi('包材',$(D.pack),`每單 ${RULE.packPerOrder} 元`)}</div></section>
+  <section class="sec"><h3>三個渠道各賺多少（貢獻）</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th></th>${ch.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
+  <tr><td>營收</td>${D.chanRev.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>
+  <tr><td>− 食材</td>${D.chanFood.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>
+  <tr><td>− 平台抽成</td>${D.chanCom.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>
+  <tr><td>− 包材</td>${D.chanPack.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>
+  <tr class="tot"><td>渠道貢獻</td>${D.chanCm.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>
+  <tr><td>貢獻率</td>${D.chanCm.map((v,i)=>`<td>${D.chanRev[i]?pct(v/D.chanRev[i],0):'—'}</td>`).join('')}</tr></tbody></table></div>
+  <p class="note">渠道貢獻只扣與該渠道直接相關的成本；人事、租金屬全店共同費用，不分攤到渠道。</p></div></section>
+  ${D.deliRev?`<section class="sec"><h3>每份外送賺多少</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th>品項</th><th>外送份</th><th>內用毛利/份</th><th>外送後/份</th></tr></thead><tbody>
+  ${D.deliItems.filter(i=>i.ch[2]>0).sort((a,b)=>a.deliCm/a.p-b.deliCm/b.p).map(i=>`<tr${i.deliCm/i.p<.3?' class="em"':''}><td>${esc(i.n)}</td><td>${i.ch[2]}</td><td>${fmt(i.dineCm)}</td><td>${fmt(i.deliCm)}</td></tr>`).join('')}</tbody></table></div>
+  <p class="note">外送後/份＝售價 − 食材 − 抽成（未含包材）。紅底為外送後毛利率低於 30% 的品項，可考慮不上架外送或改套餐。</p></div></section>
+  <section class="sec"><h3>試算：外送價格加成</h3><div class="box" style="display:grid;gap:8px">
+  <label class="f" for="mkRange">外送價比店內高 <span class="num" style="font-size:20px">${deliMarkup}%</span><input class="range" id="mkRange" type="range" min="0" max="20" step="1" value="${deliMarkup}"></label>
+  <div class="kpis">${kpi('外送貢獻',$(newCm),`原 ${$(D.chanCm[2])}`,cls(newCm-D.chanCm[2]))}${kpi('外送貢獻率',pct(newCm/newDeliRev),`原 ${pct(D.deliCmRate)}`)}</div>
+  <p class="note">假設單量不變，只為了看抽成影響；實際漲價可能讓外送單減少，AI 建議中以單量 −15% 保守估算。</p></div></section>`:''}`;
+}
+
+function viewMembers(){
+  const m=D.mem,c=m.camp;
+  return `${header('會員與回購',dateLine())}
+  <section class="sec"><div class="sec-h"><h2>30 天回購率 ${pct(m.rep30,0)}</h2>${lightPill('members')}</div>
+  <div class="kpis">${kpi('LINE 好友',fmt(m.friends),`本月新增 ${m.newMonth}`)}${kpi('今日會員單',`${m.memberOrders} 單`,`占 ${pct(m.memberShare,0)}，新會員 ${m.newToday}`)}
+  ${kpi('30 天回購率',pct(m.rep30,0),`上月 ${pct(m.rep30Last,0)}`,'down')}${kpi('沉睡會員',fmt(m.dormant),'60 天沒回來')}</div>
+  <p class="note">回購率＝過去 30 天消費過的會員中，消費 2 次以上的比例。只能計算有出示會員或綁 LINE 的客人。</p></section>
+  <section class="sec"><h3>活動成效：${esc(c.name)}</h3><div class="box">
+  ${bars([c.sent,c.claimed,c.redeemed],['發送','領取','核銷'],{round:100,ticks:[0,Math.round(c.sent/2/100)*100,Math.round(c.sent/100)*100],tickFmt:t=>fmt(t),valLabels:v=>fmt(v),h:140,aria:'優惠券漏斗'})}
+  <div class="kpis" style="margin-top:8px">${kpi('核銷率',pct(c.redeemed/c.sent),`領取後核銷 ${pct(c.redeemed/c.claimed,0)}`)}${kpi('帶來營收（估）',$(m.campRev),`贈品成本 ${$(m.campCost)}`)}</div>
+  <p class="note">領取多、核銷少，代表券有吸引力但使用門檻偏高（限平日晚餐）。可試放寬到平日全天。</p></div></section>
+  <section class="sec"><h3>下一步</h3><div class="list">
+   <div class="item"><span class="ic dot warn"></span><span class="txt"><b>對 ${fmt(m.dormant)} 位沉睡會員發喚回券</b><span>例如「好久不見，加點小菜免費」，有效 14 天</span></span></div>
+   <div class="item"><span class="ic dot info"></span><span class="txt"><b>結帳時邀請加 LINE</b><span>今天非會員單 ${D.O-m.memberOrders} 張，是名單成長的來源</span></span></div></div>
+   <div class="btns"><button class="btn sm pri" data-addtodo="members">加入待辦：設計喚回券</button></div></section>`;
+}
+
+function viewAI(){
+  return `${header('AI 經營特助',dateLine())}
+  <section class="sec"><div class="callout"><b>模擬示範</b><span>以下摘要與建議由固定規則，依本頁的模擬數據自動產生，用來展示正式版的運作方式。本原型沒有連接你的 POS，也沒有進行即時 AI 分析。</span></div>
+  <div class="box"><h3>今日摘要</h3><p style="margin-top:6px;font-size:13.5px">今天營收 ${$(D.rev)}，達成目標 ${pct(D.achieve,0)}，比上週四 ${sgn(D.vsLw*100,n=>n.toFixed(1))}%。毛利 ${$(D.gp)}（${pct(D.gpRate,0)}），扣掉人事、租金等營業費用後，營業利益估 ${$(D.op)}。
+  主要問題：${D.ing.name}進價上漲讓食材成本率升到 ${pct(D.foodRate)}；${D.drink.n}加點率從 ${pct(D.lwAttach,0)} 掉到 ${pct(D.attach,0)}，是客單價下滑的主因${D.offPtCost>0?`；下午離峰 ${D.offOrders} 張單卻有 ${D.offStaffHours} 人時在班`:''}。</p></div></section>
+  <section class="sec"><div class="sec-h"><h3>三項建議</h3><small>依每月影響金額排序</small></div>
+  ${D.sugg.map((s,i)=>{const st=S.todos.find(t=>t.sid===s.id)?'todo':S.later.includes(s.id)?'later':'';return `<article class="sugg" id="sg-${s.id}">
+   <div class="hd"><div><span class="no">建議 ${i+1}・${esc(s.area)}</span><h3>${esc(s.title)}</h3></div>${st==='todo'?'<span class="pill ok">已加入待辦</span>':st==='later'?'<span class="pill info">稍後處理</span>':''}</div>
+   <p style="font-size:13px">${esc(s.act)}</p><p class="imp">預估每月影響約 <b class="num" style="font-size:15px;color:var(--ink)">${$(s.impact)}</b>（模擬估算）</p>
+   <div class="evid" id="ev-${s.id}" hidden>${s.basis.map(b=>`<span>・${esc(b)}</span>`).join('')}<span class="src">資料來源：${esc(s.src)}</span><div class="btns"><button class="btn sm" data-go="${s.route}">打開來源卡片 →</button></div></div>
+   <div class="btns"><button class="btn sm" data-ev="${s.id}">查看依據</button><button class="btn sm pri" data-todo="${s.id}" ${st==='todo'?'disabled':''}>加入待辦</button><button class="btn sm ghost" data-later="${s.id}" ${st?'disabled':''}>稍後處理</button></div></article>`}).join('')}</section>
+  <section class="sec"><div class="box soft"><h3>正式版會多做什麼</h3><p class="note" style="margin-top:4px">串接店家授權的 POS 與進貨資料後，每天打烊自動產出摘要並推送到 LINE；建議會附上原始單據連結，老闆可回覆「採用／不採用」，系統再追蹤成效。這些都不在本原型範圍。</p></div></section>`;
+}
+
+function viewTodo(){
+  return `${header('明天待辦','只存在這台裝置')}
+  <section class="sec">${S.todos.length?`<div class="list">${S.todos.map((t,i)=>`<label class="item" for="td${i}"><input type="checkbox" id="td${i}" data-done="${i}" ${t.done?'checked':''}><span class="txt"><b class="${t.done?'done':''}">${esc(t.text)}</b><span>來源：${esc(t.from)}</span></span><span></span></label>`).join('')}</div>`:'<p class="note">目前沒有待辦。到 AI 經營特助或各卡片按「加入待辦」。</p>'}
+  ${S.later.length?`<p class="note">稍後處理：${S.later.length} 項（正式版會在隔天早上再提醒）。</p>`:''}
+  <div class="btns"><button class="btn sm" data-go="ai">看 AI 建議</button></div></section>`;
+}
+
+/* ---------- 進階：營業時段 / 阿米巴 ---------- */
+function segments(){
+  const P=SEG_PRESETS[D.kind];
+  if(S.seg==='custom')return S.custom.map((c,i)=>[`時段 ${i+1}`,c[0],c[1]]);
+  return P[S.seg]||P.two;
+}
+const PERIOD={day:{lab:'日',days:1,cal:1,f:{B:1,L:1,O:1,D:1}},week:{lab:'週',days:6,cal:7,f:{B:6.2,L:6.3,O:6.0,D:6.6}},month:{lab:'月',days:26,cal:30,f:{B:26.8,L:27.2,O:26,D:28.6}}};
+function segCalc(){
+  const segs=segments(),per=PERIOD[S.period];
+  const inSeg=x=>segs.findIndex(s=>x>=s[1]-1e-9&&x<s[2]-1e-9);
+  const rows=segs.map(s=>({name:s[0],from:s[1],to:s[2],rev:0,o:0,lwO:0,food:0,labor:0,attr:0,tgt:0}));
+  const un={name:'未歸屬時段',rev:0,o:0,lwO:0,food:0,labor:0,attr:0,tgt:0};
+  const foodRate=D.foodRate,deliShare=D.deliRev/D.rev,takeShare=D.orders[1]/D.O,deliOShare=D.orders[2]/D.O;
+  const lwW=h=>h.lw*BAND_MULT[h.band];const lwTot=D.hours.reduce((a,h)=>a+lwW(h),0);
+  D.hours.forEach(h=>{const f=per.f[h.band];const idx=inSeg(h.h+.01);const R=idx>=0?rows[idx]:un;
+    const rv=h.rev*f,o=h.o*f;R.rev+=rv;R.o+=o;R.lwO+=h.lw*f;R.food+=rv*foodRate;
+    R.attr+=rv*deliShare*RULE.commission+o*(takeShare+deliOShare)*RULE.packPerOrder+rv*RULE.payFee;R.tgt+=D.target*(lwW(h)/lwTot)*f});
+  D.staff.forEach(s=>s.slots.forEach(([x,c])=>{const idx=inSeg(x);(idx>=0?rows[idx]:un).labor+=c*per.days}));
+  const all=[...rows];if(un.rev>0||un.labor>0)all.push(un);
+  all.forEach(r=>{r.cm=r.rev-r.food-r.labor-r.attr;r.cmTgt=r.tgt*(1-D.foodTarget)-r.labor-r.attr*(r.tgt/(r.rev||1));});
+  const common={rent:D.fixed.rent*per.cal,util:D.fixed.util*per.cal,depr:D.fixed.depr*per.cal,misc:D.fixed.misc*per.cal,mkt:D.fixed.mkt*per.cal};
+  const commonSum=Object.values(common).reduce((a,b)=>a+b,0);
+  const cmSum=all.reduce((a,r)=>a+r.cm,0);
+  return {segs,rows:all,common,commonSum,cmSum,op:cmSum-commonSum,per};
+}
+function segControls(){
+  const P=SEG_PRESETS[D.kind];
+  const opts=[['all','全日一段'],['two',P.two.map(s=>s[0]).join('＋')],['three',P.three.map(s=>s[0]).join('＋')],['custom','自訂']];
+  const hrsOpt=v=>{let o='';for(let h=OPEN[D.kind][0];h<=OPEN[D.kind][1];h+=.5)o+=`<option value="${h}" ${Math.abs(h-v)<1e-9?'selected':''}>${hh(h)}</option>`;return o};
+  return `<div class="box" style="display:grid;gap:8px"><div class="note">店家自己決定怎麼切時段；沒有班別的店用「全日一段」即可。</div>
+  <div class="seg" role="group" aria-label="時段設定">${opts.map(([k,l])=>`<button aria-pressed="${S.seg===k}" data-seg="${k}">${l}</button>`).join('')}</div>
+  ${S.seg==='custom'?`<div style="display:grid;gap:6px">${S.custom.map((c,i)=>`<div class="split2"><label class="f" for="cs${i}a">時段 ${i+1} 開始<select id="cs${i}a" data-cs="${i},0">${hrsOpt(c[0])}</select></label><label class="f" for="cs${i}b">結束<select id="cs${i}b" data-cs="${i},1">${hrsOpt(c[1])}</select></label></div>`).join('')}
+   <div class="btns">${S.custom.length<3?'<button class="btn sm" id="csAdd">＋ 新增時段</button>':''}${S.custom.length>1?'<button class="btn sm ghost" id="csDel">移除最後一段</button>':''}</div></div>`:''}
+  <div class="seg" role="group" aria-label="期間">${Object.entries(PERIOD).map(([k,p])=>`<button aria-pressed="${S.period===k}" data-period="${k}">${p.lab}</button>`).join('')}</div></div>`;
+}
+function viewTimeslot(){
+  const c=segCalc();
+  return `${header('營業時段分析','進階功能｜'+D.storeName)}
+  <section class="sec">${segControls()}</section>
+  <section class="sec"><h3>各時段表現（${c.per.lab}）</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th>時段</th><th>單數</th><th>上期單</th><th>營收</th><th>客單</th><th>營收目標差</th></tr></thead><tbody>
+  ${c.rows.map(r=>`<tr><td>${esc(r.name)}${r.from!=null?`<br><small class="note">${hh(r.from)}–${hh(r.to)}</small>`:''}</td><td>${fmt(r.o)}</td><td>${fmt(r.lwO)}</td><td>${fmt(r.rev)}</td><td>${r.o?fmt(r.rev/r.o):'—'}</td><td class="${cls(r.rev-r.tgt)}">${sgn(r.rev-r.tgt)}</td></tr>`).join('')}
+  </tbody></table></div><p class="note">上期＝上週同一天（週、月為模擬倍數）。營收目標依上週各小時營收比例（單數 × 時段客單係數）拆分每日目標。</p></div></section>
+  <div class="callout"><b>想知道每個時段到底有沒有賺？</b><span>阿米巴核算會把時段的直接成本與全店共同費用分開。</span><div class="btns"><button class="btn sm pri" data-go="amoeba">看時段貢獻利益 →</button></div></div>`;
+}
+function viewAmoeba(){
+  const c=segCalc();const alloc=S.alloc;const totRev=c.rows.reduce((a,r)=>a+r.rev,0);
+  return `${header('阿米巴時段核算','進階功能｜時段當成獨立經營單位')}
+  <section class="sec">${segControls()}</section>
+  <section class="sec"><h3>時段貢獻利益（${c.per.lab}）</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th></th>${c.rows.map(r=>`<th>${esc(r.name)}</th>`).join('')}</tr></thead><tbody>
+  <tr><td>營業額</td>${c.rows.map(r=>`<td>${fmt(r.rev)}</td>`).join('')}</tr>
+  <tr><td>− 食材成本</td>${c.rows.map(r=>`<td>${fmt(r.food)}</td>`).join('')}</tr>
+  <tr><td>− 直接人事</td>${c.rows.map(r=>`<td>${fmt(r.labor)}</td>`).join('')}</tr>
+  <tr><td>− 可歸屬費用</td>${c.rows.map(r=>`<td>${fmt(r.attr)}</td>`).join('')}</tr>
+  <tr class="tot"><td>時段貢獻利益</td>${c.rows.map(r=>`<td class="${r.cm<0?'down':''}">${fmt(r.cm)}</td>`).join('')}</tr>
+  <tr><td>貢獻率</td>${c.rows.map(r=>`<td>${r.rev?pct(r.cm/r.rev,0):'—'}</td>`).join('')}</tr>
+  <tr><td>目標差異</td>${c.rows.map(r=>`<td class="${cls(r.cm-r.cmTgt)}">${r.tgt?sgn(r.cm-r.cmTgt):'—'}</td>`).join('')}</tr>
+  ${alloc?`<tr><td><i>分攤共同費用（參考）</i></td>${c.rows.map(r=>`<td>${fmt(-c.commonSum*r.rev/totRev)}</td>`).join('')}</tr><tr><td><i>分攤後損益（參考）</i></td>${c.rows.map(r=>`<td>${fmt(r.cm-c.commonSum*r.rev/totRev)}</td>`).join('')}</tr>`:''}
+  </tbody></table></div>
+  <p class="note">直接人事＝在該時段上班的人時 × 時薪（正職以月薪日攤換算）。不在任何時段內的工時（備料、清潔）放「未歸屬時段」。可歸屬費用＝外送抽成、包材、金流手續費。</p></div></section>
+  <section class="sec"><h3>總店共同費用（不分攤）</h3><div class="box"><div class="cascade">
+   <div class="r"><span>各時段貢獻合計</span><span class="n">${fmt(c.cmSum)}</span></div>
+   <div class="r sub"><span>− 租金</span><span class="n">${fmt(c.common.rent)}</span></div>
+   <div class="r sub"><span>− 水電瓦斯</span><span class="n">${fmt(c.common.util)}</span></div>
+   <div class="r sub"><span>− 設備折舊</span><span class="n">${fmt(c.common.depr)}</span></div>
+   <div class="r sub"><span>− 雜支、行銷</span><span class="n">${fmt(c.common.misc+c.common.mkt)}</span></div>
+   <div class="r res gold"><span>全店營業利益</span><span class="n">${fmt(c.op)}</span></div></div>
+   ${S.period==='day'?`<p class="note" style="margin-top:6px">與「經營總覽」今日營業利益 ${fmt(D.op)} 一致${Math.abs(c.op-D.op)>2?'（差 '+fmt(c.op-D.op)+'）':''}。</p>`:''}
+   <p class="note" style="margin-top:6px">租金、水電、折舊不會因為某個時段多開或少開而改變，所以不算進時段的成本，各時段負責的是「貢獻利益」。</p>
+   <label class="check" for="allocChk" style="margin-top:8px"><input type="checkbox" id="allocChk" ${alloc?'checked':''}> 顯示依營收比例分攤後的參考數字（不作為時段績效）</label></div></section>`;
+}
+function viewMultistore(){
+  return `${header('多店管理','進階版規劃｜本原型未提供')}
+  <section class="sec"><div class="box soft" style="display:grid;gap:6px"><h3>進階版會有的功能</h3>
+  <span class="note">・各分店九宮格燈號並排，一眼看哪家店出狀況</span><span class="note">・分店營收、食材成本率、人事成本率排名</span>
+  <span class="note">・中央廚房／統一採購的食材價格同步到各店成本</span><span class="note">・總部費用與分店直接成本分開呈現（同阿米巴原則）</span>
+  <p class="note">多店資料涉及多家 POS 串接與權限設計，本輪 G1 原型只保留入口，不製作模擬數字。</p></div>
+  <div class="btns"><button class="btn sm pri" data-go="contact">我有多家店，想了解</button></div></section>`;
+}
+
+/* ---------- 換成我的餐廳 ---------- */
+let myPreset=null;
+function viewMystore(){
+  const pf=S.profile;myPreset=pf.preset;
+  return `${header('換成我的餐廳','不需要提供營業機密')}
+  <section class="sec"><p class="note">選大概的數字就好，九宮格會換成你的店型重新模擬。資料只存在這台手機。</p>
+  <form id="myForm" class="box" style="display:grid;gap:12px">
+   <label class="f" for="mfName">店名（可留空）<input id="mfName" type="text" maxlength="12" value="${esc(pf.name)}" placeholder="例：阿明小館"></label>
+   <div class="f">店型<div class="chips" role="group" aria-label="店型">${Object.entries(PRESETS).map(([k,p])=>`<button type="button" class="chip" aria-pressed="${myPreset===k}" data-preset="${k}">${p.label}</button>`).join('')}</div></div>
+   <label class="f" for="mfOrders">平常一天大約幾張單 <span class="h">內用、外帶、外送合計</span><input id="mfOrders" type="range" min="30" max="400" step="10" value="${pf.orders}"><span class="num" id="mfOrdersV" style="font-size:18px">${pf.orders} 單</span></label>
+   <label class="f" for="mfTicket">平均客單價 <span class="h">0 表示用店型預設</span><input id="mfTicket" type="range" min="0" max="900" step="10" value="${pf.ticket}"><span class="num" id="mfTicketV" style="font-size:18px">${pf.ticket?pf.ticket+' 元':'店型預設'}</span></label>
+   <label class="f" for="mfStaff">一天大約幾人上班 <span class="h">前 4 位視為正職</span><input id="mfStaff" type="range" min="2" max="10" step="1" value="${pf.staff}"><span class="num" id="mfStaffV" style="font-size:18px">${pf.staff} 人</span></label>
+   <label class="check" for="mfDeli"><input type="checkbox" id="mfDeli" ${pf.delivery?'checked':''}> 有上外送平台</label>
+   <div class="btns"><button class="btn pri" type="submit">套用並回到九宮格</button><button class="btn ghost" type="button" id="mfDefault">回到示範店</button></div>
+  </form>
+  <p class="note">套用後所有卡片、燈號與 AI 建議都會依你的設定重新計算，原本的待辦會清空。這仍是模擬：食材漲價、加點率下滑等情境是示範用，不代表你的店。</p></section>`;
+}
+
+/* ---------- 30 秒需求回饋 ---------- */
+const PAINS=['不知道今天有沒有賺','食材成本失控','人事成本太高','外送抽成吃掉利潤','回頭客變少','多店難管理','每天對帳太花時間'];
+let fb={pains:[],stores:'',pos:'',contact:'',name:'',consent:false};
+function viewContact(){
+  if(S.feedback){
+    const payload=feedbackPayload(S.feedback);
+    return `${header('我想了解專屬版本','30 秒需求回饋')}
+    <section class="sec"><div class="alert ok"><b>已記錄在這台裝置（模擬）</b><p>本原型不會送出資料，也不會發出 LINE 或 Email 通知。正式上線時，這份回饋會建立商機並通知對應的商務專人。</p></div>
+    <div class="box"><h3>正式版會送出的資料格式</h3><pre class="code">${esc(JSON.stringify(payload,null,2))}</pre></div>
+    <div class="btns"><button class="btn sm" id="fbAgain">重新填寫</button><button class="btn sm pri" data-go="home">回九宮格</button></div></section>`;
+  }
+  return `${header('我想了解專屬版本','30 秒需求回饋')}
+  <form id="fbForm" class="sec">
+   <div class="box" style="display:grid;gap:10px"><div class="f">1. 你最想解決什麼？（可複選）<div class="chips">${PAINS.map(p=>`<button type="button" class="chip" aria-pressed="${fb.pains.includes(p)}" data-pain="${esc(p)}">${p}</button>`).join('')}</div></div>
+   <div class="f">2. 幾家店？<div class="chips">${['1 家','2–3 家','4 家以上'].map(p=>`<button type="button" class="chip" aria-pressed="${fb.stores===p}" data-stores="${p}">${p}</button>`).join('')}</div></div>
+   <div class="f">3. 目前結帳用什麼？<div class="chips">${['手寫／收銀機','POS 系統','平板點餐','還沒決定'].map(p=>`<button type="button" class="chip" aria-pressed="${fb.pos===p}" data-pos="${p}">${p}</button>`).join('')}</div></div>
+   <label class="f" for="fbName">4. 怎麼稱呼（選填）<input id="fbName" type="text" maxlength="20" value="${esc(fb.name)}"></label>
+   <label class="f" for="fbContact">聯絡方式（選填）<span class="h">LINE ID、電話或 Email；不填也能送出，只是我們無法回覆</span><input id="fbContact" type="text" maxlength="60" value="${esc(fb.contact)}"></label>
+   <label class="check" for="fbConsent"><input type="checkbox" id="fbConsent" ${fb.consent?'checked':''}> 同意商務專人依上述方式聯繫我</label>
+   <p class="note" id="fbErr" hidden style="color:var(--bad)"></p>
+   <div class="btns"><button class="btn gold" type="submit">送出需求</button></div></div>
+  </form>`;
+}
+function feedbackPayload(f){
+  return {template_id:TEMPLATE_ID,proto:PROTO_VER,ref:REF,session_id:S.session,submitted_at:f.ts,
+    store_profile:{preset:S.profile.preset,orders_per_day:S.profile.orders,ticket:S.profile.ticket||null,delivery:S.profile.delivery,staff:S.profile.staff},
+    needs:f.pains,stores:f.stores,pos:f.pos,contact:f.contact?{name:f.name||null,value:f.contact,consent:f.consent}:null,
+    journey:{cards_viewed:[...new Set(S.events.filter(e=>e.event==='card_open').map(e=>e.props.card))],scenarios_done:Object.keys(S.scen).filter(k=>S.scen[k]),todos:S.todos.length},
+    crm:{action:'create_lead',notify:['line','email'],status:'NOT_SENT_PROTOTYPE'}};
+}
+
+/* ---------- 導覽 S01–S05 ---------- */
+const SCEN=[
+  {id:'S01',t:'老闆看今日戰況',d:'打開首頁 30 秒摘要與中央「經營總覽」，看營收、毛利、營業利益的差別。',go:'overview',done:'overview'},
+  {id:'S02',t:'找出業績掉在哪',d:'從「訂單與客單」拆解營收差距，再到「產品銷售」找到加點率下滑。',go:'orders',done:'products'},
+  {id:'S03',t:'食材成本異常',d:'「食材成本」看關鍵食材漲價影響哪些產品，拖動進價試算毛利。',go:'food',done:'food-sim'},
+  {id:'S04',t:'人事成本與排班',d:'「人事成本」對照排班與每小時單數，切到「試算調整」看能省多少。',go:'labor',done:'labor-sim'},
+  {id:'S05',t:'AI 經營特助提出建議',d:'看三項模擬建議，選「查看依據」、「加入待辦」或「稍後處理」。',go:'ai',done:'ai-action'}];
+function markScen(key){const s=SCEN.find(x=>x.done===key);if(s&&!S.scen[s.id]){S.scen[s.id]=true;track('scenario_complete',{scenario:s.id});save()}}
+function viewGuide(){
+  return `${header('體驗導覽','五個情境，約 3 分鐘')}
+  <section class="sec"><div class="list">${SCEN.map(s=>`<button class="item" data-scen="${s.id}"><span class="ic dot ${S.scen[s.id]?'ok':'info'}"></span><span class="txt"><b>${s.id}｜${s.t}</b><span>${s.d}</span></span><span class="go">${S.scen[s.id]?'已完成':'開始 →'}</span></button>`).join('')}</div>
+  <p class="note">完成後可到「換成我的餐廳」想像自己的店，或留下 30 秒需求。</p></section>`;
+}
+function viewGlossary(){
+  return `${header('名詞與算法','本原型的計算規則')}
+  <section class="sec"><div class="box" style="display:grid;gap:6px;font-size:13px">
+  <span><b>營收</b>＝顧客實付（扣折扣，不扣外送抽成）</span><span><b>理論食材成本</b>＝Σ 銷售份數 × 配方成本（含今日關鍵食材進價）</span>
+  <span><b>毛利</b>＝營收 − 食材成本</span><span><b>人事成本</b>＝正職月薪 × ${RULE.ftLoad} ÷ ${RULE.ftDays} 天 ＋ 兼職時數 × ${RULE.minWage} × ${RULE.ptLoad}（超時 ×${RULE.otMult}）</span>
+  <span><b>營業利益</b>＝毛利 − 人事 − 外送抽成 − 包材 − 金流 − 租金 − 水電瓦斯 − 折舊 − 雜支行銷</span>
+  <span><b>實際淨利</b>＝營業利益 − 利息 − 所得稅等，月結後確定；每日畫面不顯示</span>
+  <span><b>時段貢獻利益</b>＝時段營業額 − 食材 − 直接人事 − 可歸屬費用；共同費用不分攤</span></div>
+  <div class="box"><h3>燈號規則</h3><div class="tbl-wrap"><table><thead><tr><th>卡片</th><th>綠</th><th>黃</th><th>紅</th></tr></thead><tbody>
+  <tr><td>今日營收</td><td>達成 ≥100%</td><td>90–100%</td><td>&lt;90%</td></tr>
+  <tr><td>訂單與客單</td><td>比上週 ≥−3%</td><td>−3~−10%</td><td>&lt;−10%</td></tr>
+  <tr><td>產品銷售</td><td>加點率降 ≤10%</td><td>10–20%</td><td>&gt;20%</td></tr>
+  <tr><td>食材成本</td><td>≤ 店型目標＊</td><td>超標 ≤1.5 點，或關鍵食材漲 ≥30%</td><td>超標 &gt;1.5 點，或漲 ≥50%</td></tr>
+  <tr><td>人事成本</td><td>≤25%</td><td>25–30% 或有超時／離峰過多</td><td>&gt;30%</td></tr>
+  <tr><td>外帶與外送</td><td>外送貢獻 ≥35%</td><td>25–35%</td><td>&lt;25%</td></tr>
+  <tr><td>會員與回購</td><td>回購 ≥30%</td><td>25–30%</td><td>&lt;25%</td></tr>
+  <tr><td>經營總覽</td><td colspan="3" style="text-align:left">取其他卡最差燈號；營業利益為負直接紅燈</td></tr></tbody></table></div><p class="note">＊食材成本率目標：鐵板熱炒 32%、小吃麵店 33%、咖啡廳 30%、便當店 38%（模擬預設，正式版由店家設定）。</p></div></section>`;
+}
+function viewDevlog(){
+  return `${header('整合事件紀錄','MIN-003 介面預覽｜未送出')}
+  <section class="sec"><div class="kpis">${kpi('模板識別碼',TEMPLATE_ID,PROTO_VER)}${kpi('推薦夥伴',esc(REF),'網址 ?ref= 參數')}</div>
+  <p class="note">以下是這台裝置上記錄的體驗事件（最多 200 筆）。正式版會送到 MIN-003 追蹤後端；本原型只存在本機。</p>
+  <pre class="code">${esc(S.events.slice(-30).reverse().map(e=>JSON.stringify(e)).join('\n'))||'（尚無事件）'}</pre></section>`;
+}
+
+/* ============================================================
+   路由與互動
+   ============================================================ */
+const VIEWS={home:viewHome,revenue:viewRevenue,orders:viewOrders,products:viewProducts,food:viewFood,overview:viewOverview,labor:viewLabor,delivery:viewDelivery,members:viewMembers,ai:viewAI,
+  todo:viewTodo,timeslot:viewTimeslot,amoeba:viewAmoeba,multistore:viewMultistore,mystore:viewMystore,contact:viewContact,guide:viewGuide,glossary:viewGlossary,devlog:viewDevlog};
+let current='home';
+function route(){const h=(location.hash||'').slice(1);return VIEWS[h]?h:'home'}
+function render(keepScroll){
+  current=route();
+  const y=window.scrollY;
+  app.innerHTML=VIEWS[current]();
+  if(!keepScroll)window.scrollTo(0,0);else window.scrollTo(0,y);
+  if(current==='products'||current==='overview')markScen(current);
+}
+function go(v){const tgt=v==='home'?'':'#'+v;const cur=location.hash==='#'?'':location.hash;if(cur===tgt)render();else location.hash=tgt}
+window.addEventListener('hashchange',()=>{const v=route();if(TITLES[v])track('card_open',{card:v});render()});
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200)}
+function addTodo(text,from,sid){if(sid&&S.todos.find(t=>t.sid===sid))return toast('已在待辦中');S.todos.push({text,from,sid,ts:new Date().toISOString(),done:false});track('todo_add',{from,sid});save();toast('已加入明天待辦')}
+const QUICK_TODO={
+  food:()=>[`${D.ing.name}：${D.items.filter(i=>i.u>0).sort((a,b)=>b.u*b.qty-a.u*a.qty)[0].n} 暫調價，詢第二家報價`,'食材成本','food'],
+  labor:()=>[`平日離峰 ${D.offHours.map(h=>h+'時').join('、')} 少排 1 位兼職`,'人事成本','labor'],
+  members:()=>[`設計沉睡會員喚回券（${fmt(D.mem.dormant)} 人）`,'會員與回購','members']};
+
+app.addEventListener('click',e=>{
+  const b=e.target.closest('button,[data-done]');if(!b)return;
+  if(b.dataset.go){go(b.dataset.go);if(b.dataset.go==='contact'||b.dataset.go==='mystore')track('cta_click',{target:b.dataset.go,from:current});return}
+  if(b.dataset.scen){const s=SCEN.find(x=>x.id===b.dataset.scen);track('scenario_start',{scenario:s.id});toast(`${s.id}：${s.t}`);go(s.go);return}
+  if(b.dataset.sort){prodSort=b.dataset.sort;render(true);return}
+  if(b.dataset.ov){S.ovPeriod=b.dataset.ov;save();render(true);return}
+  if(b.dataset.lsim){laborSim=b.dataset.lsim==='1';if(laborSim)markScen('labor-sim');render(true);return}
+  if(b.dataset.seg){S.seg=b.dataset.seg;save();render(true);return}
+  if(b.dataset.period){S.period=b.dataset.period;save();render(true);return}
+  if(b.dataset.addtodo){const [t,f,sid]=QUICK_TODO[b.dataset.addtodo]();addTodo(t,f,sid);render(true);return}
+  if(b.dataset.ev){const el=document.getElementById('ev-'+b.dataset.ev);el.hidden=!el.hidden;b.textContent=el.hidden?'查看依據':'收起依據';track('ai_action',{action:'view_basis',sid:b.dataset.ev});markScen('ai-action');return}
+  if(b.dataset.todo){const s=D.sugg.find(x=>x.id===b.dataset.todo);S.later=S.later.filter(x=>x!==s.id);addTodo(s.act,'AI 經營特助・'+s.area,s.id);track('ai_action',{action:'add_todo',sid:s.id});markScen('ai-action');render(true);return}
+  if(b.dataset.later){if(!S.later.includes(b.dataset.later))S.later.push(b.dataset.later);track('ai_action',{action:'later',sid:b.dataset.later});markScen('ai-action');save();toast('已設為稍後處理');render(true);return}
+  if(b.dataset.preset){myPreset=b.dataset.preset;const PP=PRESETS[myPreset];[['mfOrders',PP.defOrders,' 單'],['mfStaff',PP.defStaff,' 人']].forEach(([id,v,u])=>{document.getElementById(id).value=v;document.getElementById(id+'V').textContent=v+u});document.getElementById('mfTicket').value=0;document.getElementById('mfTicketV').textContent='店型預設';document.querySelectorAll('[data-preset]').forEach(x=>x.setAttribute('aria-pressed',x===b));return}
+  if(b.dataset.pain){const p=b.dataset.pain;fb.pains=fb.pains.includes(p)?fb.pains.filter(x=>x!==p):[...fb.pains,p];b.setAttribute('aria-pressed',fb.pains.includes(p));return}
+  if(b.dataset.stores){fb.stores=b.dataset.stores;document.querySelectorAll('[data-stores]').forEach(x=>x.setAttribute('aria-pressed',x===b));return}
+  if(b.dataset.pos){fb.pos=b.dataset.pos;document.querySelectorAll('[data-pos]').forEach(x=>x.setAttribute('aria-pressed',x===b));return}
+  switch(b.id){
+    case 'resetBtn':document.getElementById('resetConfirm').hidden=false;return;
+    case 'resetNo':document.getElementById('resetConfirm').hidden=true;return;
+    case 'resetYes':{const ev=S.events;S=freshState();S.events=ev;track('reset',{});D=build(S.profile);foodSimPrice=null;laborSim=false;deliMarkup=0;fb={pains:[],stores:'',pos:'',contact:'',name:'',consent:false};save();toast('已重設為預設示範店');render();return}
+    case 'mfDefault':S.profile={...DEFAULT_PROFILE};D=build(S.profile);save();track('mystore_apply',{preset:'teppan',default:true});toast('已回到示範店');go('home');return;
+    case 'csAdd':{const last=S.custom[S.custom.length-1];S.custom.push([Math.min(last[1],OPEN[D.kind][1]-1),Math.min(last[1]+3,OPEN[D.kind][1])]);save();render(true);return}
+    case 'csDel':S.custom.pop();save();render(true);return;
+    case 'fbAgain':S.feedback=null;save();render();return;
+  }
+});
+app.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='ingRange'){foodSimPrice=+t.value;markScen('food-sim');render(true);document.getElementById('ingRange')?.focus();return}
+  if(t.id==='mkRange'){deliMarkup=+t.value;render(true);document.getElementById('mkRange')?.focus();return}
+  if(t.id==='mfOrders')document.getElementById('mfOrdersV').textContent=t.value+' 單';
+  if(t.id==='mfTicket')document.getElementById('mfTicketV').textContent=+t.value?t.value+' 元':'店型預設';
+  if(t.id==='mfStaff')document.getElementById('mfStaffV').textContent=t.value+' 人';
+  if(t.id==='fbName')fb.name=t.value;
+  if(t.id==='fbContact')fb.contact=t.value;
+});
+app.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.done!=null){S.todos[+t.dataset.done].done=t.checked;save();render(true);return}
+  if(t.id==='allocChk'){S.alloc=t.checked;save();render(true);return}
+  if(t.id==='fbConsent'){fb.consent=t.checked;return}
+  if(t.dataset.cs){const [i,j]=t.dataset.cs.split(',').map(Number);S.custom[i][j]=+t.value;if(S.custom[i][1]<=S.custom[i][0])S.custom[i][1]=Math.min(S.custom[i][0]+.5,OPEN[D.kind][1]);save();render(true)}
+});
+app.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='myForm'){
+    S.profile={preset:myPreset,name:document.getElementById('mfName').value.trim(),orders:+document.getElementById('mfOrders').value,ticket:+document.getElementById('mfTicket').value,staff:+document.getElementById('mfStaff').value,delivery:document.getElementById('mfDeli').checked};
+    if(S.seg==='custom')S.seg='two';
+    if(S.todos.length||S.later.length){S.todos=[];S.later=[]}/* 待辦屬於前一家店的模擬情境，換店型後清空 */
+    D=build(S.profile);foodSimPrice=null;save();track('mystore_apply',{...S.profile,name:S.profile.name?'(set)':''});toast('已換成你的店型（模擬），待辦已清空');go('home');
+  }
+  if(e.target.id==='fbForm'){
+    const err=document.getElementById('fbErr');
+    if(!fb.pains.length){err.textContent='請至少選一個想解決的問題。';err.hidden=false;return}
+    if(fb.contact&&!fb.consent){err.textContent='留下聯絡方式時，請勾選同意聯繫。';err.hidden=false;return}
+    S.feedback={...fb,ts:new Date().toISOString()};track('feedback_submit',{pains:fb.pains.length,stores:fb.stores,pos:fb.pos,has_contact:!!fb.contact});save();render();
+  }
+});
+
+/* 啟動 */
+track('page_view',{landing:route(),ref:REF});
+render();
+</script>
+</body></html>
