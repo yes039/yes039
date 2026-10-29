@@ -1,0 +1,568 @@
+<title>換成我的工程公司</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: home with two big entries; industry page = sticky section bar, company panel, nine-grid, scenarios, assistant, simulator, next steps; details open in a drawer / bottom sheet */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --sunk:#f5f7f9; --ink:#1c2632; --muted:#5a6776; --line:#d6dde5;
+  --vest:#f4b400; --vest-soft:#fff3cc; --vest-ink:#1c2632;
+  --blue:#1d5ea6; --blue-soft:#e3eefb; --violet:#5b4bb7; --violet-soft:#ece9fb;
+  --red:#c0352b; --red-soft:#fbe4e2; --amber:#a86200; --amber-soft:#fcefd6; --green:#2b7a4b; --green-soft:#e1f2e8; --grey:#8b96a3; --grey-soft:#eceff2;
+  --display:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --sunk:#141b22; --ink:#e5eaf0; --muted:#98a5b3; --line:#2a3440;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1c2632; --blue:#82b3ec; --blue-soft:#1d2d42; --violet:#a99cf0; --violet-soft:#27223f;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222b35; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --sunk:#141b22; --ink:#e5eaf0; --muted:#98a5b3; --line:#2a3440;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1c2632; --blue:#82b3ec; --blue-soft:#1d2d42; --violet:#a99cf0; --violet-soft:#27223f;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222b35; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px}
+h1{font-family:var(--display);font-weight:400;font-size:20px;margin:0;white-space:nowrap}
+h1 .tape{background:var(--vest);color:var(--vest-ink);padding:0 .25em;border-radius:4px}
+.demo{font-size:12px;color:var(--amber);background:var(--amber-soft);border-radius:999px;padding:2px 10px}
+.hdr-r{margin-left:auto;display:flex;gap:6px;align-items:center}
+main .wrap{padding-block:16px 72px;display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0;text-wrap:balance}
+h3{font-size:13px;letter-spacing:.05em;color:var(--muted);margin:0;font-weight:700}
+.lede{color:var(--muted);font-size:14px;margin:0;max-width:66ch}
+.small{font-size:13px} .muted{color:var(--muted)} .num{font-variant-numeric:tabular-nums}
+button{font:inherit}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;background:var(--vest);color:var(--vest-ink);white-space:nowrap;min-height:40px}
+.btn.ghost{background:var(--sunk);color:var(--ink);border:1.5px solid var(--line);font-weight:500}
+.btn.sm{padding:5px 12px;font-size:13px;min-height:34px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input[type=text],textarea,select{border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;width:100%;min-width:0}
+input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;accent-color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.pill.red{background:var(--red-soft);color:var(--red)} .pill.amber{background:var(--amber-soft);color:var(--amber)} .pill.green{background:var(--green-soft);color:var(--green)} .pill.grey{background:var(--grey-soft);color:var(--grey)} .pill.blue{background:var(--blue-soft);color:var(--blue)}
+.note{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px;margin:0}
+.rule-tag{font-size:12px;color:var(--violet);background:var(--violet-soft);border-radius:6px;padding:2px 8px;font-weight:700;white-space:nowrap}
+
+/* home */
+.hero{display:flex;flex-direction:column;gap:10px;padding-block:8px}
+.hero h2{font-size:28px}
+.entries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.entries{grid-template-columns:1fr}}
+.entry{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:20px;text-align:left;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;gap:8px;border-top:6px solid var(--vest)}
+.entry:hover{border-color:var(--ink)}
+.entry b{font-family:var(--display);font-weight:400;font-size:22px}
+.entry span{color:var(--muted);font-size:14px}
+.entry i{font-style:normal;font-weight:700;color:var(--blue)}
+
+/* section bar */
+.secbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:6px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.secbar button{flex:0 0 auto;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:34px}
+.secbar button.back{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* company panel */
+.cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
+@media (max-width:640px){.cfg{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fld .lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.fld .lab b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:15px}
+.fld .hint{font-size:11px;color:var(--muted)}
+.clampnote{font-size:12px;color:var(--amber)}
+
+/* nine grid */
+.nine{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;text-align:left;color:var(--ink);cursor:pointer;min-width:0;border-top:6px solid var(--grey);overflow:hidden}
+.tile:hover{border-color:var(--ink)}
+.tile.red{border-top-color:var(--red)} .tile.amber{border-top-color:var(--amber)} .tile.green{border-top-color:var(--green)}
+.tile.hub{background:var(--ink);color:var(--surface);border-color:var(--ink);border-top-color:var(--vest)}
+.tile.hub .t-sub,.tile.hub h3{color:var(--surface);opacity:.8}
+.tile.ai{border-top-color:var(--violet)}
+.t-h{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.t-big{font-family:var(--display);font-size:30px;line-height:1.05;font-variant-numeric:tabular-nums}
+.t-big small{font-family:var(--body);font-size:12px;margin-left:3px}
+.t-sub{font-size:12px;color:var(--muted)}
+.t-lines{display:flex;flex-direction:column;gap:3px;font-size:12px;min-width:0}
+.t-lines div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot.red{background:var(--red)} .dot.amber{background:var(--amber)} .dot.green{background:var(--green)}
+@media (max-width:640px){
+ .nine{aspect-ratio:9/16;grid-template-rows:repeat(3,minmax(0,1fr));gap:6px}
+ .tile{padding:8px;gap:4px;border-top-width:5px}
+ .tile h3{font-size:11px;letter-spacing:0}
+ .t-big{font-size:22px} .t-big small{display:block;font-size:10px;margin:1px 0 0}
+ .t-lines{font-size:10.5px}
+ .t-h .pill{display:none}
+ .t-lines{gap:5px}
+ .t-lines div{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.35}
+}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+
+/* scenarios */
+.scens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.scens{grid-template-columns:1fr}}
+.scen{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;color:var(--ink);border-left:5px solid var(--red)}
+.scen.done{border-left-color:var(--green)}
+.scen b{font-size:15px}
+.steps{display:flex;gap:4px;flex-wrap:wrap}
+.step{font-size:11px;border-radius:999px;padding:1px 8px;background:var(--grey-soft);color:var(--muted)}
+.step.on{background:var(--ink);color:var(--surface)} .step.ok{background:var(--green-soft);color:var(--green)}
+.flowbox{display:flex;flex-direction:column;gap:10px}
+.opt{border:1.5px solid var(--line);background:var(--sunk);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;gap:2px}
+.opt[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.opt small{color:var(--muted)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:14px}
+.kv span:nth-child(odd){color:var(--muted)}
+.msg{background:var(--sunk);border-radius:10px;padding:8px 12px;font-size:14px}
+.msg .who{font-size:12px;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cmp div{background:var(--sunk);border-radius:10px;padding:8px 10px}
+.cmp span{display:block;font-size:12px;color:var(--muted)}
+.cmp b{font-size:20px;font-variant-numeric:tabular-nums}
+
+/* assistant */
+.issue{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.issue:last-child{border-bottom:0}
+.issue .no{font-family:var(--display);font-size:22px;line-height:1}
+.issue .t{font-weight:700}
+.issue .m{font-size:13px;color:var(--muted)}
+.tasks{display:flex;flex-direction:column;gap:6px}
+.task{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--sunk);border-radius:10px;padding:8px 10px;font-size:14px}
+
+/* simulator */
+.simgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.simgrid{grid-template-columns:1fr}}
+.res{display:flex;flex-direction:column;gap:8px}
+.resrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.resrow b{font-variant-numeric:tabular-nums;font-size:18px}
+.asm{font-size:12px;color:var(--muted)}
+.asm-edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.asm-edit{grid-template-columns:1fr}}
+.asm-edit label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+
+/* conversion */
+.convs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.convs{grid-template-columns:1fr}}
+.conv{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer;color:var(--ink)}
+.conv b{font-size:15px}
+.conv span{font-size:13px;color:var(--muted)}
+
+/* consent + dev */
+.consent{background:var(--blue-soft);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.ev{display:grid;grid-template-columns:64px 1fr auto;gap:8px;font-size:12px;background:var(--sunk);border-radius:8px;padding:6px 8px;align-items:center}
+.ev code{font-family:ui-monospace,Menlo,Consolas,monospace}
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+@media (max-width:640px){.drawer{top:auto;left:0;width:100%;max-height:90%;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding-left:env(safe-area-inset-left,0px)}}
+.dr-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dr-b{overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.x{border:0;background:var(--sunk);color:var(--ink);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;flex:0 0 auto}
+.tb{overflow-x:auto} table{border-collapse:collapse;width:100%;font-size:13px;min-width:420px}
+th{text-align:left;font-size:12px;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap} td.r,th.r{text-align:right}
+.bar{height:6px;background:var(--grey-soft);border-radius:3px;position:relative;min-width:60px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--blue)}
+.bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+@media (max-width:640px){ h1{font-size:18px} .hdr-r .btn{padding:4px 10px} }
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>工程 AI <span class="tape">管理團隊體驗</span></h1>
+  <span class="demo">G2 開發版・模擬資料・建議為規則式模擬</span>
+  <div class="hdr-r"><button class="btn ghost sm" id="devBtn" aria-pressed="false">開發檢視</button></div>
+</div></header>
+<main><div class="wrap" id="main"></div></main>
+<div id="layer"></div><div id="toastBox"></div>
+
+<script>
+/* =================== 共用：格式、狀態、事件與歸因 =================== */
+const F={n:x=>Math.round(x).toLocaleString("zh-TW"),d1:x=>(Math.round(x*10)/10).toLocaleString("zh-TW"),pct:x=>Math.round(x*100)+"%",
+ wan:x=>(Math.abs(x)>=10000?(Math.round(x/1000)/10).toLocaleString("zh-TW")+" 億":(Math.round(x*10)/10).toLocaleString("zh-TW")+" 萬"),nt:x=>"NT$"+Math.round(x).toLocaleString("zh-TW")};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const $=s=>document.querySelector(s);
+const SRC={direct:{label:"直接進入（無推薦）"},P001:{label:"推薦夥伴 P001 阿明（水電材料行）",ind:"water"},P002:{label:"推薦夥伴 P002 小華（水電師傅）",ind:"water"},P101:{label:"推薦夥伴 P101 吳經理（建材商）",ind:"build"}};
+let ST;
+function freshState(){return {view:"home",consent:null,source:"direct",session:"s-"+Math.random().toString(36).slice(2,8),events:[],dev:false,
+  inp:{water:{...MODS.water.defaults},build:{...MODS.build.defaults}},asm:{water:{...MODS.water.asm},build:{...MODS.build.asm}},
+  resolved:{water:{},build:{}},sim:{water:{...MODS.water.simDefaults},build:{...MODS.build.simDefaults}},asst:{water:{tasks:[],day:0,base:null},build:{tasks:[],day:0,base:null}},
+  scen:null,drawer:null,leads:[]}}
+/* 事件：開啟與客戶主動送出的轉換永遠記錄；其餘互動需同意 */
+function track(type,data){
+  const always=["page_open","consent","summary_request","line_join_click","booking_submit"];
+  const ok=always.includes(type)||ST.consent==="同意記錄操作";
+  ST.events.unshift({t:new Date().toTimeString().slice(0,8),type,data:data||"",ok,src:ST.source});
+  if(ST.dev) renderDev();
+}
+function toast(t){$("#toastBox").innerHTML=`<div class="toast" role="status">${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#toastBox").innerHTML="",2600)}
+const seedRand=i=>{const x=Math.sin(i*9301+49297)*233280;return x-Math.floor(x)};
+
+/* =================== 產業模組：水電 =================== */
+const WATER={
+ key:"water",name:"水電公司",title:i=>`${i.company?esc(i.company)+" 的":"我的"}${i.sites}工地指揮台`,
+ defaults:{company:"",sites:8,leads:4,workers:24,reportRate:75,abnormal:2,shortage:3,overdue:1},
+ inputs:[
+  {k:"sites",label:"同時施工工地數",min:1,max:20,step:1,unit:"個"},
+  {k:"leads",label:"工地主任／領班人數",min:1,max:20,step:1,unit:"人"},
+  {k:"workers",label:"現場施工人員數",min:1,max:200,step:1,unit:"人"},
+  {k:"reportRate",label:"每日工地回報完成率",min:0,max:100,step:5,unit:"%"},
+  {k:"abnormal",label:"異常工地數",min:0,max:20,step:1,unit:"個",cap:"sites"},
+  {k:"shortage",label:"缺料待辦數",min:0,max:40,step:1,unit:"項"},
+  {k:"overdue",label:"逾期工程數",min:0,max:20,step:1,unit:"個",cap:"sites"}],
+ asm:{wage:2800,callMin:10,stopDay:0.5,shortTurn:4,idleRate:0.06,rushFee:800},
+ asmLabels:{wage:["師傅日薪（NT$）",1],callMin:["每個未回報工地，老闆追問耗時（分鐘）",1],stopDay:["缺料時該工地停工（天）",0.1],shortTurn:["每月缺料發生倍數（目前待辦 × ?）",1],idleRate:["派工不順造成的閒置比例",0.01],rushFee:["急件叫料運費（NT$／次）",1]},
+ model(i,res,a){
+  const S=i.sites, A=Math.min(i.abnormal,S), O=Math.min(i.overdue,S), L=Math.max(1,i.leads), W=Math.max(1,i.workers);
+  let reported=Math.round(S*i.reportRate/100), M=i.shortage;
+  if(res.S01) reported=Math.min(S,reported+1);
+  let unrep=S-reported, unrep2=unrep>0?Math.max(1,Math.floor(unrep/2)):0;
+  const crew=W/S, perLead=S/L;
+  let shortSites=Math.min(S,Math.ceil(M/2)), tmrSites=M>0?Math.min(shortSites,Math.ceil(M/3)):0;
+  if(res.S02){ M=Math.max(0,M-Math.ceil(M/3)); tmrSites=0; shortSites=Math.min(S,Math.ceil(M/2)) }
+  const Oeff=res.S03?Math.max(0,O-1):O;
+  const sites=Array.from({length:S},(_,k)=>{const planned=Math.round(30+seedRand(k+S)*60); const late=k<Oeff; const lag=late?Math.round(10+seedRand(k+3)*10):Math.round(seedRand(k+7)*4);
+   return {id:k+1,name:`工地 ${String(k+1).padStart(2,"0")}`,planned,actual:Math.max(0,planned-lag),late,lag,
+    abnormal:k>=Oeff&&k<Oeff+A, short:k>=S-shortSites, tmr:k>=S-tmrSites, unrep:k>=S-unrep&&k<S, unrep2:k>=S-unrep2&&k<S,crew:Math.max(1,Math.round(crew+(seedRand(k)-.5)*2))}});
+  sites.forEach(s=>{s.light=(s.late||s.unrep2||(s.abnormal&&s.tmr))?"red":(s.abnormal||s.short||s.unrep)?"amber":"green"});
+  const avgActual=sites.reduce((x,s)=>x+s.actual,0)/S, avgPlanned=sites.reduce((x,s)=>x+s.planned,0)/S;
+  const idleMan=tmrSites*crew*a.stopDay;
+  const blocked=Math.min(S,tmrSites+unrep2), ready=S-blocked;
+  const delayDays=Oeff?Math.round(sites.filter(s=>s.late).reduce((x,s)=>x+s.lag,0)/Oeff/4):0;
+  const decAbn=Math.ceil(A/2), decShort=tmrSites>0?1:0, decLate=Oeff>0?1:0, decisions=decAbn+decShort+decLate;
+  return {S,A,O:Oeff,L,W,M,reported,unrep,unrep2,crew,perLead,shortSites,tmrSites,idleMan,blocked,ready,delayDays,avgActual,avgPlanned,decAbn,decShort,decLate,decisions,sites,rate:reported/S};
+ },
+ tiles(m){return [
+  {k:"progress",h:"工地進度",big:F.n(m.avgActual)+"%",unit:"平均實際進度",lines:[`預定 ${F.n(m.avgPlanned)}%`,`${m.S-m.O} 個按進度・${m.O} 個落後`],cls:m.O/m.S>=.2?"red":m.O?"amber":"green"},
+  {k:"report",h:"今日回報",big:`${m.reported}/${m.S}`,unit:"工地已回報",lines:[m.unrep?`${m.unrep} 個未回報`:"全部回報",m.unrep2?`${m.unrep2} 個連續 2 天`:"沒有連續未回報"],cls:m.unrep2?"red":m.unrep?"amber":"green"},
+  {k:"crew",h:"人員與派工",big:F.d1(m.crew),unit:"人／工地",lines:[`每位主任管 ${F.d1(m.perLead)} 個工地`,m.idleMan?`明天可能閒置 ${F.d1(m.idleMan)} 人日`:"明天沒有閒置風險"],cls:m.perLead>4?"red":(m.perLead>2.5||m.crew<2||m.idleMan)?"amber":"green"},
+  {k:"material",h:"材料與缺料",big:m.M,unit:"項缺料待辦",lines:[`影響 ${m.shortSites} 個工地`,m.tmrSites?`明天 ${m.tmrSites} 個工地會缺`:"明天不受影響"],cls:m.tmrSites?"red":m.M?"amber":"green"},
+  {k:"decide",h:"老闆待決策",big:m.decisions,unit:"件要你決定",lines:[`異常 ${m.decAbn}・缺料 ${m.decShort}・落後 ${m.decLate}`,"點開看建議"],cls:"hub"},
+  {k:"abnormal",h:"工程異常",big:m.A,unit:"個工地有異常",lines:[m.A?"漏水、圖面不符等":"沒有異常",`燈號紅 ${m.sites.filter(s=>s.light==="red").length}・黃 ${m.sites.filter(s=>s.light==="amber").length}`],cls:m.A>=2?"red":m.A?"amber":"green"},
+  {k:"tomorrow",h:"明日工作",big:`${m.ready}/${m.S}`,unit:"工地可照常施工",lines:[m.blocked?`${m.blocked} 個卡住（缺料或沒回報）`:"全部可開工","依今日回報自動排"],cls:m.blocked/m.S>.3?"red":m.blocked?"amber":"green"},
+  {k:"overdue",h:"逾期事項",big:m.O,unit:"個工程逾期",lines:[m.O?`平均晚 ${m.delayDays} 天`:"沒有逾期",m.O?"點開看調度方案":"按進度"],cls:m.O?"red":"green"},
+  {k:"ai",h:"AI 管理特助",big:"3",unit:"件今日重點",lines:[WATER.assistant(m)[0]?.t||"今天沒有急事","規則式模擬建議"],cls:"ai"}]},
+ detail(k,m){
+  const rows=f=>`<div class="tb"><table><thead><tr><th>工地</th><th>燈號</th><th class="r">預定</th><th class="r">實際</th><th>回報</th><th>缺料</th><th class="r">人力</th></tr></thead><tbody>${m.sites.filter(f).map(s=>`<tr><td>${s.name}</td><td><span class="dot ${s.light}"></span></td><td class="r">${s.planned}%</td><td class="r">${s.actual}%</td><td>${s.unrep2?'<span class="pill red">2 天未回報</span>':s.unrep?'<span class="pill amber">今日未回報</span>':"已回報"}</td><td>${s.tmr?'<span class="pill red">明天缺</span>':s.short?'<span class="pill amber">待叫料</span>':"—"}</td><td class="r">${s.crew}</td></tr>`).join("")||`<tr><td colspan="7" class="muted">沒有</td></tr>`}</tbody></table></div>`;
+  const D={progress:[`平均實際進度 = 各工地實際進度平均；落後工地 = 實際比預定少 10% 以上。`,rows(()=>true)],
+   report:[`回報工地數 = 工地數 × 回報完成率（四捨五入）；未回報中至少一半視為連續 2 天（模擬規則）。`,rows(s=>s.unrep)],
+   crew:[`每工地人力 = 現場人員 ÷ 工地數；主任負荷 = 工地數 ÷ 主任人數，超過 2.5 標黃、超過 4 標紅。明天閒置人日 = 明天缺料工地數 × 每工地人力 × 缺料停工天數。`,rows(()=>true)],
+   material:[`受影響工地 = 缺料待辦 ÷ 2（無條件進位）；明天會缺的工地 = 缺料待辦 ÷ 3（無條件進位）。`,rows(s=>s.short)],
+   decide:[`待決策 = 異常工地 ÷ 2（需要老闆拍板的）＋ 明天缺料是否急件叫料（1 件）＋ 落後工地是否調人（1 件）。`,WATER.assistant(m).map((x,i)=>`<div class="issue"><span class="no">${i+1}</span><span><span class="t">${esc(x.t)}</span><br><span class="m">${esc(x.why)}</span></span><span>${x.scen?`<button class="btn sm" data-scen="${x.scen}">處理</button>`:""}</span></div>`).join("")],
+   abnormal:[`異常工地由客戶輸入；燈號規則：落後、連續 2 天未回報、異常且明天缺料 → 紅；異常、缺料、今日未回報 → 黃。`,rows(s=>s.abnormal||s.light!=="green")],
+   tomorrow:[`可照常施工 = 工地數 −（明天缺料工地 ＋ 連續 2 天未回報工地）。`,rows(s=>s.tmr||s.unrep2)],
+   overdue:[`逾期工地平均延誤天數 = 落後百分比 ÷ 4（模擬：每 4% 約一天工作量）。`,rows(s=>s.late)],
+   ai:[`今日重點依固定規則排序：連續未回報 > 明天缺料 > 進度落後 > 主任負荷過重。這是規則式模擬，不是 AI 模型產生。`,""]};
+  return D[k];
+ },
+ assistant(m){const L=[];
+  if(m.unrep2) L.push({s:90+m.unrep2,t:`${m.unrep2} 個工地連續 2 天沒回報`,why:"看不到現場就不知道有沒有出事，先確認人和進度",scen:"S01",task:"提醒主任並請領班代回報",metric:["回報率",F.pct(m.rate),F.pct(Math.min(1,(m.reported+m.unrep2)/m.S))]});
+  if(m.tmrSites) L.push({s:85+m.tmrSites,t:`明天 ${m.tmrSites} 個工地會缺料`,why:`可能閒置 ${F.d1(m.idleMan)} 人日`,scen:"S02",task:"今天下午急件叫料",metric:["明天閒置人日",F.d1(m.idleMan),"0"]});
+  if(m.O) L.push({s:80+m.O,t:`${m.O} 個工程進度落後`,why:`平均晚 ${m.delayDays} 天`,scen:"S03",task:"加派 2 人 3 天追進度",metric:["落後工程",m.O,Math.max(0,m.O-1)]});
+  if(m.perLead>2.5) L.push({s:60,t:`每位主任管 ${F.d1(m.perLead)} 個工地`,why:"負荷過重，回報和異常處理容易漏",task:"指定領班分擔回報",metric:["每位主任工地數",F.d1(m.perLead),F.d1(m.perLead*.8)]});
+  if(m.A) L.push({s:55+m.A,t:`${m.A} 個工地有異常待處理`,why:"異常沒結案會拖到進度",task:"每件異常指定負責人與期限",metric:["未結異常",m.A,Math.max(0,m.A-1)]});
+  if(!L.length) L.push({s:1,t:"今天沒有急事",why:"維持每日回報即可",task:"維持每日回報",metric:["回報率",F.pct(m.rate),F.pct(m.rate)]});
+  return L.sort((x,y)=>y.s-x.s).slice(0,3)},
+ scenarios:{
+  S01:{title:"工地兩天沒回報",sub:"紅燈 → 看回報紀錄 → 決定怎麼追",build(m,a){const s=m.sites.find(x=>x.unrep2)||m.sites[m.S-1];return {
+   anomaly:`${s.name} 連續 2 天沒有回報，燈號轉紅。最後一次回報是 2 天前 17:40，進度 ${s.actual}%。`,
+   evidence:[["10/27 17:40","主任","今天 2F 配管完成，明天 3F。"],["10/28 16:30","系統","提醒主任回報（未讀）"],["10/29 16:30","系統","再次提醒（已讀未回）"]],
+   causes:[m.perLead>2.5?`主任同時管 ${F.d1(m.perLead)} 個工地，負荷過重（最可能）`:"主任今天在別的工地，沒空回報",`現場人力 ${s.crew} 人，沒有指定代回報的人`,"現場收訊差或師傅不熟回報方式"],
+   options:[{id:"a",t:"系統再提醒，並請領班代回報",c:"成本最低，30 分鐘內有結果",eff:"回報恢復"},{id:"b",t:"老闆直接打給主任",c:`花老闆約 ${a.callMin} 分鐘`,eff:"回報恢復，但下次可能再發生"},{id:"c",t:"明天派人巡場",c:"多花半天人力，確認現場狀況",eff:"確認現場，但慢一天"}],
+   dispatch:o=>({who:o.id==="c"?"行政安排巡場人員":o.id==="b"?"老闆":"系統＋領班",what:o.id==="c"?`明早到 ${s.name} 拍照回報`:`今天 18:00 前補 ${s.name} 回報`,due:o.id==="c"?"明天 10:00":"今天 18:00"}),
+   verify:o=>({before:[["今日回報",`${m.reported}/${m.S}`],["紅燈工地",m.sites.filter(x=>x.light==="red").length]],after:[["今日回報",`${Math.min(m.S,m.reported+1)}/${m.S}`],["紅燈工地",Math.max(0,m.sites.filter(x=>x.light==="red").length-1)]],text:o.id==="c"?"巡場確認：現場正常施工，主任漏回報。已指定領班每天代回報。":"18:05 收到回報：3F 配管完成 60%，沒有異常。已指定領班為代回報人。"})}}},
+  S02:{title:"明天施工卻缺材料",sub:"缺什麼 → 影響誰 → 怎麼補",build(m,a){const items=["1/2 吋彎頭 ×20 個","4 分 PVC 管 ×10 支","2.0mm² 電線 ×5 捲","給水球閥 ×6 個","排水 S 彎 ×8 個"].slice(0,Math.max(1,Math.min(5,Math.ceil(m.M/2)||1))); const sites=m.sites.filter(x=>x.tmr); const ss=sites.length?sites:[m.sites[0]]; const idle=Math.max(m.idleMan,ss.length*m.crew*a.stopDay);return {
+   anomaly:`明天 ${ss.length} 個工地要用的材料還沒到：${items.join("、")}。`,
+   evidence:ss.map(x=>[x.name,"影響",`${x.crew} 人班組，明天排配管`]),
+   causes:["師傅當天才發現缺，叫料太晚","沒有共用的缺料清單，主任以為行政已叫","材料行週末不送貨"],
+   options:[{id:"a",t:"今天下午急件叫料",c:`運費約 ${F.nt(a.rushFee)}，明早到`,eff:"明天照常施工"},{id:"b",t:"從其他工地調庫存",c:"不用花錢，但要有人跑一趟",eff:"大部分工地照常"},{id:"c",t:"明天改排其他工項",c:"不用叫料，但進度慢一天",eff:"避免閒置，進度順延"}],
+   dispatch:o=>({who:o.id==="b"?"主任安排師傅":"行政",what:o.id==="a"?"今天 15:00 前向材料行急件下單":o.id==="b"?"今天下班前從工地 01 調料":"通知班組明天改做其他工項",due:"今天 17:00"}),
+   verify:o=>({before:[["明天缺料工地",ss.length],["可能閒置人日",F.d1(idle)]],after:[["明天缺料工地",o.id==="c"?ss.length:0],["可能閒置人日",o.id==="c"?"0（改排工項）":"0"]],text:o.id==="a"?`隔天 08:10 材料到場，班組照常施工。避免約 ${F.d1(idle)} 人日閒置（約 ${F.nt(idle*a.wage)}），急件運費 ${F.nt(a.rushFee)}。`:o.id==="b"?"調料完成，只剩 1 項明天中午到。":"班組改做明管固定，進度順延 1 天，沒有閒置。"})}}},
+  S03:{title:"工程進度落後",sub:"預定 vs 實際 → 調度方案",build(m,a){const s=m.sites.filter(x=>x.late).sort((x,y)=>y.lag-x.lag)[0]||{...m.sites[0],lag:12,actual:m.sites[0].planned-12,late:true};const need=Math.max(1,Math.round(s.lag/4));return {
+   anomaly:`${s.name} 預定 ${s.planned}%、實際 ${s.actual}%，落後 ${s.lag}%，約晚 ${need} 天。`,
+   evidence:[["預定進度",`${s.planned}%`,""],["實際進度",`${s.actual}%`,""],["現場人力",`${s.crew} 人`,""]],
+   causes:[s.crew<3?`現場只有 ${s.crew} 人，人力不足（最可能）`:"前期缺料停工一天","業主變更位置，部分重做","雨天影響外牆管線"],
+   options:[{id:"a",t:"加派 2 人 3 天",c:`人力成本約 ${F.nt(2*3*a.wage)}`,eff:`追回約 ${Math.min(need,3)} 天`},{id:"b",t:"週末加班一天",c:`加班費約 ${F.nt(s.crew*a.wage*1.33)}`,eff:"追回約 1 天"},{id:"c",t:"與業主協調延期",c:"不花錢，但要談",eff:"工期順延，避免趕工品質問題"}],
+   dispatch:o=>({who:o.id==="c"?"老闆":"主任",what:o.id==="a"?`從進度超前的工地調 2 人到 ${s.name}`:o.id==="b"?"安排週六加班班組":"約業主說明並確認新完工日",due:"明天"}),
+   verify:o=>({before:[["落後",`${s.lag}%`],["逾期工程",m.O||1]],after:[["落後",o.id==="a"?`${Math.max(0,s.lag-12)}%`:o.id==="b"?`${Math.max(0,s.lag-4)}%`:`${s.lag}%（已延期）`],["逾期工程",o.id==="a"||o.id==="c"?Math.max(0,(m.O||1)-1):(m.O||1)]],text:o.id==="a"?"3 天後實際進度追上預定，燈號轉黃。":o.id==="b"?"週末加班後落後縮小，仍需追蹤。":"業主同意延後 5 天，新完工日已更新到排程。"})}}}},
+ simDefaults:{targetRate:95,shortCut:50,dispatchGain:20},
+ simInputs:[{k:"targetRate",label:"把回報率提高到",min:50,max:100,step:5,unit:"%"},{k:"shortCut",label:"缺料停工減少",min:0,max:100,step:10,unit:"%"},{k:"dispatchGain",label:"派工閒置減少",min:0,max:50,step:5,unit:"%"}],
+ sim(m,s,a){
+  const extra=Math.max(0,Math.round(m.S*s.targetRate/100)-m.reported);
+  const bossH=extra*a.callMin*22/60;
+  const shortMonthly=m.M*a.shortTurn;
+  const stopCost=shortMonthly*a.stopDay*m.crew*a.wage*(s.shortCut/100);
+  const idleCost=m.W*22*a.wage*a.idleRate*(s.dispatchGain/100);
+  return {rows:[["老闆每月少花在追問的時間",F.d1(bossH)+" 小時",`多回報 ${extra} 個工地 × ${a.callMin} 分鐘 × 22 天`],
+   ["每月減少缺料停工成本",F.nt(stopCost),`缺料 ${m.M} 項 × ${a.shortTurn}（每月發生倍數）× ${a.stopDay} 天 × ${F.d1(m.crew)} 人 × ${F.nt(a.wage)} × ${s.shortCut}%`],
+   ["每月減少派工閒置成本",F.nt(idleCost),`${m.W} 人 × 22 天 × ${F.nt(a.wage)} × 閒置 ${F.pct(a.idleRate)} × ${s.dispatchGain}%`]],total:stopCost+idleCost};
+ }
+};
+
+/* =================== 產業模組：營造 =================== */
+const BUILD={
+ key:"build",name:"營造公司",title:i=>`${i.company?esc(i.company)+" 的":"我的"}工程管理戰情室`,
+ defaults:{company:"",projects:5,contract:12000,progress:45,budgetExec:47,pendingBill:600,unsigned:350,trouble:1},
+ inputs:[
+  {k:"projects",label:"同時管理工程數",min:1,max:20,step:1,unit:"件"},
+  {k:"contract",label:"工程總合約金額",min:500,max:200000,step:500,unit:"萬",fmt:"wan"},
+  {k:"progress",label:"平均工程進度",min:0,max:100,step:1,unit:"%"},
+  {k:"budgetExec",label:"預算執行比例（已花成本 ÷ 預算）",min:0,max:120,step:1,unit:"%"},
+  {k:"pendingBill",label:"待請款金額（已完成未請）",min:0,max:20000,step:50,unit:"萬",fmt:"wan"},
+  {k:"unsigned",label:"未核准追加減金額",min:0,max:10000,step:50,unit:"萬",fmt:"wan"},
+  {k:"trouble",label:"逾期及異常工程數",min:0,max:20,step:1,unit:"件",cap:"projects"}],
+ asm:{margin:0.12,duration:360,collect:0.85,pay:0.9,penalty:0.001,subShare:0.6},
+ asmLabels:{margin:["目標毛利率",0.01],duration:["平均工期（天）",1],collect:["已請款中已收比例",0.01],pay:["已發生成本中已付比例",0.01],penalty:["逾期罰款（每日，占合約）",0.0001],subShare:["分包占預算比例",0.01]},
+ model(i,res,a){
+  const P=i.projects, C=i.contract, p=i.progress/100, b=i.budgetExec/100, X=Math.min(i.trouble,P);
+  let B=i.pendingBill, V=i.unsigned;
+  /* 進度（獨立）：落後工程拉低進度效率 */
+  let lagPct=X?6+4*Math.min(X,3):0; if(res.S01) lagPct=Math.max(0,lagPct-6);
+  const planned=Math.min(1,p+(X/P)*lagPct/100), SPI=planned?p/planned:1, delayDays=Math.round((planned-p)*a.duration);
+  /* 成本（獨立）：預算 = 合約 ×（1 − 目標毛利）；CPI = 依進度應花 ÷ 實際已花 */
+  const budget=C*(1-a.margin), AC=budget*b, EVcost=budget*p, CPI=AC?EVcost/AC:1, EAC=CPI?budget/CPI:budget, margin=(C-EAC)/C;
+  /* 現金流（獨立）：已完成產值 − 待請款 = 已請款；已收 = 已請 × 收款比例 */
+  if(res.S02) V=V*0.4;
+  const EV=C*p, billed=Math.max(0,EV-B); let received=billed*a.collect; if(res.S03) received=Math.min(billed,received+(billed-received)*0.5);
+  const recv=billed-received, overdueRecv=recv*Math.min(0.7,0.2+(X/P)*0.5)*(res.S03?0.5:1), paid=AC*a.pay, netCash=received-paid;
+  const months=Math.max(1,12*p), monthlyCost=AC/months, coverWeeks=netCash>0?netCash/(monthlyCost/4.33):0;
+  /* 其他格 */
+  const bids=Math.max(1,Math.ceil(P/4)), doubts=3+bids*2;
+  const subTotal=budget*a.subShare, subValued=subTotal*b, subPaid=subValued*0.85, subUnpaid=subValued-subPaid, subFlag=Math.ceil(X/2);
+  const defects=Math.round(P*1.5)+X*2, defectsOver=X;
+  const missingReports=Math.min(P,X), openDecisions=Math.ceil(P*0.8), lateDecisions=X?1:0;
+  const penaltyRisk=X?C/P*a.penalty*delayDays:0;
+  const decisions=(X?1:0)+(V>0?1:0)+(overdueRecv>0?1:0)+(CPI<0.97?1:0);
+  const projects=Array.from({length:P},(_,k)=>{const w=0.6+seedRand(k+P)*0.8; return {id:k+1,name:`工程 ${String.fromCharCode(65+k)}`,w}});
+  const wsum=projects.reduce((x,q)=>x+q.w,0);
+  projects.forEach((q,k)=>{q.contract=C*q.w/wsum; const late=k<X; q.prog=clamp(p*100+(seedRand(k+11)-.5)*20-(late?lagPct:0),0,100); q.plan=clamp(q.prog+(late?lagPct:seedRand(k)*3),0,100); q.late=late; q.light=late?"red":(q.plan-q.prog>3?"amber":"green")});
+  return {P,C,p,b,X,B,V,planned,SPI,delayDays,lagPct,budget,AC,EVcost,CPI,EAC,margin,EV,billed,received,recv,overdueRecv,paid,netCash,monthlyCost,coverWeeks,bids,doubts,subTotal,subValued,subPaid,subUnpaid,subFlag,defects,defectsOver,missingReports,openDecisions,lateDecisions,penaltyRisk,decisions,projects,a};
+ },
+ tiles(m){const a=m.a;return [
+  {k:"progress",h:"工程進度",big:F.pct(m.p),unit:"平均實際進度",lines:[`應達 ${F.pct(m.planned)}・進度指數 ${m.SPI.toFixed(2)}`,m.X?`${m.X} 件落後，約晚 ${m.delayDays} 天`:"全部按進度"],cls:m.SPI<.9?"red":m.SPI<.97?"amber":"green"},
+  {k:"tender",h:"標案與文件",big:m.doubts,unit:"項疑義待確認",lines:[`進行中標案 ${m.bids} 件`,"AI 整理工項與條款"],cls:m.doubts?"amber":"green"},
+  {k:"subs",h:"採購・發包・估驗",big:F.wan(m.subUnpaid),unit:"已估未付",lines:[`分包已估 ${F.wan(m.subValued)}`,m.subFlag?`差異提醒 ${m.subFlag} 件`:"沒有差異"],cls:m.subFlag?"red":"green"},
+  {k:"cash",h:"請款與收款",big:F.wan(m.recv),unit:"已請未收",lines:[`待請款 ${F.wan(m.B)}`,m.overdueRecv>0?`逾期 ${F.wan(m.overdueRecv)}`:"沒有逾期"],cls:m.overdueRecv>m.monthlyCost*.5?"red":m.overdueRecv>0?"amber":"green"},
+  {k:"decide",h:"今日待決策",big:m.decisions,unit:"件要你決定",lines:["落後・追加減・收款・成本","點開看建議"],cls:"hub"},
+  {k:"daily",h:"日報與會議",big:`${m.P-m.missingReports}/${m.P}`,unit:"日報已交",lines:[`待追蹤決議 ${m.openDecisions} 件`,m.lateDecisions?"有逾期決議":"沒有逾期決議"],cls:m.lateDecisions?"red":m.missingReports?"amber":"green"},
+  {k:"safety",h:"工安與品質",big:m.defects,unit:"項缺失未改善",lines:[m.defectsOver?`逾期 ${m.defectsOver} 項`:"沒有逾期","監造巡查與自主檢查"],cls:m.defectsOver?"red":m.defects?"amber":"green"},
+  {k:"change",h:"變更設計與追加減",big:F.wan(m.V),unit:"尚未簽認",lines:[`占合約 ${F.pct(m.V/m.C)}`,m.V>0?"簽認前不能請款":"沒有待簽"],cls:m.V>m.C*.05?"red":m.V>0?"amber":"green"},
+  {k:"cost",h:"成本與毛利",big:F.pct(m.margin),unit:"預估毛利",lines:[`成本效率 ${m.CPI.toFixed(2)}`,`目標 ${F.pct(a.margin)}`],cls:m.margin<.05?"red":m.margin<a.margin-.02?"amber":"green"}]},
+ detail(k,m){const a=m.a;
+  const ptab=`<div class="tb"><table><thead><tr><th>工程</th><th class="r">合約</th><th>進度（線＝應達）</th><th class="r">實際</th><th class="r">應達</th></tr></thead><tbody>${m.projects.map(q=>`<tr><td><span class="dot ${q.light}"></span> ${q.name}</td><td class="r">${F.wan(q.contract)}</td><td style="min-width:90px"><div class="bar"><i style="width:${q.prog}%;background:var(--${q.late?"red":"blue"})"></i><b style="left:${q.plan}%"></b></div></td><td class="r">${F.n(q.prog)}%</td><td class="r">${F.n(q.plan)}%</td></tr>`).join("")}</tbody></table></div>`;
+  const kv=r=>`<div class="kv">${r.map(x=>`<span>${x[0]}</span><span class="num">${x[1]}</span>`).join("")}</div>`;
+  const D={progress:[`進度指數 = 實際進度 ÷ 應達進度；應達進度 = 實際進度 ＋（落後工程 ÷ 工程數）× 平均落後幅度。延誤天數 = 進度差 × 平均工期 ${a.duration} 天。`,ptab],
+   tender:[`疑義數 = 3 ＋ 進行中標案 × 2（模擬規則）；進行中標案 = 工程數 ÷ 4（無條件進位）。`,kv([["進行中標案",m.bids+" 件"],["待確認疑義",m.doubts+" 項"]])],
+   subs:[`分包總額 = 預算 × ${F.pct(a.subShare)}；分包已估 = 分包總額 × 預算執行比例；已付 = 已估 × 85%。`,kv([["分包總額",F.wan(m.subTotal)],["已估驗",F.wan(m.subValued)],["已付款",F.wan(m.subPaid)],["已估未付",F.wan(m.subUnpaid)],["差異提醒",m.subFlag+" 件"]])],
+   cash:[`現金流獨立計算：已完成產值 = 合約 × 進度；已請款 = 產值 − 待請款；已收 = 已請款 × ${F.pct(a.collect)}；淨現金 = 已收 − 已付成本（成本 × ${F.pct(a.pay)}）。`,kv([["已完成產值",F.wan(m.EV)],["待請款",F.wan(m.B)],["已請款",F.wan(m.billed)],["已收款",F.wan(m.received)],["已請未收",F.wan(m.recv)],["其中逾期",F.wan(m.overdueRecv)],["已付成本",F.wan(m.paid)],["淨現金",F.wan(m.netCash)],["每月成本",F.wan(m.monthlyCost)],["淨現金可撐",m.netCash>0?F.d1(m.coverWeeks)+" 週":"已為負，需資金調度"]])],
+   decide:[`待決策 = 有落後工程（1）＋ 有未簽追加減（1）＋ 有逾期應收（1）＋ 成本效率低於 0.97（1）。`,BUILD.assistant(m).map((x,i)=>`<div class="issue"><span class="no">${i+1}</span><span><span class="t">${esc(x.t)}</span><br><span class="m">${esc(x.why)}</span></span><span>${x.scen?`<button class="btn sm" data-scen="${x.scen}">處理</button>`:""}</span></div>`).join("")],
+   daily:[`缺交日報 = 逾期及異常工程數（不超過工程數）；待追蹤決議 = 工程數 × 0.8（無條件進位）。`,kv([["日報已交",`${m.P-m.missingReports}/${m.P}`],["待追蹤決議",m.openDecisions+" 件"],["逾期決議",m.lateDecisions+" 件"]])],
+   safety:[`缺失 = 工程數 × 1.5 ＋ 異常工程 × 2；逾期缺失 = 異常工程數（模擬規則）。工安是否合格由人判斷。`,kv([["未改善缺失",m.defects+" 項"],["逾期",m.defectsOver+" 項"]])],
+   change:[`未簽認追加減由客戶輸入；簽認前不能列入請款，所以同時是請款風險。`,kv([["未簽認",F.wan(m.V)],["占合約",F.pct(m.V/m.C)]])],
+   cost:[`成本獨立計算：預算 = 合約 ×（1 − 目標毛利 ${F.pct(a.margin)}）；已花 = 預算 × 執行比例；依進度應花 = 預算 × 進度；成本效率 = 應花 ÷ 已花；預估總成本 = 預算 ÷ 成本效率；預估毛利 =（合約 − 預估總成本）÷ 合約。`,kv([["合約",F.wan(m.C)],["預算",F.wan(m.budget)],["已花成本",F.wan(m.AC)],["依進度應花",F.wan(m.EVcost)],["成本效率",m.CPI.toFixed(2)],["預估總成本",F.wan(m.EAC)],["預估毛利",F.pct(m.margin)]])]};
+  return D[k];
+ },
+ assistant(m){const L=[];
+  if(m.X) L.push({s:90+m.X,t:`${m.X} 件工程落後，約晚 ${m.delayDays} 天`,why:m.penaltyRisk?`若逾期，罰款風險約 ${F.wan(m.penaltyRisk)}`:"影響後續請款期程",scen:"S01",task:"落後工程增派班組並每日追蹤",metric:["進度指數",m.SPI.toFixed(2),Math.min(1,m.SPI+.04).toFixed(2)]});
+  if(m.V>0) L.push({s:80+Math.min(15,m.V/m.C*100),t:`追加減 ${F.wan(m.V)} 尚未簽認`,why:"已施作卻沒簽，就不能請款",scen:"S02",task:"整理變更單與照片送業主簽認",metric:["未簽認",F.wan(m.V),F.wan(m.V*.4)]});
+  if(m.overdueRecv>0) L.push({s:78+Math.min(15,m.overdueRecv/m.monthlyCost*10),t:`逾期應收 ${F.wan(m.overdueRecv)}`,why:m.netCash>0?`淨現金約可撐 ${F.d1(m.coverWeeks)} 週`:"淨現金已為負",scen:"S03",task:"發催收函並約業主財務窗口",metric:["逾期應收",F.wan(m.overdueRecv),F.wan(m.overdueRecv*.5)]});
+  if(m.CPI<0.97) L.push({s:75,t:`成本效率 ${m.CPI.toFixed(2)}，預估毛利 ${F.pct(m.margin)}`,why:"花得比進度快，毛利會被吃掉",task:"逐項檢查超支科目",metric:["預估毛利",F.pct(m.margin),F.pct(m.margin+.02)]});
+  if(m.defectsOver) L.push({s:70,t:`${m.defectsOver} 項工安品質缺失逾期`,why:"可能被監造開罰或停工",task:"指定改善負責人與期限",metric:["逾期缺失",m.defectsOver,0]});
+  if(!L.length) L.push({s:1,t:"今天沒有急事",why:"維持日報與週會",task:"維持日報",metric:["進度指數",m.SPI.toFixed(2),m.SPI.toFixed(2)]});
+  return L.sort((x,y)=>y.s-x.s).slice(0,3)},
+ scenarios:{
+  S01:{title:"工程進度落後",sub:"進度落差 → 工期影響 → 處理",build(m,a){const q=m.projects.filter(x=>x.late)[0]||{...m.projects[0],plan:m.projects[0].prog+10};const gap=Math.max(1,Math.round(q.plan-q.prog)), days=Math.round(gap/100*a.duration), pen=q.contract*a.penalty*days;return {
+   anomaly:`${q.name} 應達 ${F.n(q.plan)}%、實際 ${F.n(q.prog)}%，落後 ${gap}%，約影響工期 ${days} 天。`,
+   evidence:[["合約金額",F.wan(q.contract),""],["若逾期罰款（每日千分之一）",F.wan(pen),`以 ${days} 天估`],["最近日報","鋼筋班 2 天未到齊",""]],
+   causes:["鋼筋分包人力不足（最可能）","材料送審延誤，等核可才能施作","天候影響外部作業"],
+   options:[{id:"a",t:"要求分包增派班組，每日回報",c:"不增加成本，需談判",eff:"兩週追回一半落後"},{id:"b",t:"調整工序，先做不受影響的項目",c:"不花錢，排程要重排",eff:"減少閒置，落後縮小"},{id:"c",t:"與業主協調工期展延",c:"需正當理由與書面",eff:"避免罰款，但影響信譽"}],
+   dispatch:o=>({who:o.id==="c"?"老闆＋工務":"工地主任",what:o.id==="a"?"今天通知分包，明天起每日回報人數":o.id==="b"?"重排兩週工序並通知各班組":"準備展延申請與佐證",due:"明天"}),
+   verify:o=>({before:[["落後",`${gap}%`],["工期影響",`${days} 天`]],after:[["落後",o.id==="c"?`${gap}%（已申請展延）`:`${Math.round(gap/2)}%`],["工期影響",o.id==="c"?"0 天（展延核准後）":`${Math.round(days/2)} 天`]],text:o.id==="a"?"分包增派 1 組，兩週後落後減半，燈號轉黃。":o.id==="b"?"工序調整後閒置減少，落後縮小。":"業主收件審查中，系統每週追蹤回覆。"})}}},
+  S02:{title:"追加減尚未簽認",sub:"未簽金額 → 請款風險 → 追蹤",build(m,a){const V=Math.max(m.V,50), parts=[0.5,0.3,0.2].map((r,k)=>({n:["機電管線改道","地坪材質變更","外牆開口增設"][k],v:V*r,d:[35,21,12][k]}));return {
+   anomaly:`有 ${F.wan(V)} 追加減還沒簽認，其中最久的已施作 35 天。`,
+   evidence:parts.map(x=>[x.n,F.wan(x.v),`已施作 ${x.d} 天`]),
+   causes:["現場口頭同意，沒有書面變更單","變更單缺照片與數量計算","業主內部簽核流程慢"],
+   options:[{id:"a",t:"一週內補齊變更單與照片送簽",c:"工務 1–2 天工時",eff:"約 6 成可在本期簽認"},{id:"b",t:"老闆直接約業主主管",c:"老闆半天",eff:"大額項目優先處理"},{id:"c",t:"先暫停相關追加施作",c:"可能影響關係",eff:"不再擴大未簽金額"}],
+   dispatch:o=>({who:o.id==="b"?"老闆":"工務",what:o.id==="a"?"整理 3 份變更單（數量、單價、照片）送業主":o.id==="b"?"約業主工程主管確認大額變更":"通知現場暫停追加項目",due:"一週內"}),
+   verify:o=>({before:[["未簽認",F.wan(V)],["可請款",F.wan(0)]],after:[["未簽認",F.wan(o.id==="c"?V:V*.4)],["可請款",F.wan(o.id==="c"?0:V*.6)]],text:o.id==="c"?"未簽金額不再增加，但既有金額仍待簽。":`簽回 ${F.wan(V*.6)}，列入下一期請款。`})}}},
+  S03:{title:"已請款但尚未收款",sub:"應收 → 逾期 → 資金壓力 → 催收",build(m,a){const od=Math.max(m.overdueRecv,m.recv*.3,10);return {
+   anomaly:`已請未收 ${F.wan(m.recv)}，其中 ${F.wan(od)} 已逾期，最久 45 天。`,
+   evidence:[["已請未收",F.wan(m.recv),""],["逾期金額",F.wan(od),"18–45 天"],["淨現金",F.wan(m.netCash),m.netCash>0?`約可撐 ${F.d1(m.coverWeeks)} 週`:"已為負"]],
+   causes:["業主估驗審查退件，未通知我方","發票或請款文件不齊","業主資金調度延後付款"],
+   options:[{id:"a",t:"今天發催收函並 LINE 提醒財務窗口",c:"成本低",eff:"約一半逾期款兩週內入帳"},{id:"b",t:"老闆親自拜訪業主",c:"老闆半天",eff:"大額款項優先"},{id:"c",t:"與銀行洽談短期週轉",c:"利息成本",eff:"先解資金壓力"}],
+   dispatch:o=>({who:o.id==="b"?"老闆":"會計",what:o.id==="a"?"發催收函、確認文件是否齊全":o.id==="b"?"約業主財務主管":"準備應收帳款明細洽銀行",due:"本週"}),
+   verify:o=>({before:[["逾期應收",F.wan(od)],["淨現金可撐",m.netCash>0?F.d1(m.coverWeeks)+" 週":"負"]],after:[["逾期應收",F.wan(o.id==="c"?od:od*.5)],["淨現金可撐",o.id==="c"?"＋短期週轉":(m.netCash+od*.5>0?F.d1((m.netCash+od*.5)/(m.monthlyCost/4.33))+" 週":"負")]],text:o.id==="c"?"週轉額度核准，應收仍需持續催收。":`兩週內入帳 ${F.wan(od*.5)}，其餘排入下週追蹤。`})}}}},
+ simDefaults:{costCut:2,cycleCut:15,signRate:60},
+ simInputs:[{k:"costCut",label:"剩餘工程成本降低",min:0,max:10,step:0.5,unit:"%"},{k:"cycleCut",label:"請款週期縮短",min:0,max:45,step:5,unit:"天"},{k:"signRate",label:"追加減簽認比例",min:0,max:100,step:10,unit:"%"}],
+ sim(m,s,a){
+  const remain=Math.max(0,m.EAC-m.AC), costSave=remain*s.costCut/100;
+  const dailyBill=m.EV/Math.max(30,a.duration*m.p), cashEarly=dailyBill*s.cycleCut;
+  const billable=m.V*s.signRate/100;
+  return {rows:[["毛利增加",F.wan(costSave),`剩餘成本（預估總成本 ${F.wan(m.EAC)} − 已花 ${F.wan(m.AC)}）× ${s.costCut}%`],
+   ["現金提前入帳",F.wan(cashEarly),`每日完成產值 ${F.wan(dailyBill)}（產值 ÷ 已施工天數）× 縮短 ${s.cycleCut} 天`],
+   ["追加減可請款",F.wan(billable),`未簽 ${F.wan(m.V)} × ${s.signRate}%`]],total:null,unit:"萬"};
+ }
+};
+const MODS={water:WATER,build:BUILD};
+
+/* =================== 共用框架：畫面 =================== */
+function vHome(){
+  return `<section class="hero"><h2>30 秒，換成你的公司</h2><p class="lede">不用登入、不用填真實工程資料。調幾個數字，就能看到你的公司由 AI 管理團隊協助時，每天老闆會看到什麼、會先處理哪三件事。</p></section>
+  <div class="entries">
+   <button class="entry" data-ind="water"><b>換成我的水電公司</b><span>工地數、主任與師傅人數、回報率、缺料、逾期……立刻生成你的工地指揮台九宮格與三個情境。</span><i>開始 →</i></button>
+   <button class="entry" data-ind="build"><b>換成我的營造公司</b><span>工程數、合約規模、進度、預算執行、請款與追加減……立刻生成你的工程管理戰情室。</span><i>開始 →</i></button>
+  </div>
+  <p class="note">畫面上的數字全部依你輸入的條件模擬產生；建議內容是固定規則產生的模擬建議，沒有接 AI 模型，也不會連到任何真實工程或 LINE 群組。</p>`;
+}
+function vInd(){
+  const M=MODS[ST.view], i=ST.inp[ST.view];
+  return `<nav class="secbar" aria-label="段落"><button class="back" data-home="1">← 換產業</button><button data-jump="sec-cfg">我的公司</button><button data-jump="sec-grid">九宮格</button><button data-jump="sec-scen">三個情境</button><button data-jump="sec-ai">AI 經營特助</button><button data-jump="sec-sim">改善試算</button><button data-jump="sec-next">下一步</button></nav>
+  ${ST.consent==null?`<div class="consent"><b>開始前</b><span>這是模擬體驗頁。為了之後說明時更了解你的需求，我們想記錄你試用了哪些功能（不含你輸入的數字以外的資料），保存 12 個月。不同意也能完整體驗。</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-consent="同意記錄操作">同意記錄操作</button><button class="btn ghost sm" data-consent="只看不記錄">只看不記錄</button></div></div>`:""}
+  <section class="card" id="sec-cfg"><h2 id="indTitle">${M.title(i)}</h2><p class="lede">調整下面的條件，九宮格、情境、特助建議和試算會立即跟著變。不需要真實工程名稱、客戶或合約資料。</p>
+   <label class="fld"><span class="lab">公司名稱（可留空）</span><input type="text" id="in-company" value="${esc(i.company)}" placeholder="例如：大明水電" maxlength="20"></label>
+   <div class="cfg">${M.inputs.map(f=>`<label class="fld"><span class="lab">${f.label}<b id="v-${f.k}">${fv(f,i[f.k])}</b></span><input type="range" id="in-${f.k}" data-in="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${i[f.k]}" aria-label="${f.label}"></label>`).join("")}</div>
+   <span class="clampnote" id="clampNote"></span>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-resetinp="1">恢復預設</button></div></section>
+  <section id="sec-grid" class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>${ST.view==="water"?"工地指揮台九宮格":"工程管理九宮格"}</h2><span class="small muted">點任一格看算法與明細</span></div><div id="gridArea"></div>
+   <div class="legend"><span><span class="dot red"></span>要處理</span><span><span class="dot amber"></span>注意</span><span><span class="dot green"></span>正常</span><span>燈號依固定規則，不靠 AI</span></div></section>
+  <section id="sec-scen" class="card"><h2>三個老闆最常遇到的情境</h2><p class="lede">每個情境走一遍：異常 → 原因 → 建議 → 你的決定 → 派工 → 驗果。用的是你剛才輸入的條件。</p><div class="scens" id="scenArea"></div></section>
+  <section id="sec-ai" class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>AI 經營特助</h2><span class="rule-tag">規則式模擬建議・未接 AI 模型</span></div><div id="aiArea"></div></section>
+  <section id="sec-sim" class="card"><h2>改善試算</h2><p class="lede">拉動改善幅度，看可能的效果。所有金額都附計算方式與假設，可自行修改假設；這是估算，不是保證收益。</p><div id="simArea"></div></section>
+  <section id="sec-next" class="card"><h2>下一步</h2><p class="lede">看完覺得有用，可以選一個方式繼續。</p>
+   <div class="convs"><button class="conv" data-conv="summary"><b>領取管理體檢摘要</b><span>把剛才的九宮格重點整理成一頁，可以留聯絡方式寄給你。</span></button>
+   <button class="conv" data-conv="line"><b>加入 LINE 了解工程 AI 員工</b><span>加官方帳號，看更多工程老闆的使用方式。</span></button>
+   <button class="conv" data-conv="booking"><b>預約專人示範</b><span>專人用你公司的情況，示範每天怎麼用。</span></button></div></section>`;
+}
+const fv=(f,v)=>f.fmt==="wan"?F.wan(v):`${v} ${f.unit}`;
+function curModel(){const k=ST.view;return MODS[k].model(ST.inp[k],ST.resolved[k],ST.asm[k])}
+function renderGrid(){
+  const M=MODS[ST.view], m=curModel();
+  $("#gridArea").innerHTML=`<div class="nine">${M.tiles(m).map(t=>`<button class="tile ${t.cls}" data-tile="${t.k}"><div class="t-h"><h3>${t.h}</h3>${t.cls==="red"?'<span class="pill red">要處理</span>':""}</div><div class="t-big">${t.big}<small>${t.unit}</small></div><div class="t-lines"><div>${t.lines[0]}</div><div class="opt">${t.lines[1]}</div></div></button>`).join("")}</div>`;
+}
+function renderScens(){
+  const M=MODS[ST.view], m=curModel();
+  $("#scenArea").innerHTML=Object.entries(M.scenarios).map(([id,s])=>{const done=ST.resolved[ST.view][id];return `<button class="scen ${done?"done":""}" data-scen="${id}"><span class="small muted">${id}</span><b>${s.title}</b><span class="small muted">${s.sub}</span><span class="steps">${["異常","原因","建議","決策","派工","驗果"].map(x=>`<span class="step ${done?"ok":""}">${x}</span>`).join("")}</span><span class="small" style="color:var(--blue);font-weight:700">${done?"已處理，再看一次 →":"開始體驗 →"}</span></button>`}).join("");
+}
+function renderAI(){
+  const k=ST.view, M=MODS[k], m=curModel(), A=ST.asst[k], top=M.assistant(m);
+  $("#aiArea").innerHTML=`<div><h3>今日最重要的三個問題</h3>${top.map((x,i)=>`<div class="issue"><span class="no">${i+1}</span><span><span class="t">${esc(x.t)}</span><br><span class="m">${esc(x.why)}</span><br><span class="m">建議優先處理：${esc(x.task)}</span></span><span>${x.scen?`<button class="btn ghost sm" data-scen="${x.scen}">看情境</button>`:""}</span></div>`).join("")}</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-asst="dispatch" ${A.tasks.length?"disabled":""}>一鍵模擬派工</button><button class="btn ghost sm" data-asst="day" ${A.tasks.length&&A.day<3?"":"disabled"}>快轉一天</button><button class="btn ghost sm" data-asst="reset" ${A.tasks.length?"":"disabled"}>重來</button></div>
+   ${A.tasks.length?`<div><h3>處理進度（第 ${A.day} 天）</h3><div class="tasks" style="margin-top:6px">${A.tasks.map(t=>{const st=A.day>=t.done?"已完成":A.day>=1?"處理中":"已派工";return `<div class="task"><span><b>${esc(t.task)}</b><br><span class="small muted">負責：${esc(t.who)}</span></span><span class="pill ${st==="已完成"?"green":st==="處理中"?"blue":"grey"}">${st}</span></div>`}).join("")}</div></div>
+   <div><h3>改善結果</h3><div class="cmp" style="margin-top:6px">${A.tasks.map(t=>`<div><span>${esc(t.metric[0])}</span><b>${A.day>=t.done?`${esc(t.metric[1])} → ${esc(t.metric[2])}`:esc(t.metric[1])}</b></div>`).join("")}</div>${A.day>=3?`<p class="note" style="margin-top:8px">三天後的模擬結果。正式使用時，這些數字來自每天的回報與系統紀錄。</p>`:""}</div>`:""}`;
+}
+function renderSim(){
+  const k=ST.view, M=MODS[k], m=curModel(), s=ST.sim[k], a=ST.asm[k], r=M.sim(m,s,a);
+  $("#simArea").innerHTML=`<div class="simgrid"><div class="cfg" style="grid-template-columns:1fr">${M.simInputs.map(f=>`<label class="fld"><span class="lab">${f.label}<b id="sv-${f.k}">${s[f.k]} ${f.unit}</b></span><input type="range" data-sim="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${s[f.k]}" aria-label="${f.label}"></label>`).join("")}</div>
+   <div class="res" id="simRes">${simRes(r)}</div></div>
+   <details><summary class="small" style="cursor:pointer">修改計算假設</summary><div class="asm-edit" style="margin-top:8px">${Object.entries(M.asmLabels).map(([key,[lab,st]])=>`<label>${lab}<input type="text" inputmode="decimal" data-asm="${key}" value="${a[key]}"></label>`).join("")}</div></details>`;
+}
+function simRes(r){return r.rows.map(x=>`<div class="resrow"><span>${x[0]}<div class="asm">${esc(x[2])}</div></span><b>${x[1]}</b></div>`).join("")+(r.total!=null?`<div class="resrow"><span><b>每月可能減少的成本合計</b></span><b>${F.nt(r.total)}</b></div>`:"")+`<p class="note">估算，不是保證收益。實際效果要看導入後的回報與紀錄。</p>`}
+function refresh(){ if(!MODS[ST.view]) return; const M=MODS[ST.view], i=ST.inp[ST.view];
+  $("#indTitle").innerHTML=M.title(i);
+  const caps=M.inputs.filter(f=>f.cap&&i[f.k]>i[f.cap]).map(f=>f.label); $("#clampNote").textContent=caps.length?`${caps.join("、")}超過${M.inputs.find(f=>f.k===M.inputs.find(x=>x.cap).cap).label}，以上限計算`:"";
+  renderGrid(); renderScens(); renderAI(); renderSim(); }
+function render(){
+  $("#main").innerHTML=ST.view==="home"?vHome():vInd();
+  if(ST.view!=="home") refresh();
+  renderDrawer(); if(ST.dev) renderDev();
+}
+
+/* =================== 共用框架：情境流程（異常 → 原因 → 建議 → 決策 → 派工 → 驗果） =================== */
+const STEPS=["異常","原因","建議","決策","派工","驗果"];
+function scenBody(){
+  const sc=ST.scen, M=MODS[sc.ind], m=MODS[sc.ind].model(ST.inp[sc.ind],{...ST.resolved[sc.ind],[sc.id]:false},ST.asm[sc.ind]), S=M.scenarios[sc.id], d=S.build(m,ST.asm[sc.ind]);
+  const o=d.options.find(x=>x.id===sc.choice);
+  const blocks=[
+   `<div class="card" style="border-left:5px solid var(--red)"><h3>① 異常</h3><b>${esc(d.anomaly)}</b><div style="display:flex;flex-direction:column;gap:6px">${d.evidence.map(e=>`<div class="msg"><div class="who">${esc(e[0])}</div>${esc(e[1])}${e[2]?"・"+esc(e[2]):""}</div>`).join("")}</div></div>`,
+   `<div class="card"><h3>② 可能原因（依規則排序）</h3><ol style="margin:0;padding-left:20px">${d.causes.map(c=>`<li>${esc(c)}</li>`).join("")}</ol></div>`,
+   `<div class="card"><h3>③ 建議方案</h3>${d.options.map(x=>`<button class="opt" data-opt="${x.id}" aria-pressed="${sc.choice===x.id}"><b>${esc(x.t)}</b><small>${esc(x.c)}・預期：${esc(x.eff)}</small></button>`).join("")}<span class="rule-tag" style="align-self:flex-start">規則式模擬建議</span></div>`,
+   o?`<div class="card"><h3>④ 老闆決策</h3><b>你選擇：${esc(o.t)}</b><span class="small muted">決策時間與內容會留紀錄，之後可回頭看效果。</span></div>`:"",
+   o&&sc.step>=4?(()=>{const t=d.dispatch(o);return `<div class="card"><h3>⑤ 派工</h3><div class="kv"><span>負責</span><span>${esc(t.who)}</span><span>工作</span><span>${esc(t.what)}</span><span>期限</span><span>${esc(t.due)}</span></div><span class="small muted">正式版會用 LINE 通知負責人，到期未完成會提醒（本版不發送）。</span></div>`})():"",
+   o&&sc.step>=5?(()=>{const v=d.verify(o);return `<div class="card" style="border-left:5px solid var(--green)"><h3>⑥ 驗果</h3><p style="margin:0">${esc(v.text)}</p><div class="cmp">${v.before.map((b,i)=>`<div><span>${esc(b[0])}</span><b>${esc(String(b[1]))} → ${esc(String(v.after[i][1]))}</b></div>`).join("")}</div></div>`})():""];
+  const showUpto=sc.step<=2?sc.step:sc.step;
+  return `<div class="steps">${STEPS.map((x,i)=>`<span class="step ${i<sc.step?"ok":i===sc.step?"on":""}">${x}</span>`).join("")}</div>
+   <div class="flowbox">${blocks.slice(0,Math.min(showUpto+1,6)).join("")}</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">${sc.step<2?`<button class="btn" data-next="1">下一步：${STEPS[sc.step+1]}</button>`:sc.step===2?`<button class="btn" data-next="1" ${sc.choice?"":"disabled"}>${sc.choice?"確定這個決策":"先選一個方案"}</button>`:sc.step<5?`<button class="btn" data-next="1">下一步：${STEPS[sc.step+1]}</button>`:`<button class="btn" data-scenclose="1">完成，回到九宮格</button><button class="btn ghost" data-conv="booking">想用在我的公司</button>`}</div>`;
+}
+
+/* =================== 共用框架：轉換、抽屜、開發檢視 =================== */
+function summaryText(){
+  const k=ST.view, M=MODS[k], m=curModel(), i=ST.inp[k];
+  return `${i.company||"你的公司"}｜管理體檢摘要（模擬）\n`+M.tiles(m).filter(t=>t.k!=="ai").map(t=>`・${t.h}：${String(t.big).replace(/<[^>]+>/g,"")} ${t.unit}${t.cls==="red"?"（要處理）":""}`).join("\n")+`\n\n今日三件事：\n`+M.assistant(m).map((x,n)=>`${n+1}. ${x.t} → ${x.task}`).join("\n")+`\n\n＊依輸入條件模擬，建議為規則式模擬。`;
+}
+function convBody(kind){
+  const consentBox=`<label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cv-agree"> 我同意你們用這個聯絡方式和我聯繫，說明工程 AI 員工。資料保存 12 個月，可隨時要求刪除。</label>`;
+  if(kind==="summary") return `<pre style="white-space:pre-wrap;font-family:var(--body);background:var(--sunk);border-radius:10px;padding:12px;margin:0;font-size:14px">${esc(summaryText())}</pre>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-copysum="1">複製摘要</button></div>
+   <h3>想寄給自己？（選填）</h3><input type="text" id="cv-contact" placeholder="LINE ID 或 Email">${consentBox}<button class="btn" data-cvsend="summary">寄給我</button><p class="note">不留也可以，上面的摘要已經可以直接複製。</p>`;
+  if(kind==="line") return `<p style="margin:0">搜尋官方帳號 ID，或用手機開啟連結加入：</p><div class="kv"><span>官方帳號 ID</span><span><b>@你的官方帳號</b>（正式版替換）</span><span>連結</span><span>https://line.me/R/ti/p/@你的官方帳號</span></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-cvsend="line">我已加入</button></div><p class="note">原型不會開啟真實 LINE。按下後只記錄一次「點選加入 LINE」事件。</p>`;
+  return `<label class="fld"><span class="lab">怎麼稱呼（選填）</span><input type="text" id="cv-name" placeholder="例如：王老闆"></label><label class="fld"><span class="lab">聯絡方式</span><input type="text" id="cv-contact" placeholder="電話、LINE ID 或 Email"></label><label class="fld"><span class="lab">方便的時間</span><select id="cv-time"><option>平日上午</option><option>平日下午</option><option>平日晚上</option><option>週末</option></select></label>${consentBox}<button class="btn" data-cvsend="booking">送出預約</button>`;
+}
+function renderDrawer(){
+  const d=ST.drawer; if(!d){$("#layer").innerHTML="";return}
+  let h="",b="";
+  if(d.kind==="tile"){const M=MODS[ST.view], m=curModel(), t=M.tiles(m).find(x=>x.k===d.k), det=M.detail(d.k,m); h=t.h; b=`<div class="t-big" style="font-size:34px">${t.big}<small>${t.unit}</small></div><p class="note"><b>怎麼算：</b>${det[0]}</p>${det[1]||""}`}
+  if(d.kind==="scen"){const S=MODS[ST.scen.ind].scenarios[ST.scen.id]; h=`${ST.scen.id}｜${S.title}`; b=scenBody()}
+  if(d.kind==="conv"){h={summary:"管理體檢摘要",line:"加入 LINE",booking:"預約專人示範"}[d.k]; b=convBody(d.k)}
+  $("#layer").innerHTML=`<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(h)}"><div class="dr-h"><h2 style="font-size:18px">${esc(h)}</h2><button class="x" data-close="1" aria-label="關閉">×</button></div><div class="dr-b" id="drb">${b}</div></aside>`;
+}
+function renderDev(){
+  let el=$("#devPanel"); if(!ST.dev){ if(el) el.remove(); return }
+  if(!el){el=document.createElement("section");el.id="devPanel";el.className="card";el.style.margin="0 0 16px";$("#main").prepend(el)}
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="font-size:17px">開發檢視：來源歸因與事件</h2><span class="small muted">客戶看不到這一塊</span></div>
+   <label class="fld"><span class="lab">模擬來源（正式版由專屬連結碼決定）</span><select id="srcSel">${Object.entries(SRC).map(([k,v])=>`<option value="${k}" ${ST.source===k?"selected":""}>${v.label}</option>`).join("")}</select></label>
+   <div class="kv"><span>session</span><span>${ST.session}</span><span>同意</span><span>${ST.consent||"尚未選擇"}</span><span>留資</span><span>${ST.leads.length} 筆（${ST.leads.map(l=>l.kind).join("、")||"—"}）</span></div>
+   <div style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto">${ST.events.map(e=>`<div class="ev"><span>${e.t}</span><span><code>${e.type}</code> ${esc(e.data)}<br><span class="muted">來源：${SRC[e.src].label}</span></span><span class="pill ${e.ok?"green":"grey"}">${e.ok?"記錄":"不記錄"}</span></div>`).join("")||`<span class="small muted">還沒有事件。</span>`}</div>`;
+}
+
+/* =================== 事件處理 =================== */
+document.addEventListener("input",e=>{const t=e.target;
+  if(t.dataset.in){const k=ST.view, f=MODS[k].inputs.find(x=>x.k===t.dataset.in); ST.inp[k][f.k]=Number(t.value); $("#v-"+f.k).textContent=fv(f,ST.inp[k][f.k]); refresh(); clearTimeout(track.t1); track.t1=setTimeout(()=>track("customize",`${k}:${f.k}=${t.value}`),600); return}
+  if(t.id==="in-company"){ST.inp[ST.view].company=t.value.slice(0,20); $("#indTitle").innerHTML=MODS[ST.view].title(ST.inp[ST.view]); return}
+  if(t.dataset.sim){const k=ST.view, f=MODS[k].simInputs.find(x=>x.k===t.dataset.sim); ST.sim[k][f.k]=Number(t.value); $("#sv-"+f.k).textContent=`${t.value} ${f.unit}`; $("#simRes").innerHTML=simRes(MODS[k].sim(curModel(),ST.sim[k],ST.asm[k])); clearTimeout(track.t2); track.t2=setTimeout(()=>track("simulator_use",`${k}:${f.k}=${t.value}`),600); return}
+  if(t.dataset.asm){const k=ST.view, v=Number(t.value); if(!Number.isNaN(v)&&v>=0){ST.asm[k][t.dataset.asm]=v; renderGrid(); renderScens(); renderAI(); $("#simRes").innerHTML=simRes(MODS[k].sim(curModel(),ST.sim[k],ST.asm[k]))} return}
+});
+document.addEventListener("change",e=>{ if(e.target.id==="srcSel"){ST.source=e.target.value; track("source_set",ST.source); toast("已切換模擬來源")} });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ST.drawer){ST.drawer=null;renderDrawer()} });
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button"); if(!t) return; const d=t.dataset;
+  if(t.id==="devBtn"){ST.dev=!ST.dev; t.setAttribute("aria-pressed",ST.dev); renderDev(); return}
+  if(d.ind){ST.view=d.ind; render(); window.scrollTo({top:0}); track("page_open",`${d.ind}${ST.source!=="direct"?"・夥伴連結":""}`); return}
+  if(d.home){ST.view="home"; ST.drawer=null; render(); window.scrollTo({top:0}); return}
+  if(d.jump){const el=document.getElementById(d.jump); if(el){window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-56,behavior:"smooth"})} return}
+  if(d.consent){ST.consent=d.consent; track("consent",d.consent); render(); return}
+  if(d.resetinp){ST.inp[ST.view]={...MODS[ST.view].defaults}; ST.resolved[ST.view]={}; ST.asst[ST.view]={tasks:[],day:0}; render(); return}
+  if(d.close){ST.drawer=null; renderDrawer(); return}
+  if(d.tile){ST.drawer={kind:"tile",k:d.tile}; renderDrawer(); track("grid_open",`${ST.view}:${d.tile}`); return}
+  if(d.scen){ST.scen={ind:ST.view,id:d.scen,step:0,choice:null}; ST.drawer={kind:"scen"}; renderDrawer(); track("scenario_open",`${ST.view}:${d.scen}`); return}
+  if(d.opt){ST.scen.choice=d.opt; $("#drb").innerHTML=scenBody(); return}
+  if(d.next){const sc=ST.scen; if(sc.step===2&&!sc.choice) return; sc.step=Math.min(5,sc.step+(sc.step===2?2:1)); $("#drb").innerHTML=scenBody(); $("#drb").scrollTop=$("#drb").scrollHeight;
+    if(sc.step===4) track("scenario_decision",`${sc.ind}:${sc.id}:${sc.choice}`);
+    if(sc.step===5){ST.resolved[sc.ind][sc.id]=true; track("scenario_complete",`${sc.ind}:${sc.id}`); refresh()} return}
+  if(d.scenclose){ST.drawer=null; ST.scen=null; renderDrawer(); toast("九宮格已依處理結果更新"); return}
+  if(d.asst){const k=ST.view, A=ST.asst[k];
+    if(d.asst==="dispatch"){const m=curModel(); A.tasks=MODS[k].assistant(m).map((x,n)=>({task:x.task,who:k==="water"?["主任","行政","老闆"][n%3]:["工務","會計","老闆"][n%3],metric:x.metric,done:n+1})); A.day=0; track("assistant_dispatch",k)}
+    if(d.asst==="day"){A.day=Math.min(3,A.day+1); if(A.day===3) track("assistant_result",k)}
+    if(d.asst==="reset"){A.tasks=[];A.day=0}
+    renderAI(); return}
+  if(d.conv){ST.drawer={kind:"conv",k:d.conv}; renderDrawer(); track(d.conv==="summary"?"summary_open":d.conv==="line"?"line_open":"booking_open",ST.view); return}
+  if(d.copysum){try{await navigator.clipboard.writeText(summaryText()); toast("已複製摘要")}catch(err){toast("請長按摘要文字手動複製")} track("summary_request","copy"); return}
+  if(d.cvsend){const kind=d.cvsend;
+    if(kind==="line"){track("line_join_click",ST.view); ST.drawer=null; renderDrawer(); toast("已記錄（模擬，未開啟 LINE）"); return}
+    const contact=($("#cv-contact")?.value||"").trim(), agree=$("#cv-agree")?.checked;
+    if(!contact){toast("請填聯絡方式"); return}
+    if(!agree){toast("留聯絡方式需要勾選同意"); return}
+    ST.leads.push({kind:kind==="summary"?"索取摘要":"預約示範",ind:ST.view,src:ST.source,consent:true});
+    track(kind==="summary"?"summary_request":"booking_submit",`${ST.view}・已同意聯繫${ST.source!=="direct"?"・歸因 "+ST.source:""}`);
+    ST.drawer=null; renderDrawer(); toast(kind==="summary"?"已收到，摘要會寄給你（模擬，未發送）":"已收到預約，專人會聯繫你（模擬，未發送）"); return}
+});
+ST=freshState(); render();
+</script>
