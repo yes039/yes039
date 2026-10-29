@@ -178,7 +178,7 @@ td{padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap} td.r,
 <header class="top"><div class="wrap">
   <h1>工程 AI <span class="tape">管理團隊體驗</span></h1>
   <span class="demo">G2 開發版・模擬資料・建議為規則式模擬</span>
-  <div class="hdr-r"><button class="btn ghost sm" id="devBtn" aria-pressed="false">開發檢視</button></div>
+  <div class="hdr-r"><span class="pill grey" id="codeChip" hidden></span><button class="btn ghost sm" id="devBtn" aria-pressed="false">觀察紀錄</button></div>
 </div></header>
 <main><div class="wrap" id="main"></div></main>
 <div id="layer"></div><div id="toastBox"></div>
@@ -190,17 +190,20 @@ const F={n:x=>Math.round(x).toLocaleString("zh-TW"),d1:x=>(Math.round(x*10)/10).
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const $=s=>document.querySelector(s);
-const SRC={direct:{label:"直接進入（無推薦）"},P001:{label:"推薦夥伴 P001 阿明（水電材料行）",ind:"water"},P002:{label:"推薦夥伴 P002 小華（水電師傅）",ind:"water"},P101:{label:"推薦夥伴 P101 吳經理（建材商）",ind:"build"}};
+const SRC={direct:{label:"直接進入（無推薦）"},P001:{label:"推薦夥伴 P001 阿明（水電材料行）",ind:"water"},P002:{label:"推薦夥伴 P002 小華（水電師傅）",ind:"water"},P101:{label:"推薦夥伴 P101 吳經理（建材商）",ind:"build"},
+  TW1:{label:"測試者 TW1（水電第一輪）",ind:"water",tester:1},TW2:{label:"測試者 TW2（水電第一輪）",ind:"water",tester:1},TB1:{label:"測試者 TB1（營造第一輪）",ind:"build",tester:1},TB2:{label:"測試者 TB2（營造第一輪）",ind:"build",tester:1}};
+/* 測試入口：只讀網址 #代碼（例 #TW1、#P001），代碼不含任何個資，也不是登入憑證 */
+function applyHash(){const raw=decodeURIComponent(location.hash.slice(1)).trim().toUpperCase(); if(!raw) return "none"; if(!SRC[raw]||raw==="DIRECT") return "invalid"; ST.source=raw; ST.code=raw; if(SRC[raw].ind) ST.view=SRC[raw].ind; return "ok"}
 let ST;
 function freshState(){return {view:"home",consent:null,source:"direct",session:"s-"+Math.random().toString(36).slice(2,8),events:[],dev:false,
   inp:{water:{...MODS.water.defaults},build:{...MODS.build.defaults}},asm:{water:{...MODS.water.asm},build:{...MODS.build.asm}},
   resolved:{water:{},build:{}},sim:{water:{...MODS.water.simDefaults},build:{...MODS.build.simDefaults}},asst:{water:{tasks:[],day:0,base:null},build:{tasks:[],day:0,base:null}},
-  scen:null,drawer:null,leads:[]}}
+  scen:null,drawer:null,leads:[],code:null,t0:Date.now()}}
 /* 事件：開啟與客戶主動送出的轉換永遠記錄；其餘互動需同意 */
 function track(type,data){
-  const always=["page_open","consent","summary_request","line_join_click","booking_submit"];
+  const always=["page_open","consent","summary_request","booking_intent","line_interest","card_save","invalid_code"];
   const ok=always.includes(type)||ST.consent==="同意記錄操作";
-  ST.events.unshift({t:new Date().toTimeString().slice(0,8),type,data:data||"",ok,src:ST.source});
+  ST.events.unshift({t:new Date().toTimeString().slice(0,8),ms:Date.now(),type,data:data||"",ok,src:ST.source});
   if(ST.dev) renderDev();
 }
 function toast(t){$("#toastBox").innerHTML=`<div class="toast" role="status">${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#toastBox").innerHTML="",2600)}
@@ -227,17 +230,18 @@ const WATER={
   let unrep=S-reported, unrep2=unrep>0?Math.max(1,Math.floor(unrep/2)):0;
   const crew=W/S, perLead=S/L;
   let shortSites=Math.min(S,Math.ceil(M/2)), tmrSites=M>0?Math.min(shortSites,Math.ceil(M/3)):0;
-  if(res.S02){ M=Math.max(0,M-Math.ceil(M/3)); tmrSites=0; shortSites=Math.min(S,Math.ceil(M/2)) }
-  const Oeff=res.S03?Math.max(0,O-1):O;
+  if(res.S02&&res.S02!=="c"){ M=Math.max(0,M-Math.ceil(M/3)); tmrSites=0; shortSites=Math.min(S,Math.ceil(M/2)) }
+  const rearr=res.S02==="c"; /* 改排工項：明天仍缺料，但班組不閒置 */
+  const Oeff=(res.S03&&res.S03!=="b")?Math.max(0,O-1):O;
   const sites=Array.from({length:S},(_,k)=>{const planned=Math.round(30+seedRand(k+S)*60); const late=k<Oeff; const lag=late?Math.round(10+seedRand(k+3)*10):Math.round(seedRand(k+7)*4);
    return {id:k+1,name:`工地 ${String(k+1).padStart(2,"0")}`,planned,actual:Math.max(0,planned-lag),late,lag,
     abnormal:k>=Oeff&&k<Oeff+A, short:k>=S-shortSites, tmr:k>=S-tmrSites, unrep:k>=S-unrep&&k<S, unrep2:k>=S-unrep2&&k<S,crew:Math.max(1,Math.round(crew+(seedRand(k)-.5)*2))}});
   sites.forEach(s=>{s.light=(s.late||s.unrep2||(s.abnormal&&s.tmr))?"red":(s.abnormal||s.short||s.unrep)?"amber":"green"});
   const avgActual=sites.reduce((x,s)=>x+s.actual,0)/S, avgPlanned=sites.reduce((x,s)=>x+s.planned,0)/S;
-  const idleMan=tmrSites*crew*a.stopDay;
-  const blocked=Math.min(S,tmrSites+unrep2), ready=S-blocked;
+  const idleMan=rearr?0:tmrSites*crew*a.stopDay;
+  const blocked=Math.min(S,(rearr?0:tmrSites)+unrep2), ready=S-blocked;
   const delayDays=Oeff?Math.round(sites.filter(s=>s.late).reduce((x,s)=>x+s.lag,0)/Oeff/4):0;
-  const decAbn=Math.ceil(A/2), decShort=tmrSites>0?1:0, decLate=Oeff>0?1:0, decisions=decAbn+decShort+decLate;
+  const decAbn=Math.ceil(A/2), decShort=tmrSites>0&&!rearr?1:0, decLate=Oeff>0?1:0, decisions=decAbn+decShort+decLate;
   return {S,A,O:Oeff,L,W,M,reported,unrep,unrep2,crew,perLead,shortSites,tmrSites,idleMan,blocked,ready,delayDays,avgActual,avgPlanned,decAbn,decShort,decLate,decisions,sites,rate:reported/S};
  },
  tiles(m){return [
@@ -249,7 +253,7 @@ const WATER={
   {k:"abnormal",h:"工程異常",big:m.A,unit:"個工地有異常",lines:[m.A?"漏水、圖面不符等":"沒有異常",`燈號紅 ${m.sites.filter(s=>s.light==="red").length}・黃 ${m.sites.filter(s=>s.light==="amber").length}`],cls:m.A>=2?"red":m.A?"amber":"green"},
   {k:"tomorrow",h:"明日工作",big:`${m.ready}/${m.S}`,unit:"工地可照常施工",lines:[m.blocked?`${m.blocked} 個卡住（缺料或沒回報）`:"全部可開工","依今日回報自動排"],cls:m.blocked/m.S>.3?"red":m.blocked?"amber":"green"},
   {k:"overdue",h:"逾期事項",big:m.O,unit:"個工程逾期",lines:[m.O?`平均晚 ${m.delayDays} 天`:"沒有逾期",m.O?"點開看調度方案":"按進度"],cls:m.O?"red":"green"},
-  {k:"ai",h:"AI 管理特助",big:"3",unit:"件今日重點",lines:[WATER.assistant(m)[0]?.t||"今天沒有急事","規則式模擬建議"],cls:"ai"}]},
+  {k:"ai",h:"AI 管理特助",big:WATER.assistant(m).filter(x=>x.s>1).length,unit:"件今日重點",lines:[WATER.assistant(m)[0]?.t||"今天沒有急事","規則式模擬建議"],cls:"ai"}]},
  detail(k,m){
   const rows=f=>`<div class="tb"><table><thead><tr><th>工地</th><th>燈號</th><th class="r">預定</th><th class="r">實際</th><th>回報</th><th>缺料</th><th class="r">人力</th></tr></thead><tbody>${m.sites.filter(f).map(s=>`<tr><td>${s.name}</td><td><span class="dot ${s.light}"></span></td><td class="r">${s.planned}%</td><td class="r">${s.actual}%</td><td>${s.unrep2?'<span class="pill red">2 天未回報</span>':s.unrep?'<span class="pill amber">今日未回報</span>':"已回報"}</td><td>${s.tmr?'<span class="pill red">明天缺</span>':s.short?'<span class="pill amber">待叫料</span>':"—"}</td><td class="r">${s.crew}</td></tr>`).join("")||`<tr><td colspan="7" class="muted">沒有</td></tr>`}</tbody></table></div>`;
   const D={progress:[`平均實際進度 = 各工地實際進度平均；落後工地 = 實際比預定少 10% 以上。`,rows(()=>true)],
@@ -278,21 +282,21 @@ const WATER={
    causes:[m.perLead>2.5?`主任同時管 ${F.d1(m.perLead)} 個工地，負荷過重（最可能）`:"主任今天在別的工地，沒空回報",`現場人力 ${s.crew} 人，沒有指定代回報的人`,"現場收訊差或師傅不熟回報方式"],
    options:[{id:"a",t:"系統再提醒，並請領班代回報",c:"成本最低，30 分鐘內有結果",eff:"回報恢復"},{id:"b",t:"老闆直接打給主任",c:`花老闆約 ${a.callMin} 分鐘`,eff:"回報恢復，但下次可能再發生"},{id:"c",t:"明天派人巡場",c:"多花半天人力，確認現場狀況",eff:"確認現場，但慢一天"}],
    dispatch:o=>({who:o.id==="c"?"行政安排巡場人員":o.id==="b"?"老闆":"系統＋領班",what:o.id==="c"?`明早到 ${s.name} 拍照回報`:`今天 18:00 前補 ${s.name} 回報`,due:o.id==="c"?"明天 10:00":"今天 18:00"}),
-   verify:o=>({before:[["今日回報",`${m.reported}/${m.S}`],["紅燈工地",m.sites.filter(x=>x.light==="red").length]],after:[["今日回報",`${Math.min(m.S,m.reported+1)}/${m.S}`],["紅燈工地",Math.max(0,m.sites.filter(x=>x.light==="red").length-1)]],text:o.id==="c"?"巡場確認：現場正常施工，主任漏回報。已指定領班每天代回報。":"18:05 收到回報：3F 配管完成 60%，沒有異常。已指定領班為代回報人。"})}}},
+   verify:(o,m2)=>({before:[["今日回報",`${m.reported}/${m.S}`],["紅燈工地",m.sites.filter(x=>x.light==="red").length]],after:[["今日回報",`${m2.reported}/${m2.S}`],["紅燈工地",m2.sites.filter(x=>x.light==="red").length]],text:o.id==="c"?"巡場確認：現場正常施工，主任漏回報。已指定領班每天代回報。":"18:05 收到回報：3F 配管完成 60%，沒有異常。已指定領班為代回報人。"})}}},
   S02:{title:"明天施工卻缺材料",sub:"缺什麼 → 影響誰 → 怎麼補",build(m,a){const items=["1/2 吋彎頭 ×20 個","4 分 PVC 管 ×10 支","2.0mm² 電線 ×5 捲","給水球閥 ×6 個","排水 S 彎 ×8 個"].slice(0,Math.max(1,Math.min(5,Math.ceil(m.M/2)||1))); const sites=m.sites.filter(x=>x.tmr); const ss=sites.length?sites:[m.sites[0]]; const idle=Math.max(m.idleMan,ss.length*m.crew*a.stopDay);return {
    anomaly:`明天 ${ss.length} 個工地要用的材料還沒到：${items.join("、")}。`,
    evidence:ss.map(x=>[x.name,"影響",`${x.crew} 人班組，明天排配管`]),
    causes:["師傅當天才發現缺，叫料太晚","沒有共用的缺料清單，主任以為行政已叫","材料行週末不送貨"],
    options:[{id:"a",t:"今天下午急件叫料",c:`運費約 ${F.nt(a.rushFee)}，明早到`,eff:"明天照常施工"},{id:"b",t:"從其他工地調庫存",c:"不用花錢，但要有人跑一趟",eff:"大部分工地照常"},{id:"c",t:"明天改排其他工項",c:"不用叫料，但進度慢一天",eff:"避免閒置，進度順延"}],
    dispatch:o=>({who:o.id==="b"?"主任安排師傅":"行政",what:o.id==="a"?"今天 15:00 前向材料行急件下單":o.id==="b"?"今天下班前從工地 01 調料":"通知班組明天改做其他工項",due:"今天 17:00"}),
-   verify:o=>({before:[["明天缺料工地",ss.length],["可能閒置人日",F.d1(idle)]],after:[["明天缺料工地",o.id==="c"?ss.length:0],["可能閒置人日",o.id==="c"?"0（改排工項）":"0"]],text:o.id==="a"?`隔天 08:10 材料到場，班組照常施工。避免約 ${F.d1(idle)} 人日閒置（約 ${F.nt(idle*a.wage)}），急件運費 ${F.nt(a.rushFee)}。`:o.id==="b"?"調料完成，只剩 1 項明天中午到。":"班組改做明管固定，進度順延 1 天，沒有閒置。"})}}},
+   verify:(o,m2)=>({before:[["明天缺料工地",ss.length],["可能閒置人日",F.d1(idle)]],after:[["明天缺料工地",o.id==="c"?ss.length:0],["可能閒置人日",o.id==="c"?"0（改排工項）":"0"]],text:o.id==="a"?`隔天 08:10 材料到場，班組照常施工。避免約 ${F.d1(idle)} 人日閒置（約 ${F.nt(idle*a.wage)}），急件運費 ${F.nt(a.rushFee)}。`:o.id==="b"?"調料完成，只剩 1 項明天中午到。":"班組改做明管固定，進度順延 1 天，沒有閒置。"})}}},
   S03:{title:"工程進度落後",sub:"預定 vs 實際 → 調度方案",build(m,a){const s=m.sites.filter(x=>x.late).sort((x,y)=>y.lag-x.lag)[0]||{...m.sites[0],lag:12,actual:m.sites[0].planned-12,late:true};const need=Math.max(1,Math.round(s.lag/4));return {
    anomaly:`${s.name} 預定 ${s.planned}%、實際 ${s.actual}%，落後 ${s.lag}%，約晚 ${need} 天。`,
    evidence:[["預定進度",`${s.planned}%`,""],["實際進度",`${s.actual}%`,""],["現場人力",`${s.crew} 人`,""]],
    causes:[s.crew<3?`現場只有 ${s.crew} 人，人力不足（最可能）`:"前期缺料停工一天","業主變更位置，部分重做","雨天影響外牆管線"],
    options:[{id:"a",t:"加派 2 人 3 天",c:`人力成本約 ${F.nt(2*3*a.wage)}`,eff:`追回約 ${Math.min(need,3)} 天`},{id:"b",t:"週末加班一天",c:`加班費約 ${F.nt(s.crew*a.wage*1.33)}`,eff:"追回約 1 天"},{id:"c",t:"與業主協調延期",c:"不花錢，但要談",eff:"工期順延，避免趕工品質問題"}],
    dispatch:o=>({who:o.id==="c"?"老闆":"主任",what:o.id==="a"?`從進度超前的工地調 2 人到 ${s.name}`:o.id==="b"?"安排週六加班班組":"約業主說明並確認新完工日",due:"明天"}),
-   verify:o=>({before:[["落後",`${s.lag}%`],["逾期工程",m.O||1]],after:[["落後",o.id==="a"?`${Math.max(0,s.lag-12)}%`:o.id==="b"?`${Math.max(0,s.lag-4)}%`:`${s.lag}%（已延期）`],["逾期工程",o.id==="a"||o.id==="c"?Math.max(0,(m.O||1)-1):(m.O||1)]],text:o.id==="a"?"3 天後實際進度追上預定，燈號轉黃。":o.id==="b"?"週末加班後落後縮小，仍需追蹤。":"業主同意延後 5 天，新完工日已更新到排程。"})}}}},
+   verify:(o,m2)=>({before:[["落後",`${s.lag}%`],["逾期工程",m.O]],after:[["落後",o.id==="a"?`${Math.max(0,s.lag-12)}%`:o.id==="b"?`${Math.max(0,s.lag-4)}%`:`${s.lag}%（已延期）`],["逾期工程",m2.O]],text:o.id==="a"?"3 天後實際進度追上預定，燈號轉黃。":o.id==="b"?"週末加班後落後縮小，仍需追蹤。":"業主同意延後 5 天，新完工日已更新到排程。"})}}}},
  simDefaults:{targetRate:95,shortCut:50,dispatchGain:20},
  simInputs:[{k:"targetRate",label:"把回報率提高到",min:50,max:100,step:5,unit:"%"},{k:"shortCut",label:"缺料停工減少",min:0,max:100,step:10,unit:"%"},{k:"dispatchGain",label:"派工閒置減少",min:0,max:50,step:5,unit:"%"}],
  sim(m,s,a){
@@ -325,14 +329,15 @@ const BUILD={
   const P=i.projects, C=i.contract, p=i.progress/100, b=i.budgetExec/100, X=Math.min(i.trouble,P);
   let B=i.pendingBill, V=i.unsigned;
   /* 進度（獨立）：落後工程拉低進度效率 */
-  let lagPct=X?6+4*Math.min(X,3):0; if(res.S01) lagPct=Math.max(0,lagPct-6);
+  let lagPct=X?6+4*Math.min(X,3):0; if(res.S01&&res.S01!=="c") lagPct=lagPct/2; /* 展延：審查中，進度數字不變 */
   const planned=Math.min(1,p+(X/P)*lagPct/100), SPI=planned?p/planned:1, delayDays=Math.round((planned-p)*a.duration);
   /* 成本（獨立）：預算 = 合約 ×（1 − 目標毛利）；CPI = 依進度應花 ÷ 實際已花 */
   const budget=C*(1-a.margin), AC=budget*b, EVcost=budget*p, CPI=AC?EVcost/AC:1, EAC=CPI?budget/CPI:budget, margin=(C-EAC)/C;
   /* 現金流（獨立）：已完成產值 − 待請款 = 已請款；已收 = 已請 × 收款比例 */
-  if(res.S02) V=V*0.4;
-  const EV=C*p, billed=Math.max(0,EV-B); let received=billed*a.collect; if(res.S03) received=Math.min(billed,received+(billed-received)*0.5);
-  const recv=billed-received, overdueRecv=recv*Math.min(0.7,0.2+(X/P)*0.5)*(res.S03?0.5:1), paid=AC*a.pay, netCash=received-paid;
+  if(res.S02&&res.S02!=="c") V=V*0.4;
+  const EV=C*p, billed=Math.max(0,EV-B); let received=billed*a.collect;
+  const recv0=billed-received, od0=recv0*Math.min(0.7,0.2+(X/P)*0.5), coll=(res.S03&&res.S03!=="c")?od0*0.5:0; /* 催收：逾期款收回一半 */
+  received+=coll; const recv=recv0-coll, overdueRecv=od0-coll, paid=AC*a.pay, netCash=received-paid;
   const months=Math.max(1,12*p), monthlyCost=AC/months, coverWeeks=netCash>0?netCash/(monthlyCost/4.33):0;
   /* 其他格 */
   const bids=Math.max(1,Math.ceil(P/4)), doubts=3+bids*2;
@@ -385,21 +390,21 @@ const BUILD={
    causes:["鋼筋分包人力不足（最可能）","材料送審延誤，等核可才能施作","天候影響外部作業"],
    options:[{id:"a",t:"要求分包增派班組，每日回報",c:"不增加成本，需談判",eff:"兩週追回一半落後"},{id:"b",t:"調整工序，先做不受影響的項目",c:"不花錢，排程要重排",eff:"減少閒置，落後縮小"},{id:"c",t:"與業主協調工期展延",c:"需正當理由與書面",eff:"避免罰款，但影響信譽"}],
    dispatch:o=>({who:o.id==="c"?"老闆＋工務":"工地主任",what:o.id==="a"?"今天通知分包，明天起每日回報人數":o.id==="b"?"重排兩週工序並通知各班組":"準備展延申請與佐證",due:"明天"}),
-   verify:o=>({before:[["落後",`${gap}%`],["工期影響",`${days} 天`]],after:[["落後",o.id==="c"?`${gap}%（已申請展延）`:`${Math.round(gap/2)}%`],["工期影響",o.id==="c"?"0 天（展延核准後）":`${Math.round(days/2)} 天`]],text:o.id==="a"?"分包增派 1 組，兩週後落後減半，燈號轉黃。":o.id==="b"?"工序調整後閒置減少，落後縮小。":"業主收件審查中，系統每週追蹤回覆。"})}}},
+   verify:(o,m2)=>{const q2=m2.projects.find(x=>x.id===q.id&&x.late), g2=q2?Math.max(0,Math.round(q2.plan-q2.prog)):Math.round(gap/2), d2=Math.round(g2/100*a.duration);return {before:[["落後",`${gap}%`],["工期影響",`${days} 天`]],after:[["落後",o.id==="c"?`${gap}%（展延審查中）`:`${g2}%`],["工期影響",o.id==="c"?`${days} 天（核准後順延）`:`${d2} 天`]],text:o.id==="a"?"分包增派 1 組，兩週後落後減半。":o.id==="b"?"工序調整後閒置減少，落後縮小。":"業主收件審查中，系統每週追蹤回覆。"}}}}},
   S02:{title:"追加減尚未簽認",sub:"未簽金額 → 請款風險 → 追蹤",build(m,a){const V=Math.max(m.V,50), parts=[0.5,0.3,0.2].map((r,k)=>({n:["機電管線改道","地坪材質變更","外牆開口增設"][k],v:V*r,d:[35,21,12][k]}));return {
    anomaly:`有 ${F.wan(V)} 追加減還沒簽認，其中最久的已施作 35 天。`,
    evidence:parts.map(x=>[x.n,F.wan(x.v),`已施作 ${x.d} 天`]),
    causes:["現場口頭同意，沒有書面變更單","變更單缺照片與數量計算","業主內部簽核流程慢"],
    options:[{id:"a",t:"一週內補齊變更單與照片送簽",c:"工務 1–2 天工時",eff:"約 6 成可在本期簽認"},{id:"b",t:"老闆直接約業主主管",c:"老闆半天",eff:"大額項目優先處理"},{id:"c",t:"先暫停相關追加施作",c:"可能影響關係",eff:"不再擴大未簽金額"}],
    dispatch:o=>({who:o.id==="b"?"老闆":"工務",what:o.id==="a"?"整理 3 份變更單（數量、單價、照片）送業主":o.id==="b"?"約業主工程主管確認大額變更":"通知現場暫停追加項目",due:"一週內"}),
-   verify:o=>({before:[["未簽認",F.wan(V)],["可請款",F.wan(0)]],after:[["未簽認",F.wan(o.id==="c"?V:V*.4)],["可請款",F.wan(o.id==="c"?0:V*.6)]],text:o.id==="c"?"未簽金額不再增加，但既有金額仍待簽。":`簽回 ${F.wan(V*.6)}，列入下一期請款。`})}}},
-  S03:{title:"已請款但尚未收款",sub:"應收 → 逾期 → 資金壓力 → 催收",build(m,a){const od=Math.max(m.overdueRecv,m.recv*.3,10);return {
+   verify:(o,m2)=>({before:[["未簽認",F.wan(V)],["可請款",F.wan(0)]],after:[["未簽認",F.wan(o.id==="c"?V:V*.4)],["可請款",F.wan(o.id==="c"?0:V*.6)]],text:o.id==="c"?"未簽金額不再增加，但既有金額仍待簽。":`簽回 ${F.wan(V*.6)}，列入下一期請款。`})}}},
+  S03:{title:"已請款但尚未收款",sub:"應收 → 逾期 → 資金壓力 → 催收",build(m,a){const od=m.overdueRecv>0?m.overdueRecv:Math.max(m.recv*.3,10);return {
    anomaly:`已請未收 ${F.wan(m.recv)}，其中 ${F.wan(od)} 已逾期，最久 45 天。`,
    evidence:[["已請未收",F.wan(m.recv),""],["逾期金額",F.wan(od),"18–45 天"],["淨現金",F.wan(m.netCash),m.netCash>0?`約可撐 ${F.d1(m.coverWeeks)} 週`:"已為負"]],
    causes:["業主估驗審查退件，未通知我方","發票或請款文件不齊","業主資金調度延後付款"],
    options:[{id:"a",t:"今天發催收函並 LINE 提醒財務窗口",c:"成本低",eff:"約一半逾期款兩週內入帳"},{id:"b",t:"老闆親自拜訪業主",c:"老闆半天",eff:"大額款項優先"},{id:"c",t:"與銀行洽談短期週轉",c:"利息成本",eff:"先解資金壓力"}],
    dispatch:o=>({who:o.id==="b"?"老闆":"會計",what:o.id==="a"?"發催收函、確認文件是否齊全":o.id==="b"?"約業主財務主管":"準備應收帳款明細洽銀行",due:"本週"}),
-   verify:o=>({before:[["逾期應收",F.wan(od)],["淨現金可撐",m.netCash>0?F.d1(m.coverWeeks)+" 週":"負"]],after:[["逾期應收",F.wan(o.id==="c"?od:od*.5)],["淨現金可撐",o.id==="c"?"＋短期週轉":(m.netCash+od*.5>0?F.d1((m.netCash+od*.5)/(m.monthlyCost/4.33))+" 週":"負")]],text:o.id==="c"?"週轉額度核准，應收仍需持續催收。":`兩週內入帳 ${F.wan(od*.5)}，其餘排入下週追蹤。`})}}}},
+   verify:(o,m2)=>({before:[["逾期應收",F.wan(od)],["淨現金可撐",m.netCash>0?F.d1(m.coverWeeks)+" 週":"負"]],after:[["逾期應收",F.wan(o.id==="c"?od:od*.5)],["淨現金可撐",o.id==="c"?"＋短期週轉":(m2.netCash>0?F.d1(m2.coverWeeks)+" 週":"負")]],text:o.id==="c"?"週轉額度核准，應收仍需持續催收。":`兩週內入帳 ${F.wan(od*.5)}，其餘排入下週追蹤。`})}}}},
  simDefaults:{costCut:2,cycleCut:15,signRate:60},
  simInputs:[{k:"costCut",label:"剩餘工程成本降低",min:0,max:10,step:0.5,unit:"%"},{k:"cycleCut",label:"請款週期縮短",min:0,max:45,step:5,unit:"天"},{k:"signRate",label:"追加減簽認比例",min:0,max:100,step:10,unit:"%"}],
  sim(m,s,a){
@@ -425,7 +430,7 @@ function vHome(){
 function vInd(){
   const M=MODS[ST.view], i=ST.inp[ST.view];
   return `<nav class="secbar" aria-label="段落"><button class="back" data-home="1">← 換產業</button><button data-jump="sec-cfg">我的公司</button><button data-jump="sec-grid">九宮格</button><button data-jump="sec-scen">三個情境</button><button data-jump="sec-ai">AI 經營特助</button><button data-jump="sec-sim">改善試算</button><button data-jump="sec-next">下一步</button></nav>
-  ${ST.consent==null?`<div class="consent"><b>開始前</b><span>這是模擬體驗頁。為了之後說明時更了解你的需求，我們想記錄你試用了哪些功能（不含你輸入的數字以外的資料），保存 12 個月。不同意也能完整體驗。</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-consent="同意記錄操作">同意記錄操作</button><button class="btn ghost sm" data-consent="只看不記錄">只看不記錄</button></div></div>`:""}
+  ${ST.consent==null?`<div class="consent"><b>開始前</b><span>正式版會先問你：要不要記錄你試用了哪些功能，方便之後說明。<b>這個體驗版不會傳出任何資料</b>，關掉頁面就消失；選哪一個都能完整體驗。</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-consent="同意記錄操作">同意記錄操作</button><button class="btn ghost sm" data-consent="只看不記錄">只看不記錄</button></div></div>`:""}
   <section class="card" id="sec-cfg"><h2 id="indTitle">${M.title(i)}</h2><p class="lede">調整下面的條件，九宮格、情境、特助建議和試算會立即跟著變。不需要真實工程名稱、客戶或合約資料。</p>
    <label class="fld"><span class="lab">公司名稱（可留空）</span><input type="text" id="in-company" value="${esc(i.company)}" placeholder="例如：大明水電" maxlength="20"></label>
    <div class="cfg">${M.inputs.map(f=>`<label class="fld"><span class="lab">${f.label}<b id="v-${f.k}">${fv(f,i[f.k])}</b></span><input type="range" id="in-${f.k}" data-in="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${i[f.k]}" aria-label="${f.label}"></label>`).join("")}</div>
@@ -436,10 +441,10 @@ function vInd(){
   <section id="sec-scen" class="card"><h2>三個老闆最常遇到的情境</h2><p class="lede">每個情境走一遍：異常 → 原因 → 建議 → 你的決定 → 派工 → 驗果。用的是你剛才輸入的條件。</p><div class="scens" id="scenArea"></div></section>
   <section id="sec-ai" class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>AI 經營特助</h2><span class="rule-tag">規則式模擬建議・未接 AI 模型</span></div><div id="aiArea"></div></section>
   <section id="sec-sim" class="card"><h2>改善試算</h2><p class="lede">拉動改善幅度，看可能的效果。所有金額都附計算方式與假設，可自行修改假設；這是估算，不是保證收益。</p><div id="simArea"></div></section>
-  <section id="sec-next" class="card"><h2>下一步</h2><p class="lede">看完覺得有用，可以選一個方式繼續。</p>
-   <div class="convs"><button class="conv" data-conv="summary"><b>領取管理體檢摘要</b><span>把剛才的九宮格重點整理成一頁，可以留聯絡方式寄給你。</span></button>
-   <button class="conv" data-conv="line"><b>加入 LINE 了解工程 AI 員工</b><span>加官方帳號，看更多工程老闆的使用方式。</span></button>
-   <button class="conv" data-conv="booking"><b>預約專人示範</b><span>專人用你公司的情況，示範每天怎麼用。</span></button></div></section>`;
+  <section id="sec-next" class="card"><h2>下一步</h2><p class="lede">看完覺得有用，可以選一個方式繼續。體驗版不會傳出你輸入的任何資料。</p>
+   <div class="convs"><button class="conv" data-conv="card"><b>我的體驗成果卡</b><span>把九宮格重點、今日三件事和改善試算做成一張圖，可以存到手機或傳給合夥人。</span></button>
+   <button class="conv" data-conv="booking"><b>預約真實導入示範</b><span>專人用你公司的實際情況，示範每天怎麼用。</span></button>
+   <button class="conv" data-conv="line"><b>LINE 官方帳號</b><span>正式開放後，可以在 LINE 看更多工程老闆的使用方式。</span></button></div></section>`;
 }
 const fv=(f,v)=>f.fmt==="wan"?F.wan(v):`${v} ${f.unit}`;
 function curModel(){const k=ST.view;return MODS[k].model(ST.inp[k],ST.resolved[k],ST.asm[k])}
@@ -456,7 +461,7 @@ function renderAI(){
   $("#aiArea").innerHTML=`<div><h3>今日最重要的三個問題</h3>${top.map((x,i)=>`<div class="issue"><span class="no">${i+1}</span><span><span class="t">${esc(x.t)}</span><br><span class="m">${esc(x.why)}</span><br><span class="m">建議優先處理：${esc(x.task)}</span></span><span>${x.scen?`<button class="btn ghost sm" data-scen="${x.scen}">看情境</button>`:""}</span></div>`).join("")}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-asst="dispatch" ${A.tasks.length?"disabled":""}>一鍵模擬派工</button><button class="btn ghost sm" data-asst="day" ${A.tasks.length&&A.day<3?"":"disabled"}>快轉一天</button><button class="btn ghost sm" data-asst="reset" ${A.tasks.length?"":"disabled"}>重來</button></div>
    ${A.tasks.length?`<div><h3>處理進度（第 ${A.day} 天）</h3><div class="tasks" style="margin-top:6px">${A.tasks.map(t=>{const st=A.day>=t.done?"已完成":A.day>=1?"處理中":"已派工";return `<div class="task"><span><b>${esc(t.task)}</b><br><span class="small muted">負責：${esc(t.who)}</span></span><span class="pill ${st==="已完成"?"green":st==="處理中"?"blue":"grey"}">${st}</span></div>`}).join("")}</div></div>
-   <div><h3>改善結果</h3><div class="cmp" style="margin-top:6px">${A.tasks.map(t=>`<div><span>${esc(t.metric[0])}</span><b>${A.day>=t.done?`${esc(t.metric[1])} → ${esc(t.metric[2])}`:esc(t.metric[1])}</b></div>`).join("")}</div>${A.day>=3?`<p class="note" style="margin-top:8px">三天後的模擬結果。正式使用時，這些數字來自每天的回報與系統紀錄。</p>`:""}</div>`:""}`;
+   <div><h3>改善結果</h3><div class="cmp" style="margin-top:6px">${A.tasks.map(t=>`<div><span>${esc(t.metric[0])}</span><b>${A.day>=t.done?`${esc(t.metric[1])} → ${esc(t.metric[2])}`:esc(t.metric[1])}</b></div>`).join("")}</div>${A.day>=3?`<p class="note" style="margin-top:8px">三天後的模擬結果，只示範處理流程，不會改變上方九宮格（九宮格只在完成情境後更新）。正式使用時，這些數字來自每天的回報與系統紀錄。</p>`:""}</div>`:""}`;
 }
 function renderSim(){
   const k=ST.view, M=MODS[k], m=curModel(), s=ST.sim[k], a=ST.asm[k], r=M.sim(m,s,a);
@@ -477,19 +482,21 @@ function render(){
 
 /* =================== 共用框架：情境流程（異常 → 原因 → 建議 → 決策 → 派工 → 驗果） =================== */
 const STEPS=["異常","原因","建議","決策","派工","驗果"];
+const NEED={water:{S01:m=>m.unrep2>0,S02:m=>m.tmrSites>0,S03:m=>m.O>0},build:{S01:m=>m.X>0,S02:m=>m.V>0,S03:m=>m.overdueRecv>0}};
 function scenBody(){
   const sc=ST.scen, M=MODS[sc.ind], m=MODS[sc.ind].model(ST.inp[sc.ind],{...ST.resolved[sc.ind],[sc.id]:false},ST.asm[sc.ind]), S=M.scenarios[sc.id], d=S.build(m,ST.asm[sc.ind]);
-  const o=d.options.find(x=>x.id===sc.choice);
+  const o=d.options.find(x=>x.id===sc.choice), m2=o?M.model(ST.inp[sc.ind],{...ST.resolved[sc.ind],[sc.id]:o.id},ST.asm[sc.ind]):null;
+  sc.demo=!NEED[sc.ind][sc.id](m);
   const blocks=[
    `<div class="card" style="border-left:5px solid var(--red)"><h3>① 異常</h3><b>${esc(d.anomaly)}</b><div style="display:flex;flex-direction:column;gap:6px">${d.evidence.map(e=>`<div class="msg"><div class="who">${esc(e[0])}</div>${esc(e[1])}${e[2]?"・"+esc(e[2]):""}</div>`).join("")}</div></div>`,
    `<div class="card"><h3>② 可能原因（依規則排序）</h3><ol style="margin:0;padding-left:20px">${d.causes.map(c=>`<li>${esc(c)}</li>`).join("")}</ol></div>`,
    `<div class="card"><h3>③ 建議方案</h3>${d.options.map(x=>`<button class="opt" data-opt="${x.id}" aria-pressed="${sc.choice===x.id}"><b>${esc(x.t)}</b><small>${esc(x.c)}・預期：${esc(x.eff)}</small></button>`).join("")}<span class="rule-tag" style="align-self:flex-start">規則式模擬建議</span></div>`,
-   o?`<div class="card"><h3>④ 老闆決策</h3><b>你選擇：${esc(o.t)}</b><span class="small muted">決策時間與內容會留紀錄，之後可回頭看效果。</span></div>`:"",
+   o?`<div class="card"><h3>④ 老闆決策</h3><b>你選擇：${esc(o.t)}</b><span class="small muted">正式版會記下決策時間與內容，之後可回頭看效果（本版不保存）。</span></div>`:"",
    o&&sc.step>=4?(()=>{const t=d.dispatch(o);return `<div class="card"><h3>⑤ 派工</h3><div class="kv"><span>負責</span><span>${esc(t.who)}</span><span>工作</span><span>${esc(t.what)}</span><span>期限</span><span>${esc(t.due)}</span></div><span class="small muted">正式版會用 LINE 通知負責人，到期未完成會提醒（本版不發送）。</span></div>`})():"",
-   o&&sc.step>=5?(()=>{const v=d.verify(o);return `<div class="card" style="border-left:5px solid var(--green)"><h3>⑥ 驗果</h3><p style="margin:0">${esc(v.text)}</p><div class="cmp">${v.before.map((b,i)=>`<div><span>${esc(b[0])}</span><b>${esc(String(b[1]))} → ${esc(String(v.after[i][1]))}</b></div>`).join("")}</div></div>`})():""];
+   o&&sc.step>=5?(()=>{const v=d.verify(o,m2);return `<div class="card" style="border-left:5px solid var(--green)"><h3>⑥ 驗果</h3><p style="margin:0">${esc(v.text)}</p><div class="cmp">${v.before.map((b,i)=>`<div><span>${esc(b[0])}</span><b>${esc(String(b[1]))} → ${esc(String(v.after[i][1]))}</b></div>`).join("")}</div></div>`})():""];
   const showUpto=sc.step<=2?sc.step:sc.step;
   return `<div class="steps">${STEPS.map((x,i)=>`<span class="step ${i<sc.step?"ok":i===sc.step?"on":""}">${x}</span>`).join("")}</div>
-   <div class="flowbox">${blocks.slice(0,Math.min(showUpto+1,6)).join("")}</div>
+   ${sc.demo?`<p class="note" style="border-left:4px solid var(--amber);padding-left:8px">你輸入的條件目前沒有這個問題，下面用示範數字走一遍流程，九宮格不會改變。</p>`:""}<div class="flowbox">${blocks.slice(0,Math.min(showUpto+1,6)).join("")}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap">${sc.step<2?`<button class="btn" data-next="1">下一步：${STEPS[sc.step+1]}</button>`:sc.step===2?`<button class="btn" data-next="1" ${sc.choice?"":"disabled"}>${sc.choice?"確定這個決策":"先選一個方案"}</button>`:sc.step<5?`<button class="btn" data-next="1">下一步：${STEPS[sc.step+1]}</button>`:`<button class="btn" data-scenclose="1">完成，回到九宮格</button><button class="btn ghost" data-conv="booking">想用在我的公司</button>`}</div>`;
 }
 
@@ -499,27 +506,85 @@ function summaryText(){
   return `${i.company||"你的公司"}｜管理體檢摘要（模擬）\n`+M.tiles(m).filter(t=>t.k!=="ai").map(t=>`・${t.h}：${String(t.big).replace(/<[^>]+>/g,"")} ${t.unit}${t.cls==="red"?"（要處理）":""}`).join("\n")+`\n\n今日三件事：\n`+M.assistant(m).map((x,n)=>`${n+1}. ${x.t} → ${x.task}`).join("\n")+`\n\n＊依輸入條件模擬，建議為規則式模擬。`;
 }
 function convBody(kind){
-  const consentBox=`<label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="cv-agree"> 我同意你們用這個聯絡方式和我聯繫，說明工程 AI 員工。資料保存 12 個月，可隨時要求刪除。</label>`;
-  if(kind==="summary") return `<pre style="white-space:pre-wrap;font-family:var(--body);background:var(--sunk);border-radius:10px;padding:12px;margin:0;font-size:14px">${esc(summaryText())}</pre>
-   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-copysum="1">複製摘要</button></div>
-   <h3>想寄給自己？（選填）</h3><input type="text" id="cv-contact" placeholder="LINE ID 或 Email">${consentBox}<button class="btn" data-cvsend="summary">寄給我</button><p class="note">不留也可以，上面的摘要已經可以直接複製。</p>`;
-  if(kind==="line") return `<p style="margin:0">搜尋官方帳號 ID，或用手機開啟連結加入：</p><div class="kv"><span>官方帳號 ID</span><span><b>@你的官方帳號</b>（正式版替換）</span><span>連結</span><span>https://line.me/R/ti/p/@你的官方帳號</span></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-cvsend="line">我已加入</button></div><p class="note">原型不會開啟真實 LINE。按下後只記錄一次「點選加入 LINE」事件。</p>`;
-  return `<label class="fld"><span class="lab">怎麼稱呼（選填）</span><input type="text" id="cv-name" placeholder="例如：王老闆"></label><label class="fld"><span class="lab">聯絡方式</span><input type="text" id="cv-contact" placeholder="電話、LINE ID 或 Email"></label><label class="fld"><span class="lab">方便的時間</span><select id="cv-time"><option>平日上午</option><option>平日下午</option><option>平日晚上</option><option>週末</option></select></label>${consentBox}<button class="btn" data-cvsend="booking">送出預約</button>`;
+  const code=ST.code?`<p class="small">說的時候附上體驗編號：<b>${esc(ST.code)}</b></p>`:"";
+  if(kind==="card") return `<img id="cardImg" alt="體驗成果卡" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12)">
+   <p class="note">手機可以長按圖片儲存或分享。卡上的數字和你剛才看到的九宮格相同，都是依你輸入的條件模擬。</p>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-cardsave="1" id="cardSave" hidden>下載圖片</button><button class="btn ghost sm" data-copysum="1">複製文字版</button></div>`;
+  if(kind==="line") return `<p style="margin:0">LINE 官方帳號還沒開放，這個體驗版不會開啟 LINE。</p><button class="btn" data-intent="line">我有興趣</button><div id="intentBox"></div>`;
+  return `<p style="margin:0">真實導入示範：專人用你公司的實際情況，帶你走一遍每天怎麼用。</p><button class="btn" data-intent="booking">我想預約示範</button><div id="intentBox"></div>`;
+}
+function intentMsg(kind){
+  const code=ST.code?`<br>說的時候附上體驗編號：<b>${esc(ST.code)}</b>`:"";
+  return kind==="booking"?`<div class="card" style="border-left:5px solid var(--blue)"><b>下一步：請直接告訴陪同你的人，或回覆推薦你的人「我想預約示範」。</b><span class="small">體驗版不會傳出任何資料，所以我們不會自動收到這個按鈕的結果。${code}</span></div>`
+   :`<div class="card" style="border-left:5px solid var(--blue)"><b>謝謝！官方帳號開放後，請推薦你的人把連結傳給你。</b><span class="small">體驗版不會傳出任何資料。${code}</span></div>`;
+}
+/* 體驗成果卡：數字直接取自九宮格、特助與試算，不另外計算 */
+const CARD_KEYS={water:["report","tomorrow","material","decide"],build:["progress","cash","change","cost"]};
+const plain=x=>String(x??"").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"');
+function cardData(){
+  const k=ST.view, M=MODS[k], m=curModel(), tiles=M.tiles(m);
+  return {k,title:plain(M.title(ST.inp[k])),ind:M.name,tiles:CARD_KEYS[k].map(x=>tiles.find(t=>t.k===x)).map(t=>({h:t.h,big:plain(t.big),unit:t.unit,cls:t.cls})),
+   top:M.assistant(m).map(x=>`${x.t} → ${x.task}`),sim:M.sim(m,ST.sim[k],ST.asm[k]).rows.map(r=>[r[0],plain(r[1])]),
+   done:Object.values(ST.resolved[k]).filter(Boolean).length,code:ST.code,date:new Date().toLocaleDateString("zh-TW")};
+}
+function drawCard(){
+  const D=cardData(), W=1080, H=1700, c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+  const FN='"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif', font=(w,px)=>g.font=`${w} ${px}px ${FN}`;
+  const COL={red:"#c8402f",amber:"#c98a12",green:"#2f8a4e",hub:"#2c5fa8",ai:"#2c5fa8"};
+  const rr=(x,y,w,h,r,fill)=>{g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); g.fillStyle=fill; g.fill()};
+  const wrap=(t,x,y,maxW,lh,maxL)=>{const L=[];let line="";for(const ch of t){if(line&&g.measureText(line+ch).width>maxW){L.push(line);line=ch}else line+=ch} if(line) L.push(line);
+   const out=L.slice(0,maxL); if(L.length>maxL){let l=out[maxL-1]; while(l&&g.measureText(l+"…").width>maxW) l=l.slice(0,-1); out[maxL-1]=l+"…"} out.forEach((l,n)=>g.fillText(l,x,y+n*lh)); return out.length};
+  g.fillStyle="#f5f3ee"; g.fillRect(0,0,W,H);
+  g.fillStyle="#1f2a44"; g.fillRect(0,0,W,210);
+  g.fillStyle="#c9d3e6"; font(600,32); g.fillText(`體驗成果卡｜${D.ind}`,60,72);
+  g.fillStyle="#fff"; font(800,54); wrap(D.title,60,150,W-120,60,1);
+  const bw=(W-60*2-24)/2, bh=210;
+  D.tiles.forEach((t,n)=>{const x=60+(n%2)*(bw+24), y=250+Math.floor(n/2)*(bh+24); rr(x,y,bw,bh,22,"#fff"); g.fillStyle=COL[t.cls]||"#555"; g.fillRect(x,y+24,8,bh-48);
+   g.fillStyle="#555"; font(600,30); g.fillText(t.h,x+36,y+60); g.fillStyle=COL[t.cls]||"#222"; font(800,68); g.fillText(t.big,x+36,y+142); g.fillStyle="#666"; font(500,28); g.fillText(t.unit,x+36,y+184)});
+  let y=770; g.fillStyle="#1f2a44"; font(800,36); g.fillText("今日最重要的三件事",60,y); y+=20;
+  D.top.forEach((t,n)=>{y+=56; g.fillStyle="#2c5fa8"; font(800,32); g.fillText(String(n+1),60,y); g.fillStyle="#222"; font(500,30); y+=(wrap(t,104,y,W-170,42,2)-1)*42});
+  y+=80; g.fillStyle="#1f2a44"; font(800,36); g.fillText("改善試算（估算）",60,y);
+  D.sim.forEach(r=>{y+=54; g.fillStyle="#444"; font(500,30); wrap(r[0],60,y,W-420,40,1); g.fillStyle="#222"; font(800,32); g.textAlign="right"; g.fillText(r[1],W-60,y); g.textAlign="left"});
+  y+=66; g.fillStyle="#555"; font(600,28); g.fillText(`情境體驗：完成 ${D.done}／3`,60,y);
+  y+=40; g.fillStyle="#e7e3da"; g.fillRect(0,y,W,120); g.fillStyle="#666"; font(500,24);
+  g.fillText("模擬體驗：數字依輸入條件產生，不是實際營運資料；建議為規則式模擬。",60,y+50);
+  g.fillText(`${D.code?"體驗編號 "+D.code+"・":""}${D.date}`,60,y+86);
+  /* 依內容裁切高度，避免文字換行時壓到頁尾 */
+  const out=document.createElement("canvas"); out.width=W; out.height=y+120; out.getContext("2d").drawImage(c,0,0); return out;
+}
+function showCard(){const c=drawCard(); const img=$("#cardImg"); if(img) img.src=c.toDataURL("image/png"); showCard.c=c;
+  getDL().then(dl=>{const b=$("#cardSave"); if(dl&&b) b.hidden=false})}
+function getDL(){ if(!getDL.p) getDL.p=(window.claude&&window.claude.use)?Promise.resolve(window.claude.use("downloads")).catch(()=>null):Promise.resolve(null); return getDL.p }
+function obsText(){
+  const ev=ST.events.filter(e=>e.ok).slice().reverse(), cnt=t=>ev.filter(e=>e.type===t).length;
+  const first=ev[0], firstIn=ev.find(e=>e.type==="customize"), last=ev[ev.length-1];
+  const tileName=x=>{const [ind,k]=x.split(":"); const M=MODS[ind]; if(!M) return x; const m=M.model(ST.inp[ind],ST.resolved[ind],ST.asm[ind]); return (M.tiles(m).find(t=>t.k===k)||{h:k}).h};
+  const tiles={}; ev.filter(e=>e.type==="grid_open").forEach(e=>{const n=tileName(e.data); tiles[n]=(tiles[n]||0)+1});
+  return `體驗觀察摘要（只含同意記錄的操作；未同意時只有開啟與主動按下的意願）\n體驗編號：${ST.code||"無"}・來源：${SRC[ST.source].label}\n同意選擇：${ST.consent||"尚未選擇"}\n`+
+   `進入產業：${ev.filter(e=>e.type==="page_open").map(e=>e.data).join("、")||"—"}\n`+
+   `開始到第一次調整條件：${first&&firstIn?Math.round((firstIn.ms-first.ms)/1000)+" 秒":"—"}；體驗總時間：${first&&last?Math.round((last.ms-first.ms)/1000)+" 秒":"—"}\n`+
+   `調整條件 ${cnt("customize")} 次・改善試算 ${cnt("simulator_use")} 次・特助派工 ${cnt("assistant_dispatch")} 次\n`+
+   `點開的九宮格：${Object.entries(tiles).map(([n,c])=>`${n}×${c}`).join("、")||"—"}\n`+
+   `完成情境：${ev.filter(e=>e.type==="scenario_complete").map(e=>{const [ind,id]=e.data.split(":"); return `${MODS[ind].name.slice(0,2)} ${id} ${MODS[ind].scenarios[id].title}`}).join("、")||"—"}\n`+
+   `成果卡：開啟 ${cnt("card_open")}・下載 ${cnt("card_save")}・複製文字 ${cnt("summary_request")}\n`+
+   `意願：預約示範 ${cnt("booking_intent")}・LINE 有興趣 ${cnt("line_interest")}`;
 }
 function renderDrawer(){
   const d=ST.drawer; if(!d){$("#layer").innerHTML="";return}
   let h="",b="";
   if(d.kind==="tile"){const M=MODS[ST.view], m=curModel(), t=M.tiles(m).find(x=>x.k===d.k), det=M.detail(d.k,m); h=t.h; b=`<div class="t-big" style="font-size:34px">${t.big}<small>${t.unit}</small></div><p class="note"><b>怎麼算：</b>${det[0]}</p>${det[1]||""}`}
   if(d.kind==="scen"){const S=MODS[ST.scen.ind].scenarios[ST.scen.id]; h=`${ST.scen.id}｜${S.title}`; b=scenBody()}
-  if(d.kind==="conv"){h={summary:"管理體檢摘要",line:"加入 LINE",booking:"預約專人示範"}[d.k]; b=convBody(d.k)}
+  if(d.kind==="conv"){h={card:"我的體驗成果卡",line:"LINE 官方帳號",booking:"預約真實導入示範"}[d.k]; b=convBody(d.k)}
   $("#layer").innerHTML=`<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(h)}"><div class="dr-h"><h2 style="font-size:18px">${esc(h)}</h2><button class="x" data-close="1" aria-label="關閉">×</button></div><div class="dr-b" id="drb">${b}</div></aside>`;
+  if(d.kind==="conv"&&d.k==="card") showCard();
 }
 function renderDev(){
   let el=$("#devPanel"); if(!ST.dev){ if(el) el.remove(); return }
   if(!el){el=document.createElement("section");el.id="devPanel";el.className="card";el.style.margin="0 0 16px";$("#main").prepend(el)}
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="font-size:17px">開發檢視：來源歸因與事件</h2><span class="small muted">客戶看不到這一塊</span></div>
-   <label class="fld"><span class="lab">模擬來源（正式版由專屬連結碼決定）</span><select id="srcSel">${Object.entries(SRC).map(([k,v])=>`<option value="${k}" ${ST.source===k?"selected":""}>${v.label}</option>`).join("")}</select></label>
-   <div class="kv"><span>session</span><span>${ST.session}</span><span>同意</span><span>${ST.consent||"尚未選擇"}</span><span>留資</span><span>${ST.leads.length} 筆（${ST.leads.map(l=>l.kind).join("、")||"—"}）</span></div>
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="font-size:17px">觀察紀錄：來源與事件</h2><span class="small muted">只存在這個畫面，關掉就消失</span></div>
+   <pre id="obsPre" style="white-space:pre-wrap;font-family:var(--body);background:var(--sunk);border-radius:10px;padding:10px;margin:0;font-size:13px">${esc(obsText())}</pre><div><button class="btn ghost sm" data-copyobs="1">複製觀察摘要</button></div>
+   <label class="fld"><span class="lab">來源（由網址 #代碼決定，也可在這裡切換測試）</span><select id="srcSel">${Object.entries(SRC).map(([k,v])=>`<option value="${k}" ${ST.source===k?"selected":""}>${v.label}</option>`).join("")}</select></label>
+   <div class="kv"><span>session</span><span>${ST.session}</span><span>同意</span><span>${ST.consent||"尚未選擇"}</span><span>意願</span><span>${ST.leads.length} 筆（${ST.leads.map(l=>l.kind).join("、")||"—"}）</span></div>
    <div style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto">${ST.events.map(e=>`<div class="ev"><span>${e.t}</span><span><code>${e.type}</code> ${esc(e.data)}<br><span class="muted">來源：${SRC[e.src].label}</span></span><span class="pill ${e.ok?"green":"grey"}">${e.ok?"記錄":"不記錄"}</span></div>`).join("")||`<span class="small muted">還沒有事件。</span>`}</div>`;
 }
 
@@ -535,7 +600,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ST.drawer){ST.draw
 document.addEventListener("click",async e=>{
   const t=e.target.closest("button"); if(!t) return; const d=t.dataset;
   if(t.id==="devBtn"){ST.dev=!ST.dev; t.setAttribute("aria-pressed",ST.dev); renderDev(); return}
-  if(d.ind){ST.view=d.ind; render(); window.scrollTo({top:0}); track("page_open",`${d.ind}${ST.source!=="direct"?"・夥伴連結":""}`); return}
+  if(d.ind){ST.view=d.ind; render(); window.scrollTo({top:0}); track("page_open",`${d.ind}${ST.source!=="direct"?"・來源 "+ST.source:""}`); return}
   if(d.home){ST.view="home"; ST.drawer=null; render(); window.scrollTo({top:0}); return}
   if(d.jump){const el=document.getElementById(d.jump); if(el){window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-56,behavior:"smooth"})} return}
   if(d.consent){ST.consent=d.consent; track("consent",d.consent); render(); return}
@@ -546,23 +611,25 @@ document.addEventListener("click",async e=>{
   if(d.opt){ST.scen.choice=d.opt; $("#drb").innerHTML=scenBody(); return}
   if(d.next){const sc=ST.scen; if(sc.step===2&&!sc.choice) return; sc.step=Math.min(5,sc.step+(sc.step===2?2:1)); $("#drb").innerHTML=scenBody(); $("#drb").scrollTop=$("#drb").scrollHeight;
     if(sc.step===4) track("scenario_decision",`${sc.ind}:${sc.id}:${sc.choice}`);
-    if(sc.step===5){ST.resolved[sc.ind][sc.id]=true; track("scenario_complete",`${sc.ind}:${sc.id}`); refresh()} return}
-  if(d.scenclose){ST.drawer=null; ST.scen=null; renderDrawer(); toast("九宮格已依處理結果更新"); return}
+    if(sc.step===5){ST.resolved[sc.ind][sc.id]=sc.choice; track("scenario_complete",`${sc.ind}:${sc.id}`); refresh()} return}
+  if(d.scenclose){const demo=ST.scen.demo; ST.drawer=null; ST.scen=null; renderDrawer(); toast(demo?"示範情境完成（九宮格不變）":"九宮格已依處理結果更新"); return}
   if(d.asst){const k=ST.view, A=ST.asst[k];
     if(d.asst==="dispatch"){const m=curModel(); A.tasks=MODS[k].assistant(m).map((x,n)=>({task:x.task,who:k==="water"?["主任","行政","老闆"][n%3]:["工務","會計","老闆"][n%3],metric:x.metric,done:n+1})); A.day=0; track("assistant_dispatch",k)}
     if(d.asst==="day"){A.day=Math.min(3,A.day+1); if(A.day===3) track("assistant_result",k)}
     if(d.asst==="reset"){A.tasks=[];A.day=0}
     renderAI(); return}
-  if(d.conv){ST.drawer={kind:"conv",k:d.conv}; renderDrawer(); track(d.conv==="summary"?"summary_open":d.conv==="line"?"line_open":"booking_open",ST.view); return}
+  if(d.conv){ST.drawer={kind:"conv",k:d.conv}; renderDrawer(); track(d.conv==="card"?"card_open":d.conv==="line"?"line_open":"booking_open",ST.view); return}
   if(d.copysum){try{await navigator.clipboard.writeText(summaryText()); toast("已複製摘要")}catch(err){toast("請長按摘要文字手動複製")} track("summary_request","copy"); return}
-  if(d.cvsend){const kind=d.cvsend;
-    if(kind==="line"){track("line_join_click",ST.view); ST.drawer=null; renderDrawer(); toast("已記錄（模擬，未開啟 LINE）"); return}
-    const contact=($("#cv-contact")?.value||"").trim(), agree=$("#cv-agree")?.checked;
-    if(!contact){toast("請填聯絡方式"); return}
-    if(!agree){toast("留聯絡方式需要勾選同意"); return}
-    ST.leads.push({kind:kind==="summary"?"索取摘要":"預約示範",ind:ST.view,src:ST.source,consent:true});
-    track(kind==="summary"?"summary_request":"booking_submit",`${ST.view}・已同意聯繫${ST.source!=="direct"?"・歸因 "+ST.source:""}`);
-    ST.drawer=null; renderDrawer(); toast(kind==="summary"?"已收到，摘要會寄給你（模擬，未發送）":"已收到預約，專人會聯繫你（模擬，未發送）"); return}
+  if(d.intent){const kind=d.intent; ST.leads.push({kind:kind==="booking"?"想預約示範":"LINE 有興趣",ind:ST.view,src:ST.source});
+    track(kind==="booking"?"booking_intent":"line_interest",`${ST.view}${ST.source!=="direct"?"・來源 "+ST.source:""}`); t.disabled=true; $("#intentBox").innerHTML=intentMsg(kind); return}
+  if(d.cardsave){const dl=await getDL(); if(!dl||!showCard.c){toast("請長按圖片儲存");return}
+    const blob=await new Promise(r=>showCard.c.toBlob(r,"image/png"));
+    try{await dl.save({filename:`體驗成果卡-${ST.view==="water"?"水電":"營造"}.png`,data:blob}); track("card_save",ST.view)}catch(err){if(err&&err.code!=="declined") toast("這個畫面不能下載，請長按圖片儲存")} return}
+  if(d.copyobs){try{await navigator.clipboard.writeText(obsText()); toast("已複製觀察摘要")}catch(err){toast("請長按文字手動複製")} return}
 });
-ST=freshState(); render();
+function boot(){ST=freshState(); const h=applyHash(); render();
+  const chip=$("#codeChip"); if(ST.code){chip.textContent=`體驗編號 ${ST.code}`; chip.hidden=false} else chip.hidden=true;
+  if(h==="invalid") track("invalid_code","代碼不在名單，視為直接進入");
+  if(h==="ok"&&ST.view!=="home"){window.scrollTo({top:0}); track("page_open",`${ST.view}・來源 ${ST.source}`)}}
+boot();
 </script>
