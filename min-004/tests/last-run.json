@@ -1,0 +1,292 @@
+{
+  "at": "2026-10-29T13:26:33.304Z",
+  "passed": 57,
+  "total": 57,
+  "results": [
+    {
+      "name": "[salon] 開啟即顯示示範店九宮格",
+      "ok": true,
+      "detail": "森光髮藝"
+    },
+    {
+      "name": "[salon] 九宮格中央是 AI 行銷總監",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[salon] 完整示範案例工作流全部完成",
+      "ok": true,
+      "detail": "7/7・一個染髮作品，變成 IG 貼文、短影音腳本、LINE 預約回覆和回流活動"
+    },
+    {
+      "name": "[salon] 成果包 4 份可複製",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[salon] 成果卡圖片已產生",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[salon] 九格都能點開並有示範成果",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[salon] 手機寬度沒有橫向捲動",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[salon] 沒有 JS 錯誤",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 開啟即顯示示範店九宮格",
+      "ok": true,
+      "detail": "小指尖 Nail Studio"
+    },
+    {
+      "name": "[nail] 九宮格中央是 AI 行銷總監",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 完整示範案例工作流全部完成",
+      "ok": true,
+      "detail": "7/7・一組新款美甲，變成促銷文案、短影音企劃、限時動態和預約詢問回覆"
+    },
+    {
+      "name": "[nail] 成果包 4 份可複製",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 成果卡圖片已產生",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 九格都能點開並有示範成果",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 手機寬度沒有橫向捲動",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[nail] 沒有 JS 錯誤",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 開啟即顯示示範店九宮格",
+      "ok": true,
+      "detail": "午後巷弄咖啡"
+    },
+    {
+      "name": "[cafe] 九宮格中央是 AI 行銷總監",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 完整示範案例工作流全部完成",
+      "ok": true,
+      "detail": "7/7・一款下午茶套餐，變成場景故事、FB／IG 文案、短影音腳本、LINE 活動訊息和成效追蹤"
+    },
+    {
+      "name": "[cafe] 成果包 4 份可複製",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 成果卡圖片已產生",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 九格都能點開並有示範成果",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 手機寬度沒有橫向捲動",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[cafe] 沒有 JS 錯誤",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] salon 文案有自己的產業語彙",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] salon 痛點與目標和其他店型不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] salon 示範案例不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] nail 文案有自己的產業語彙",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] nail 痛點與目標和其他店型不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] nail 示範案例不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] cafe 文案有自己的產業語彙",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] cafe 痛點與目標和其他店型不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[差異] cafe 示範案例不同",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[LINE] 客訴情境轉真人接手",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[LINE] 建議回覆需店員按下才送出（模擬）",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[PO 文] 模擬發布標示未連平台",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[表單] 未填欄位時提示缺什麼",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[我的店] 九宮格換成使用者的店",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[我的店] 使用者輸入以純文字顯示（無 HTML 注入）",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[我的店] 文案帶入店名、主打與節日目標",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[成果] 複製文案成功",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[委派] 選 2 項建議方案 B",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[轉換] 下一步對應方案 C 並標示",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[轉換] 不收集聯絡資料",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 demo_view",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 grid_cell_open",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 try_start",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 try_submit",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 workflow_complete",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 output_copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 delegate_select",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 記錄 cta_click",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[事件] 事件紀錄不含店名等輸入內容",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[我的店] 手機寬度沒有橫向捲動",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[我的店] 沒有 JS 錯誤或彈窗",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[深色] 背景跟著系統深色",
+      "ok": true,
+      "detail": "rgb(15, 17, 22)"
+    },
+    {
+      "name": "[深色] 沒有 JS 錯誤",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

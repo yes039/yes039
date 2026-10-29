@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🧩 MIN-004 百業 AI 行銷員工 G1 互動 Demo：[min-004/](min-004/)
