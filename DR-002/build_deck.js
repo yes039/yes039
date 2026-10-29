@@ -165,7 +165,7 @@ function pill(s, x, y, w, text, fill, color) {
     const pts = [
       ["延伸", "在既有面粉供应基础上，向下游延伸一层产品"],
       ["差异", "以五款特色配方避开同质化价格竞争"],
-      ["复制", "统一25公斤规格，便于代工厂标准化复购"],
+      ["复制", "统一25公斤规格，便于馒头生产厂标准化复购"],
     ];
     pts.forEach((p, i) => {
       const y = 2.5 + i * 1.1;
@@ -178,12 +178,12 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P03 双方资源互补 =====
   {
-    const s = slide("CONTENT", "合作基础", "02 · 双方资源互补", "优质面粉 × 特色配方：一端稳供应，一端造差异");
+    const s = slide("CONTENT", "合作基础", "02 · 双方资源互补", "中粮海嘉面粉 × 陈博士配方，合作开发五行预拌粉");
     const cols = [
-      { x: 0.6, head: "中粮海嘉", sub: "面粉与供应链资源", ic: I.warehouse,
-        items: ["优质面粉原料供应", "生产与品控体系衔接", "仓储物流与供应链网络", "渠道与客户基础（范围待确认）"] },
-      { x: 7.73, head: "陈博士团队", sub: "五行特色粉体配方与产品技术", ic: I.flask,
-        items: ["五行特色粉体配方", "馒头专用预拌粉产品技术", "产品研发与工艺指导", "特色产品定位与市场推广"] },
+      { x: 0.6, head: "中粮海嘉", sub: "面粉及相关产业资源", ic: I.warehouse,
+        items: ["优质面粉原料供应", "生产与品控体系衔接", "仓储物流与供应链网络", "相关产业资源（范围待确认）"] },
+      { x: 7.73, head: "陈博士", sub: "五行特色粉体配方", ic: I.flask,
+        items: ["五行特色粉体配方", "预拌粉配方与工艺指导", "五款产品研发与定型", "特色产品定位"] },
     ];
     cols.forEach((c) => {
       card(s, c.x, 1.75, 5.0, 4.6);
@@ -198,11 +198,11 @@ function pill(s, x, y, w, text, fill, color) {
     });
     // center
     iconCircle(s, I.hand, 6.06, 2.95, 1.2, C.background1);
-    txt(s, "互补", { x: 5.8, y: 4.25, w: 1.73, h: 0.4, fontSize: 16, bold: true, align: "center", color: C.accent3 });
+    txt(s, "合作开发\n五行预拌粉", { x: 5.73, y: 4.15, w: 1.87, h: 0.6, fontSize: 13, bold: true, align: "center", color: C.accent3 });
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.73, y: 4.75, w: 1.87, h: 0.75, rectRadius: 0.08, fill: { color: C.accent5 }, line: { type: "none" } });
     txt(s, "合作关系\n尚待议定", { x: 5.73, y: 4.75, w: 1.87, h: 0.75, fontSize: 12, bold: true, align: "center", valign: "middle", color: C.background1 });
-    note(s, "注：双方尚未签署任何合作协议；中粮海嘉相关资源的具体范围以集团正式确认为准。");
-    s.addNotes("双方资源互补：中粮海嘉提供面粉与供应链，陈博士团队提供五行特色粉体配方与产品技术。必须强调：合作关系尚待议定，未正式签约。");
+    note(s, "注：双方尚未签署任何合作协议；中粮海嘉相关资源的具体范围以集团正式确认为准；五行特色粉体由谁生产尚待议定。");
+    s.addNotes("双方资源互补：中粮海嘉提供面粉及相关产业资源，陈博士提供五行特色粉体配方，双方合作开发五行预拌粉。五行特色粉体由谁生产尚待议定。必须强调：合作关系尚待议定，未正式签约。");
   }
 
   // ===== P04 五大产品矩阵 =====
@@ -229,7 +229,7 @@ function pill(s, x, y, w, text, fill, color) {
       s.addShape(pres.shapes.LINE, { x: x + 0.3, y: 5.35, w: cw - 0.6, h: 0, line: { color: HEX.accent4, width: 0.75 } });
       txt(s, "馒头专用 · 25kg/包", { x: x + 0.1, y: 5.5, w: cw - 0.2, h: 0.4, fontSize: 12, align: "center", color: C.text1 });
     });
-    note(s, "注：馒头图形为色泽示意，非实际产品照片；具体配方组成以陈博士团队最终确认为准；按普通食品管理，不作任何保健或功效宣称。", 6.5);
+    note(s, "注：馒头图形为色泽示意，非实际产品照片；具体配方组成以陈博士最终确认为准；按普通食品管理，不作任何保健或功效宣称。", 6.5);
     s.addNotes("五款产品均为馒头专用预拌粉，25公斤/包。图形为原生形状绘制的色泽示意，非实拍。产品描述仅限色泽、原料与风味，不作功效宣称，符合普通食品标签与广告法规要求。茯苓、山药、姜黄是否在适用的药食同源目录及使用范围内，须合规确认。");
   }
 
@@ -240,7 +240,8 @@ function pill(s, x, y, w, text, fill, color) {
     ins.forEach((t, i) => {
       const y = 2.0 + i * 1.3;
       card(s, 0.6, y, 2.8, 0.95, { fill: i === 0 ? C.accent1 : C.background1 });
-      txt(s, t, { x: 0.6, y, w: 2.8, h: 0.95, align: "center", valign: "middle", fontSize: 17, bold: true, color: i === 0 ? C.background1 : C.text1 });
+      txt(s, t, { x: 0.6, y: i === 0 ? y + 0.08 : y, w: 2.8, h: i === 0 ? 0.5 : 0.95, align: "center", valign: "middle", fontSize: 17, bold: true, color: i === 0 ? C.background1 : C.text1 });
+      if (i === 0) pill(s, 1.3, y + 0.52, 1.4, "生产方待议定", C.background1, C.accent5);
       if (i < 2) txt(s, "+", { x: 1.75, y: y + 0.95, w: 0.5, h: 0.35, align: "center", valign: "middle", fontSize: 18, bold: true, color: C.accent1 });
     });
     // bracket
@@ -271,9 +272,9 @@ function pill(s, x, y, w, text, fill, color) {
     const s = slide("CONTENT", "产品与模式", "05 · 产业商业模式", "一条链路，打通从预拌粉到消费者");
     const nodes = [
       { t: "预拌粉供应", d: "面粉 + 特色粉体\n标准化成品", ic: I.wheat, hi: true },
-      { t: "经销商", d: "区域分销\n覆盖与配送", ic: I.truck },
-      { t: "馒头生产企业", d: "使用预拌粉\n生产特色馒头", ic: I.factory },
-      { t: "终端渠道", d: "门店、商超\n团餐等", ic: I.store },
+      { t: "原料经销商", d: "区域分销\n覆盖与配送", ic: I.truck },
+      { t: "馒头生产厂", d: "使用预拌粉\n生产特色馒头", ic: I.factory },
+      { t: "终端渠道", d: "3,719个潜在据点\n属于此环节", ic: I.store },
       { t: "消费者", d: "购买与\n复购", ic: I.users },
     ];
     const nw = 2.05, ng = 0.46;
@@ -286,35 +287,39 @@ function pill(s, x, y, w, text, fill, color) {
       if (i < 4) arrowR(s, x + nw + 0.07, 3.92, 0.32);
     });
     // supply sources on top
-    card(s, 0.6, 1.7, 4.55, 0.7, { fill: C.accent4, noShadow: true });
+    card(s, 0.6, 1.55, 4.55, 0.55, { fill: C.accent4, noShadow: true });
     txt(s, [
       { text: "上游：", options: { bold: true, color: C.accent1 } },
-      { text: "中粮海嘉面粉 + 陈博士五行配方" },
-    ], { x: 0.8, y: 1.7, w: 4.3, h: 0.7, valign: "middle", fontSize: 14 });
-    s.addShape(pres.shapes.LINE, { x: 1.62, y: 2.4, w: 0, h: 0.35, line: { color: HEX.accent3, width: 1.25, endArrowType: "triangle" } });
+      { text: "中粮海嘉面粉 + 陈博士配方，合作开发" },
+    ], { x: 0.8, y: 1.55, w: 4.3, h: 0.55, valign: "middle", fontSize: 14 });
+    // B2B bracket over nodes 2-3, downstream over 4-5
+    pill(s, 0.6 + (nw + ng), 2.2, 2 * nw + ng, "B2B 直接销售对象", C.accent1, C.background1);
+    pill(s, 0.6 + 3 * (nw + ng), 2.2, 2 * nw + ng, "下游终端（间接拉动，非直接客户）", C.accent4, C.text1);
+    s.addShape(pres.shapes.LINE, { x: 1.62, y: 2.1, w: 0, h: 0.65, line: { color: HEX.accent3, width: 1.25, endArrowType: "triangle" } });
     // value flow
     s.addShape(pres.shapes.LEFT_ARROW, { x: 0.6, y: 5.7, w: 12.1, h: 0.5, fill: { color: C.accent4 }, line: { type: "none" } });
     txt(s, "订单与回款逐级回流 · 终端复购拉动预拌粉持续采购", { x: 1.2, y: 5.7, w: 11, h: 0.5, align: "center", valign: "middle", fontSize: 13, bold: true, color: C.accent3 });
-    s.addNotes("产业链：预拌粉供应→经销商→馒头生产企业→终端渠道→消费者。预拌粉的收入来自馒头生产企业的持续复购，终端动销是关键。");
+    s.addNotes("产业链：预拌粉供应→原料经销商→馒头生产厂→终端渠道→消费者。B2B直接销售对象为原料经销商及馒头生产厂；福建3,719个据点属于潜在终端渠道资源，尚未去重及确认进场，不是直接客户。");
   }
 
   // ===== P07 福建市场资源 =====
   {
-    const s = slide("CONTENT", "市场落地", "06 · 福建市场资源", "福建：3,719个潜在渠道据点，作为首个示范市场");
+    const s = slide("CONTENT", "市场落地", "06 · 福建市场资源", "福建：3,719个潜在终端渠道据点，支撑示范市场动销");
     card(s, 0.6, 1.75, 4.2, 4.6, { fill: C.text1 });
     iconCircle(s, I.pin, 0.95, 2.05, 0.75, C.accent3);
     txt(s, "3,719", { x: 0.9, y: 2.95, w: 3.7, h: 1.2, fontSize: 66, bold: true, color: C.accent2 });
-    txt(s, "个潜在渠道据点（福建省）", { x: 0.95, y: 4.15, w: 3.7, h: 0.4, fontSize: 15, color: C.background1 });
+    txt(s, "个潜在终端渠道据点（福建省）", { x: 0.95, y: 4.15, w: 3.7, h: 0.4, fontSize: 15, color: C.background1 });
     ["合作伙伴提供", "尚未去重", "尚未确认进场"].forEach((t, i) => pill(s, 0.95 + i * 1.22, 5.0, 1.15, t, C.accent5, C.background1));
     txt(s, "数据口径以合作伙伴原始清单为准", { x: 0.95, y: 5.6, w: 3.6, h: 0.35, fontSize: 11, color: C.accent4 });
     // classification table
-    txt(s, "渠道据点分类", { x: 5.2, y: 1.75, w: 5, h: 0.4, fontSize: 18, bold: true });
+    card(s, 5.2, 5.15, 7.5, 1.2, { fill: C.accent4, noShadow: true });
+    txt(s, [{ text: "客户定位：", options: { bold: true, color: C.accent5 } }, { text: "B2B 直接销售对象为原料经销商及馒头生产厂；3,719个据点是馒头产品的潜在终端渠道资源，用于带动下游动销，不是预拌粉的直接客户。" }],
+      { x: 5.4, y: 5.15, w: 7.1, h: 1.2, valign: "middle", fontSize: 13 });
+    txt(s, "终端渠道据点分类", { x: 5.2, y: 1.75, w: 5, h: 0.4, fontSize: 18, bold: true });
     const hdr = { bold: true, color: C.background1, fill: { color: C.accent1 }, fontSize: 13, valign: "middle" };
     const cell = (t, o = {}) => ({ text: t, options: Object.assign({ fontSize: 13, color: C.text1, valign: "middle" }, o) });
     const rows = [
       [{ text: "渠道类别", options: hdr }, { text: "据点数", options: Object.assign({}, hdr, { align: "right" }) }, { text: "在链路中的角色", options: hdr }],
-      [cell("馒头 / 包子生产企业"), cell("待填", { align: "right", color: C.accent5 }), cell("预拌粉直接使用方")],
-      [cell("经销 / 批发商"), cell("待填", { align: "right", color: C.accent5 }), cell("区域分销")],
       [cell("早餐店及面点门店"), cell("待填", { align: "right", color: C.accent5 }), cell("现做现售终端")],
       [cell("商超 / 农贸市场"), cell("待填", { align: "right", color: C.accent5 }), cell("零售终端")],
       [cell("团餐 / 单位食堂"), cell("待填", { align: "right", color: C.accent5 }), cell("集中采购终端")],
@@ -322,12 +327,12 @@ function pill(s, x, y, w, text, fill, color) {
       [cell("合计", { bold: true }), cell("3,719", { bold: true, align: "right" }), cell("未去重", { color: C.text2 })],
     ];
     s.addTable(rows, {
-      x: 5.2, y: 2.25, w: 7.5, colW: [2.9, 1.4, 3.2], rowH: 0.48,
+      x: 5.2, y: 2.25, w: 7.5, colW: [2.9, 1.4, 3.2], rowH: 0.45,
       fill: { color: C.background1 }, border: { type: "solid", pt: 0.75, color: HEX.accent4 },
       margin: [0, 0.12, 0, 0.12],
     });
-    note(s, "注：分类为建议框架，各类数量待合作伙伴提供明细后填入；据点数据未经去重、未确认进场意向，不代表已有客户或订单。");
-    s.addNotes("福建3,719个潜在渠道据点。必须强调三点：数据由合作伙伴提供；尚未去重；尚未确认进场。分类明细待补，本页表格可直接填入。");
+    note(s, "注：分类为建议框架，各类数量待合作伙伴提供明细后填入；据点数据未经去重、未确认进场，不代表已有客户或订单。");
+    s.addNotes("福建3,719个潜在终端渠道据点，不是B2B直接客户（直接客户为原料经销商及馒头生产厂）。必须强调三点：数据由合作伙伴提供；尚未去重；尚未确认进场。分类明细待补，本页表格可直接填入。");
   }
 
   // ===== P08 四家候选代工厂试点 =====
@@ -364,11 +369,11 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P09 三种合作收益模式 =====
   {
-    const s = slide("CONTENT", "收益与财务", "08 · 三种合作收益模式", "三种合作收益模式，供集团比较选择");
+    const s = slide("CONTENT", "收益与财务", "08 · 三种合作收益模式", "三种合作收益模式并列，供双方比较议定");
     const heads = [
-      ["A", "特色粉体供货合作", C.accent2, C.text1],
+      ["A", "特色粉体供货合作", C.accent1, C.background1],
       ["B", "配方技术授权合作", C.accent1, C.background1],
-      ["C", "共同经营利润分配", C.accent3, C.background1],
+      ["C", "共同经营利润分配", C.accent1, C.background1],
     ];
     const lw = 2.1, cw = 3.33;
     heads.forEach((h, i) => {
@@ -380,23 +385,23 @@ function pill(s, x, y, w, text, fill, color) {
     const L = (t) => ({ text: t, options: { bold: true, color: C.accent3, fontSize: 13, valign: "middle", fill: { color: C.accent4 } } });
     const V = (t) => ({ text: t, options: { color: C.text1, fontSize: 13, valign: "middle" } });
     const rows = [
-      [L("合作方式"), V("陈博士团队供应特色粉体，海嘉混配生产与销售"), V("陈博士团队授权配方与工艺，海嘉自主生产销售"), V("双方共同经营产品线，按约定分配利润")],
-      [L("技术方收益"), V("粉体供货收入"), V("授权费 / 按销量提成"), V("共同经营利润分成")],
+      [L("合作方式"), V("按约定供应五行特色粉体，用于预拌粉生产"), V("陈博士授权五行特色粉体配方与工艺"), V("双方共同经营五行预拌粉，按约定分配利润")],
+      [L("收益来源"), V("粉体供货收入"), V("授权费 / 按销量提成"), V("共同经营利润分成")],
       [L("双方投入"), V("低 — 中"), V("中"), V("高")],
       [L("管理复杂度"), V("低：供销关系清晰"), V("中：须配方保护与监督"), V("高：须共管机制")],
-      [L("适用阶段"), V("试点期快速启动"), V("规模化区域复制"), V("长期战略合作")],
+      [L("待议定要点"), V("粉体生产方、供货价格与数量"), V("授权范围、费率与配方保护"), V("出资、共管机制与分配比例")],
     ];
     s.addTable(rows, {
       x: 0.6, y: 2.6, w: lw + 3 * cw, colW: [lw, cw, cw, cw], rowH: [0.82, 0.62, 0.62, 0.62, 0.62],
       fill: { color: C.background1 }, border: { type: "solid", pt: 0.75, color: HEX.accent4 }, margin: [0, 0.15, 0, 0.15],
     });
-    note(s, "注：本矩阵为讨论用比较框架，三案均未获任何一方同意；具体条款、比例与费率须经双方正式谈判确定。", 6.45);
-    s.addNotes("三种合作收益模式比较：A供货、B授权、C共同经营。投入与复杂度依次递增。不预设任何一案已获同意，请集团比较后选择。");
+    note(s, "注：三案并列、无先后与推荐顺序，均未获双方同意；五行特色粉体由谁生产尚待议定；具体条款须经双方正式谈判确定。", 6.45);
+    s.addNotes("三种合作收益模式并列：A供货、B授权、C共同经营。不预设任何一案已获双方同意，也不作推荐。五行特色粉体生产方尚待议定。");
   }
 
   // ===== P10 第一年30吨销售计划 =====
   {
-    const s = slide("CONTENT", "收益与财务", "09 · 第一年销售计划", "第一年目标：30吨预拌粉成品，合1,200包");
+    const s = slide("CONTENT", "收益与财务", "09 · 第一年销售计划", "第一年目标：30吨五行预拌粉成品，合1,200包");
     s.addChart(pres.charts.BAR, [{ name: "季度销量（吨）", labels: ["Q1", "Q2", "Q3", "Q4（暂定）"], values: [5, 5, 10, 10] }], {
       x: 0.6, y: 1.7, w: 7.6, h: 4.7, barDir: "col", barGapWidthPct: 70,
       chartColors: [HEX.accent1],
@@ -409,7 +414,7 @@ function pill(s, x, y, w, text, fill, color) {
     });
     // right KPIs
     const kp = [
-      ["30吨", "全年预拌粉成品"],
+      ["30吨", "全年五行预拌粉成品（非特色粉体）"],
       ["1,200包", "按25公斤 / 包换算"],
     ];
     kp.forEach((k, i) => {
@@ -428,15 +433,15 @@ function pill(s, x, y, w, text, fill, color) {
       fontSize: 12, bold: ri === 0, color: ri === 0 ? C.background1 : C.text1, fill: { color: ri === 0 ? C.accent3 : C.background1 },
       align: ci === 0 ? "left" : "right", valign: "middle" } })));
     s.addTable(rows, { x: 8.6, y: 4.75, w: 4.1, colW: [1.25, 0.85, 0.95, 1.05], rowH: 0.33, border: { type: "solid", pt: 0.75, color: HEX.accent4 }, margin: [0, 0.1, 0, 0.1] });
-    note(s, "注：Q4 10吨为暂定目标；销售计划为提案方目标，非已确认订单。换算：1吨 = 40包（25公斤 / 包）。", 6.55);
-    s.addNotes("第一年30吨：Q1 5吨、Q2 5吨、Q3 10吨、Q4暂定10吨，合计1,200包（25公斤/包，每吨40包）。均为目标，非已确认订单。");
+    note(s, "注：30吨指五行预拌粉成品，不是五行特色粉体；Q4 10吨为暂定；为提案方目标，非已确认订单。1吨 = 40包（25公斤 / 包）。", 6.55);
+    s.addNotes("第一年30吨五行预拌粉成品（不是五行特色粉体）：Q1 5吨、Q2 5吨、Q3 10吨、Q4暂定10吨，合计1,200包（25公斤/包，每吨40包）。均为目标，非已确认订单。");
   }
 
   // ===== P11 财务与获利逻辑 =====
   {
     const s = slide("CONTENT", "收益与财务", "10 · 财务与获利逻辑", "获利结构已明确，价格与利润待正式报价后测算");
     const eq = [
-      { k: "营收", f: "销量（吨）× 出厂单价（元 / 吨）", v: "30吨 ×［待报价］" },
+      { k: "营收", f: "销量（吨）× 出厂单价（元 / 吨）", v: "30吨五行预拌粉成品 ×［待报价］" },
       { k: "成本", f: "面粉 + 特色粉体 + 辅料 + 混配加工 + 包装 + 检验 + 物流", v: "各项单价［待报价］" },
       { k: "毛利", f: "营收 − 成本", v: "［待测算］" },
     ];
@@ -555,8 +560,10 @@ function pill(s, x, y, w, text, fill, color) {
       txt(s, d[0], { x: x + 0.25, y: 2.9, w: dw - 0.4, h: 0.5, fontSize: 18, bold: true, color: C.background1 });
       txt(s, d[1], { x: x + 0.25, y: 3.45, w: dw - 0.4, h: 0.8, fontSize: 13, color: C.accent4 });
     });
-    s.addImage({ data: I.wheatGold, x: 0.6, y: 4.95, w: 0.7, h: 0.7 });
-    txt(s, "以五行配方赋能优质面粉，\n共建特色主食产业新生态。", { x: 1.55, y: 4.8, w: 11, h: 1.3, fontSize: 30, bold: true, color: C.accent2, valign: "middle" });
+    txt(s, [{ text: "待议定事项：", options: { bold: true, color: C.accent2 } }, { text: "合作关系与协议形式　·　五行特色粉体生产方　·　收益模式及具体条款" }],
+      { x: 0.6, y: 4.6, w: 12.1, h: 0.4, fontSize: 14, color: C.background1 });
+    s.addImage({ data: I.wheatGold, x: 0.6, y: 5.35, w: 0.7, h: 0.7 });
+    txt(s, "以五行配方赋能优质面粉，\n共建特色主食产业新生态。", { x: 1.55, y: 5.15, w: 11, h: 1.15, fontSize: 30, bold: true, color: C.accent2, valign: "middle" });
     txt(s, "本简报为合作提案讨论稿，所有合作条件以双方正式签署之协议为准。", { x: 0.6, y: 6.6, w: 10, h: 0.3, fontSize: 10, color: C.accent4, italic: true });
     s.addNotes("决策请求：评估合作意愿、指定对接窗口、确认试产资源、选择合作收益模式、启动90天验证。结尾主张：以五行配方赋能优质面粉，共建特色主食产业新生态。");
   }
