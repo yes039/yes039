@@ -1,0 +1,782 @@
+<title>MIN-003 獲客戰情室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one admin shell, top bar with seven views; tables scroll inside their own box; customer detail opens in a side drawer */
+:root{
+  --bg:#eef0f3; --surface:#ffffff; --sunk:#f5f6f9; --ink:#1d2530; --muted:#5b6574; --line:#d7dce3;
+  --vest:#f4b400; --vest-soft:#fff3cc; --vest-ink:#1d2530;
+  --blue:#1d5ea6; --blue-soft:#e3eefb; --violet:#5b4bb7; --violet-soft:#ece9fb;
+  --red:#c0352b; --red-soft:#fbe4e2; --amber:#a86200; --amber-soft:#fcefd6; --green:#2b7a4b; --green-soft:#e1f2e8; --grey:#8b96a3; --grey-soft:#eceff2;
+  --line-green:#06c755;
+  --display:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10141a; --surface:#19202a; --sunk:#141a22; --ink:#e6eaf0; --muted:#9aa4b2; --line:#2a333f;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1d2530; --blue:#82b3ec; --blue-soft:#1d2d42; --violet:#a99cf0; --violet-soft:#27223f;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222a34;
+  --line-green:#2fd27a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141a; --surface:#19202a; --sunk:#141a22; --ink:#e6eaf0; --muted:#9aa4b2; --line:#2a333f;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1d2530; --blue:#82b3ec; --blue-soft:#1d2d42; --violet:#a99cf0; --violet-soft:#27223f;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222a34;
+  --line-green:#2fd27a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:6}
+header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px}
+h1{font-family:var(--display);font-weight:400;font-size:21px;margin:0;white-space:nowrap}
+h1 .tape{background:var(--vest);color:var(--vest-ink);padding:0 .25em;border-radius:4px}
+.demo{font-size:12px;color:var(--amber);background:var(--amber-soft);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.who{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.who select{width:auto}
+nav.views{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1 1 100%;min-width:0;order:5}
+.vbtn{flex:0 0 auto;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.vbtn[aria-current="page"]{background:var(--ink);color:var(--surface)}
+main .wrap{padding-block:18px 64px;display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--display);font-weight:400;font-size:19px;margin:0;text-wrap:balance}
+h3{font-size:13px;letter-spacing:.05em;color:var(--muted);margin:0;font-weight:700}
+.lede{color:var(--muted);font-size:14px;margin:0;max-width:70ch}
+.small{font-size:13px} .muted{color:var(--muted)} .num{font-variant-numeric:tabular-nums}
+button{font:inherit}
+.btn{border:0;border-radius:9px;padding:7px 14px;font-weight:700;cursor:pointer;background:var(--vest);color:var(--vest-ink);white-space:nowrap}
+.btn.ghost{background:var(--sunk);color:var(--ink);border:1.5px solid var(--line);font-weight:500}
+.btn.sm{padding:3px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input[type=text],input[type=date],input[type=search],textarea,select{border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:9px;padding:6px 10px;font:inherit;min-width:0;width:100%}
+textarea{resize:vertical;min-height:70px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.pill.red{background:var(--red-soft);color:var(--red)} .pill.amber{background:var(--amber-soft);color:var(--amber)} .pill.green{background:var(--green-soft);color:var(--green)} .pill.grey{background:var(--grey-soft);color:var(--grey)} .pill.blue{background:var(--blue-soft);color:var(--blue)} .pill.violet{background:var(--violet-soft);color:var(--violet)} .pill.vest{background:var(--vest-soft);color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi b{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi i{font-style:normal;font-size:12px;color:var(--muted)}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.fr{display:grid;grid-template-columns:96px 1fr 70px;gap:10px;align-items:center;font-size:14px}
+.fbar{height:22px;background:var(--grey-soft);border-radius:6px;overflow:hidden}
+.fbar i{display:block;height:100%;background:var(--blue);border-radius:6px}
+.fr .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.fr .v small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+.tablebox table{min-width:880px}
+.tb{overflow-x:auto} .tb table{min-width:520px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--sunk);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.r,th.r{text-align:right}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;width:auto}
+.toolbar select{flex:0 1 150px;width:auto}
+.rank{display:flex;flex-direction:column;gap:6px}
+.rk{display:grid;grid-template-columns:1fr 120px 36px;gap:10px;align-items:center;font-size:14px}
+.rk .fbar{height:10px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:10px;overflow-x:auto;padding-bottom:6px}
+.col{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.col-h b{font-size:14px}
+.col-rule{font-size:11px;color:var(--muted);line-height:1.4}
+.opp{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;cursor:pointer;text-align:left;color:var(--ink)}
+.opp b{font-size:14px}
+.opp small{color:var(--muted);font-size:12px}
+.opp.hot{border-color:var(--vest);box-shadow:inset 3px 0 0 var(--vest)}
+.task{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.task .t{font-weight:700}
+.task .m{font-size:13px;color:var(--muted)}
+.rule{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.rule:last-child{border-bottom:0}
+.switch{position:relative;width:44px;height:24px;border-radius:12px;border:0;background:var(--grey-soft);cursor:pointer}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.switch[aria-checked="true"]{background:var(--green)} .switch[aria-checked="true"]::after{left:23px}
+.preview{border-radius:14px;padding:12px;font-size:14px;white-space:pre-wrap}
+.preview.line{background:#8fa8c4}
+.preview .bub{background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.preview .bub .hd{font-weight:700}
+.preview .bub .bt{background:var(--line-green);color:#fff;border-radius:8px;text-align:center;padding:6px;font-weight:700;font-size:13px}
+.preview.mail{background:var(--sunk);border:1px solid var(--line);font-family:var(--body)}
+.preview.mail .mh{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;white-space:normal}
+.simlay{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.simlay{grid-template-columns:1fr}}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.urlbar{font-size:12px;background:var(--sunk);border-radius:8px;padding:6px 10px;color:var(--muted);word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
+.consent{background:var(--blue-soft);border-radius:12px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:8px}
+.feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.feat button{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:10px;padding:10px 4px;font-size:13px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue);color:var(--blue);font-weight:500}
+.log{display:flex;flex-direction:column;gap:6px;max-height:520px;overflow-y:auto}
+.ev{display:grid;grid-template-columns:62px 1fr auto;gap:8px;align-items:center;font-size:13px;background:var(--sunk);border-radius:8px;padding:6px 10px}
+.ev time{color:var(--muted);font-variant-numeric:tabular-nums}
+.ev code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;overflow-x:auto;margin:0}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:14px}
+.kv span:nth-child(odd){color:var(--muted)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+@media (max-width:640px){.drawer{top:auto;left:0;width:100%;max-height:90%;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding-left:env(safe-area-inset-left,0px)}}
+.dr-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dr-b{overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.x{border:0;background:var(--sunk);color:var(--ink);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+.tl{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.tl div{display:grid;grid-template-columns:96px 1fr;gap:8px;background:var(--sunk);border-radius:8px;padding:6px 10px}
+.tl time{color:var(--muted);font-variant-numeric:tabular-nums}
+.warn{font-size:13px;color:var(--red);margin:0}
+.note{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px;margin:0}
+.tablebox td.mono,.tablebox td.num,.tablebox td.r{white-space:nowrap}
+.tablebox td.small{min-width:180px}
+input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;accent-color:var(--blue)}
+.switch{width:52px;height:30px;border-radius:15px} .switch::after{top:4px;left:4px;width:22px;height:22px} .switch[aria-checked="true"]::after{left:26px}
+@media (max-width:640px){
+ header.top{position:static}
+ header.top .wrap{gap:8px}
+ .demo{font-size:11px;white-space:normal}
+ .who{margin-left:0;font-size:0;flex:1 1 160px} .who select{font-size:14px;width:100%}
+ nav.views{position:sticky;top:0}
+}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>MIN-003<span class="tape">獲客戰情室</span></h1>
+  <span class="demo">G1 V1.2 封版・全部為模擬資料，未追蹤、未發送</span>
+  <label class="who">以誰的身分看<select id="asUser"></select></label>
+  <button class="btn ghost sm" id="reset">重設模擬</button>
+  <nav class="views" id="views"></nav>
+</div></header>
+<main><div class="wrap" id="main"></div></main>
+<div id="layer"></div><div id="toastBox"></div>
+
+<script>
+const TODAY="2026-10-28";
+const VIEWS=[["war","戰情室"],["crm","客戶名冊"],["board","商機看板"],["tasks","待辦跟進"],["notify","通知"],["sim","客戶體驗模擬"],["partners","推薦夥伴"],["commission","佣金結算"],["case","模擬案例"],["arch","架構與規則"],["portal","我的推薦"]];
+function viewsFor(){const r=(S.U.find(u=>u.id===S.me)||{}).role; if(r==="推薦夥伴") return VIEWS.filter(v=>v[0]==="portal"); return VIEWS.filter(v=>v[0]!=="portal"&&(v[0]!=="commission"||r==="管理者"))}
+const STAGES=["待發送","已發送","已體驗","有需求","預約洽談","提案報價","成交","未成交"];
+const STAGE_RULE={
+ "待發送":"已建檔、已產生專屬連結，還沒傳給客戶",
+ "已發送":"商務專人按下「已發送」（LINE 傳送無法自動偵測）",
+ "已體驗":"有至少 1 次實際操作或完成任務（只有開啟不算）",
+ "有需求":"客戶回饋「想了解專屬版本」、送出諮詢，或商務專人記錄通話中確認的需求",
+ "預約洽談":"客戶送出預約，或商務專人排定洽談日期",
+ "提案報價":"已送出提案或報價（商務專人記錄）",
+ "成交":"簽約或付費試辦（商務專人記錄，需填類型）",
+ "未成交":"結案，需填原因"};
+const IND={W:{name:"水電",tpl:"water",color:"blue"},C:{name:"營造",tpl:"build",color:"violet"},R:{name:"餐飲",tpl:"food",color:"amber"},H:{name:"美髮",tpl:"hair",color:"green"}};
+const TPL={
+ water:{name:"水電公司工程管理儀表板",status:"已上線",features:["九宮格","老闆手機首頁","工地總覽","LINE 回報","異常追蹤","今日摘要"],task:"完成一次 LINE 回報"},
+ build:{name:"營造公司管理儀表板",status:"已上線",features:["九宮格","老闆手機首頁","工程總覽","主任 LINE 回報","異常與缺失","今日摘要"],task:"核准一筆估驗"},
+ food:{name:"餐飲 AI 店長",status:"規劃中",features:["營收","進貨單據","排班","評論"],task:"上傳一張進貨單"},
+ hair:{name:"美髮預約助理",status:"規劃中",features:["預約","回訪","設計師業績"],task:"完成一次回訪提醒"}};
+const PAINS=["工地狀況要一直打電話問","缺料或叫錯料","交辦沒人回報","請款、收款追不上","日報會議很花時間","工安缺失沒追蹤","人手不夠"];
+const B32="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+let rs=7; const rnd=()=>{rs=(rs*1103515245+12345)%2147483648; return rs/2147483648};
+const tok=()=>Array.from({length:10},()=>B32[Math.floor(rnd()*32)]).join("");
+
+function seed(){
+ rs=7;
+ const U=[{id:"u1",name:"Shen",role:"管理者",line:"已綁定",email:"已設定"},{id:"u2",name:"商務 A",role:"商務專人",line:"已綁定",email:"已設定"},{id:"u3",name:"商務 B",role:"商務專人",line:"未綁定",email:"已設定"},{id:"p1",name:"模擬夥伴 阿明",role:"推薦夥伴",partner:"P001",line:"已綁定",email:"已設定"}];
+ const rows=[
+  ["W001","模擬水電行 01","王先生","成交","u2",{trial:true}],["W002","模擬水電工程 02","陳小姐","提案報價","u2"],["W003","模擬水電行 03","林先生","有需求","u2",{hot:true}],
+  ["W004","模擬水電工程 04","張先生","已體驗","u3"],["W005","模擬水電行 05","黃先生","已發送","u3",{openOnly:true}],["W006","模擬水電行 06","李先生","已發送","u2"],
+  ["W007","模擬水電工程 07","吳小姐","待發送","u3"],["W008","模擬水電行 08","周先生","未成交","u2"],
+  ["C001","模擬營造 01","許先生","預約洽談","u2"],["C002","模擬營造 02","鄭先生","已體驗","u3"],["C003","模擬營造 03","謝小姐","已發送","u3",{openOnly:true}],
+  ["C004","模擬營造 04","郭先生","有需求","u2"],["C005","模擬營造 05","洪先生","待發送","u2"],
+  ["R001","模擬餐飲 01","曾小姐","待發送","u3"],["R002","模擬餐飲 02","蔡先生","待發送","u3"],["H001","模擬美髮 01","潘小姐","待發送","u2"]];
+ const PAIN_OF=[0,1,0,2,0,null,null,3,3,4,null,5,null,null,null,null];
+ const C=rows.map((r,i)=>{const ind=r[0][0], st=r[3], o=r[5]||{};
+  const sent=STAGES.indexOf(st)>=1&&st!=="待發送";
+  return {id:"c"+(i+1),code:r[0],token:tok(),company:r[1],industry:ind,contact:r[2],phone:"09xx-xxx-"+String(100+i).slice(1),email:"",lineId:"",tpl:IND[ind].tpl,owner:r[4],stage:st,
+   need:PAIN_OF[i]!=null?PAINS[PAIN_OF[i]]:"",nextTask:st==="待發送"?"傳送體驗連結":st==="已發送"?"3 天後電話確認是否打開":st==="成交"||st==="未成交"?"":"安排下一次聯繫",
+   nextDate:["2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-11-03"][i%5],sentAt:sent?"2026-10-2"+(i%6+1):"",consent:sent&&!o.openOnly?(i%4===3?"只看不記錄":"同意記錄操作"):"",
+   hot:!!o.hot,trial:!!o.trial,lost:st==="未成交"?"預算不足，明年再談":"",feedback:null,openOnly:!!o.openOnly}});
+ const E=[]; let n=1; const add=(c,type,feat,day,t)=>E.push({id:n++,cid:c.id,tpl:c.tpl,type,feature:feat||"",ts:`10/${day} ${t}`,consent:c.consent,counted:true});
+ C.forEach((c,i)=>{const s=STAGES.indexOf(c.stage), d=21+(i%6);
+  if(c.stage==="待發送") return;
+  add(c,"page_open","",d,"20:1"+(i%10));
+  if(c.openOnly) return;
+  if(c.consent==="只看不記錄"&&s<3) return;
+  if(s>=2||c.stage==="未成交"){ const f=TPL[c.tpl].features; add(c,"feature_click",f[0],d,"20:12"); add(c,"feature_click",f[i%f.length],d,"20:14"); if(i%2===0) add(c,"task_complete",TPL[c.tpl].task,d,"20:16") }
+  if(s>=3&&c.stage!=="未成交"){ add(c,"consult_click","",d,"20:18"); add(c,"feedback_submit","",d,"20:19");
+   c.feedback={best:TPL[c.tpl].features[i%3],pain:c.need||PAINS[0],want:"想了解專屬版本",contact:i%2?"願意留 LINE":"請商務專人來電"} }
+  if(s>=4&&c.stage!=="未成交") add(c,"booking_submit","",d+1>28?28:d+1,"09:05");
+ });
+ const H=[]; C.forEach(c=>{ if(c.stage!=="待發送") H.push({cid:c.id,ts:c.sentAt||"10/21",from:"待發送",to:"已發送",by:U.find(u=>u.id===c.owner).name,why:"商務專人按「已發送」"}) });
+ const T=C.filter(c=>c.nextTask).map((c,i)=>({id:"t"+(i+1),cid:c.id,owner:c.owner,text:c.nextTask,due:c.nextDate,done:false,result:""}));
+ const N=[
+  {id:1,ts:"10/28 08:00",rule:"daily",ch:"LINE",to:"Shen",cid:null,status:"已送出",tries:1},
+  {id:2,ts:"10/28 08:00",rule:"daily",ch:"Email",to:"Shen",cid:null,status:"失敗後重試成功",tries:2},
+  {id:3,ts:"10/27 20:19",rule:"need",ch:"LINE",to:"商務 A",cid:"c3",status:"已送出",tries:1},
+  {id:4,ts:"10/27 20:19",rule:"hot",ch:"LINE",to:"Shen",cid:"c3",status:"已送出",tries:1},
+  {id:5,ts:"10/28 09:00",rule:"overdue",ch:"LINE",to:"商務 B",cid:"c4",status:"收件人未綁定 LINE，改寄 Email",tries:1},
+  {id:6,ts:"10/28 13:00",rule:"overdue",ch:"LINE",to:"商務 B",cid:"c4",status:"已抑制（24 小時內通知過）",tries:0}];
+ const R=[
+  {id:"need",name:"客戶主動提出需求",when:"回饋選「想了解專屬版本」或送出諮詢",to:"負責商務專人＋Shen",ch:"LINE",on:true},
+  {id:"book",name:"客戶預約洽談",when:"送出預約表單",to:"負責商務專人＋Shen",ch:"LINE＋Email",on:true},
+  {id:"hot",name:"高意向商機產生",when:"7 天內完成任務＋（諮詢或想了解專屬版本）",to:"Shen",ch:"LINE",on:true},
+  {id:"overdue",name:"商務專人逾期未跟進",when:"待辦超過期限 1 天未完成",to:"負責商務專人；逾期 3 天再通知 Shen",ch:"LINE",on:true},
+  {id:"daily",name:"每日商機摘要",when:"每天 08:00",to:"Shen",ch:"LINE＋Email",on:true},
+  {id:"partner",name:"推薦進度通知夥伴",when:"推薦客戶提出需求、成交、佣金狀態改變",to:"該推薦夥伴（不含客戶聯絡資料）",ch:"LINE",on:true}];
+ const A=[{ts:"10/26 10:12",by:"Shen",act:"匯入名冊 16 筆（去重略過 1 筆）"},{ts:"10/27 14:30",by:"商務 A",act:"W002 商機階段：有需求 → 提案報價（附報價單）"}];
+ const PS=partnerSeed(C);
+ return {U,C,E,H,T,N,R,A,...PS,me:"u1",nid:7,eid:n};
+}
+let S, view=(location.hash||"#war").slice(1), drawer=null, q="", fInd="", fStage="", fOwner="", simCid="c6", simState={consent:null,lastOpen:0}, importText="";
+
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cust=id=>S.C.find(c=>c.id===id);
+const uname=id=>(S.U.find(u=>u.id===id)||{}).name||"—";
+const me=()=>S.U.find(u=>u.id===S.me);
+const isAdmin=()=>me().role==="管理者";
+const evOf=cid=>S.E.filter(e=>e.cid===cid&&e.counted);
+const has=(cid,t)=>evOf(cid).some(e=>t.includes(e.type));
+const stIdx=s=>STAGES.indexOf(s);
+const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+function toast(t){$("#toastBox").innerHTML=`<div class="toast" role="status">${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#toastBox").innerHTML="",2600)}
+function visibleC(){return isAdmin()?S.C:S.C.filter(c=>c.owner===S.me)}
+function audit(act){S.A.unshift({ts:"10/28 "+new Date().toTimeString().slice(0,5),by:me().name,act})}
+function stagePill(s){const m={"待發送":"grey","已發送":"grey","已體驗":"blue","有需求":"amber","預約洽談":"violet","提案報價":"violet","成交":"green","未成交":"red"};return `<span class="pill ${m[s]}">${s}</span>`}
+function expStatus(c){ if(!c.sentAt) return ["grey","未發送"]; if(has(c.id,["task_complete"])) return ["green","完成任務"]; if(has(c.id,["feature_click"])) return ["blue","有操作"]; if(has(c.id,["page_open"])) return [c.consent==="只看不記錄"?"grey":"amber",c.consent==="只看不記錄"?"已開啟（未同意記錄操作）":"只開啟，沒操作"]; return ["grey","未開啟"] }
+function metrics(list){
+  const sent=list.filter(c=>c.sentAt), opened=sent.filter(c=>has(c.id,["page_open"])), acted=sent.filter(c=>has(c.id,["feature_click","task_complete"]));
+  const fb=sent.filter(c=>has(c.id,["feedback_submit"])), booked=sent.filter(c=>has(c.id,["booking_submit"])||stIdx(c.stage)>=4&&c.stage!=="未成交"), trial=sent.filter(c=>c.trial);
+  return {total:list.length,sent:sent.length,opened:opened.length,acted:acted.length,fb:fb.length,booked:booked.length,trial:trial.length};
+}
+
+/* ---------- 戰情室 ---------- */
+function vWar(){
+  const L=visibleC(), m=metrics(L);
+  const F=[["已發送",m.sent],["已開啟",m.opened],["實際操作",m.acted],["主動回饋",m.fb],["預約洽談",m.booked],["付費試辦",m.trial]];
+  const byInd=Object.keys(IND).map(k=>{const l=L.filter(c=>c.industry===k), mm=metrics(l); return {k,mm,tpl:TPL[IND[k].tpl]}}).filter(x=>x.mm.total);
+  const pains={}; L.forEach(c=>{ if(c.need) pains[c.need]=(pains[c.need]||0)+1 }); const PR=Object.entries(pains).sort((a,b)=>b[1]-a[1]); const pmax=PR.length?PR[0][1]:1;
+  const owners=S.U.filter(u=>isAdmin()||u.id===S.me).map(u=>{const t=S.T.filter(x=>x.owner===u.id&&!x.done); return {u,open:t.length,over:t.filter(x=>x.due<TODAY).length,today:t.filter(x=>x.due===TODAY).length,opps:S.C.filter(c=>c.owner===u.id&&!["成交","未成交","待發送"].includes(c.stage)).length}});
+  return `<p class="lede">${isAdmin()?"全部客戶":"你負責的客戶"}的獲客成效。「已開啟」只代表連結被打開過，不代表看過或有興趣；「實際操作」才算真的試用。</p>
+  <div class="kpis">${[["發送客戶",m.sent,`名冊 ${m.total} 家`],["已開啟體驗",m.opened,`開啟率 ${pct(m.opened,m.sent)}`],["實際操作",m.acted,`操作率 ${pct(m.acted,m.sent)}`],["主動回饋",m.fb,`回饋率 ${pct(m.fb,m.sent)}`],["預約諮詢",m.booked,`${pct(m.booked,m.sent)}`],["付費試辦",m.trial,`${pct(m.trial,m.sent)}`]].map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b><i>${k[2]}</i></div>`).join("")}</div>
+  <div class="grid2">
+   <div class="card"><h2>獲客漏斗</h2><div class="funnel">${F.map((f,i)=>`<div class="fr"><span>${f[0]}</span><span class="fbar"><i style="width:${m.sent?f[1]/m.sent*100:0}%;opacity:${1-i*.1}"></i></span><span class="v">${f[1]}<small>${i?"上一步 "+pct(f[1],F[i-1][1]):"基準"}</small></span></div>`).join("")}</div>
+   <p class="note">比例以「已發送」為分母。客戶選「只看不記錄」時看不到操作，所以實際操作數是下限。</p></div>
+   <div class="card"><h2>常見管理困擾</h2><div class="rank">${PR.length?PR.map(p=>`<div class="rk"><span>${esc(p[0])}</span><span class="fbar"><i style="width:${p[1]/pmax*100}%"></i></span><span class="num">${p[1]}</span></div>`).join(""):`<p class="small muted">還沒有回饋。</p>`}</div>
+   <p class="note">來源：客戶回饋表單的「目前最大的管理困擾」，加上商務專人在名冊裡記錄的需求。</p></div>
+  </div>
+  <div class="card"><h2>各產業與模板轉換</h2><div class="tb"><table><thead><tr><th>產業</th><th>模板</th><th class="r">名冊</th><th class="r">發送</th><th class="r">開啟</th><th class="r">實際操作</th><th class="r">回饋</th><th class="r">預約</th><th class="r">試辦</th><th class="r">操作率</th></tr></thead><tbody>
+   ${byInd.map(x=>`<tr><td><span class="pill ${IND[x.k].color}">${IND[x.k].name}</span></td><td>${esc(x.tpl.name)}${x.tpl.status!=="已上線"?` <span class="pill grey">${x.tpl.status}</span>`:""}</td><td class="r num">${x.mm.total}</td><td class="r num">${x.mm.sent}</td><td class="r num">${x.mm.opened}</td><td class="r num">${x.mm.acted}</td><td class="r num">${x.mm.fb}</td><td class="r num">${x.mm.booked}</td><td class="r num">${x.mm.trial}</td><td class="r num">${pct(x.mm.acted,x.mm.sent)}</td></tr>`).join("")}
+  </tbody></table></div></div>
+  <div class="card"><h2>通路成效</h2><div class="tb"><table><thead><tr><th>來源</th><th class="r">名冊</th><th class="r">發送</th><th class="r">實際操作</th><th class="r">回饋</th><th class="r">預約</th><th class="r">試辦／成交</th><th class="r">操作率</th></tr></thead><tbody>
+   ${["總部直發","推薦夥伴"].map(src=>{const l=L.filter(c=>(c.source||"總部直發")===src), mm=metrics(l), won=l.filter(c=>c.stage==="成交").length; return `<tr><td>${src}</td><td class="r num">${mm.total}</td><td class="r num">${mm.sent}</td><td class="r num">${mm.acted}</td><td class="r num">${mm.fb}</td><td class="r num">${mm.booked}</td><td class="r num">${won}</td><td class="r num">${pct(mm.acted,mm.sent)}</td></tr>`}).join("")}
+  </tbody></table></div><div><button class="btn ghost sm" data-go="partners">看推薦夥伴</button></div></div>
+  <div class="card"><h2>商務專人待辦與跟進</h2><div class="tb"><table><thead><tr><th>商務專人</th><th class="r">進行中商機</th><th class="r">待辦</th><th class="r">今天到期</th><th class="r">已逾期</th><th>LINE 通知</th></tr></thead><tbody>
+   ${owners.map(o=>`<tr><td>${esc(o.u.name)}</td><td class="r num">${o.opps}</td><td class="r num">${o.open}</td><td class="r num">${o.today}</td><td class="r num">${o.over?`<span class="pill red">${o.over}</span>`:"0"}</td><td>${o.u.line==="已綁定"?`<span class="pill green">已綁定</span>`:`<span class="pill amber">未綁定</span>`}</td></tr>`).join("")}
+  </tbody></table></div><div><button class="btn ghost sm" data-go="tasks">看全部待辦</button></div></div>`;
+}
+
+/* ---------- 客戶名冊 ---------- */
+function filtered(){return visibleC().filter(c=>(!q||[c.code,c.company,c.contact].join(" ").includes(q))&&(!fInd||c.industry===fInd)&&(!fStage||c.stage===fStage)&&(!fOwner||c.owner===fOwner))}
+function vCrm(){
+  const L=filtered();
+  return `<p class="lede">共用客戶名冊，所有產業在同一張表。客戶代碼是內部編號，不會出現在網址上；網址用的是另一組隨機連結碼。</p>
+  <div class="toolbar"><input type="search" id="q" placeholder="搜尋代碼、公司、窗口" value="${esc(q)}">
+   <select id="fInd"><option value="">全部產業</option>${Object.keys(IND).map(k=>`<option value="${k}" ${fInd===k?"selected":""}>${IND[k].name}</option>`).join("")}</select>
+   <select id="fStage"><option value="">全部階段</option>${STAGES.map(s=>`<option ${fStage===s?"selected":""}>${s}</option>`).join("")}</select>
+   ${isAdmin()?`<select id="fOwner"><option value="">全部負責人</option>${S.U.map(u=>`<option value="${u.id}" ${fOwner===u.id?"selected":""}>${u.name}</option>`).join("")}</select>`:""}
+   <button class="btn sm" id="newC">＋ 新增客戶</button>${isAdmin()?`<button class="btn ghost sm" id="imp">匯入</button><button class="btn ghost sm" id="exp">匯出</button>`:""}</div>
+  <div id="impBox" hidden class="card"><h3>匯入名冊（貼上 CSV：公司,產業代碼,窗口,電話）</h3><textarea id="impText" placeholder="模擬水電行 09,W,鄭先生,09xx-xxx-201&#10;模擬水電行 01,W,王先生,09xx-xxx-001">${esc(importText)}</textarea><div class="toolbar"><button class="btn sm" id="impCheck">檢查重複並匯入</button><span class="small muted">同公司名或同電話視為重複，不會重複建檔。</span></div><div id="impOut"></div></div>
+  <div class="tablebox"><table><thead><tr><th>代碼</th><th>公司</th><th>產業</th><th>窗口</th><th>體驗模板</th><th>體驗狀態</th><th>商機階段</th><th>需求</th><th>負責</th><th>下次跟進</th></tr></thead><tbody>
+  ${L.map(c=>{const e=expStatus(c);return `<tr class="click" data-cust="${c.id}" tabindex="0"><td class="mono">${c.code}${c.hot?` <span class="pill vest">高意向</span>`:""}</td><td>${esc(c.company)}</td><td>${IND[c.industry].name}</td><td>${esc(c.contact)}</td><td class="small">${esc(TPL[c.tpl].name)}</td><td><span class="pill ${e[0]}">${e[1]}</span></td><td>${stagePill(c.stage)}</td><td class="small">${esc(c.need)||"—"}</td><td>${uname(c.owner)}</td><td class="num ${c.nextDate<TODAY&&c.nextTask?"":""}">${c.nextTask?`${c.nextDate.slice(5).replace("-","/")}${c.nextDate<TODAY?` <span class="pill red">逾期</span>`:""}`:"—"}</td></tr>`}).join("")||`<tr><td colspan="10" class="muted">沒有符合條件的客戶。</td></tr>`}
+  </tbody></table></div>
+  <p class="small muted" style="margin:0">共 ${L.length} 筆。${isAdmin()?"":"商務專人只看得到自己負責的客戶；匯入、匯出限管理者。"}</p>`;
+}
+function custDrawer(c){
+  const e=expStatus(c), ev=evOf(c.id), hist=S.H.filter(h=>h.cid===c.id), tasks=S.T.filter(t=>t.cid===c.id);
+  const url=`https://demo.你的網域.tw/d/${c.tpl}?t=${c.token}`;
+  const canEdit=isAdmin()||c.owner===S.me;
+  return `<div class="toolbar">${stagePill(c.stage)}<span class="pill ${e[0]}">${e[1]}</span>${c.hot?`<span class="pill vest">高意向</span>`:""}${c.trial?`<span class="pill green">付費試辦</span>`:""}</div>
+  <div class="form">
+   <label>公司<input type="text" id="f-company" value="${esc(c.company)}" ${canEdit?"":"disabled"}></label>
+   <label>窗口<input type="text" id="f-contact" value="${esc(c.contact)}" ${canEdit?"":"disabled"}></label>
+   <label>電話（模擬）<input type="text" id="f-phone" value="${esc(c.phone)}" ${canEdit?"":"disabled"}></label>
+   <label>Email<input type="text" id="f-email" value="${esc(c.email)}" placeholder="客戶自願提供才填" ${canEdit?"":"disabled"}></label>
+   <label>負責商務專人<select id="f-owner" ${isAdmin()?"":"disabled"}>${S.U.map(u=>`<option value="${u.id}" ${u.id===c.owner?"selected":""}>${u.name}</option>`).join("")}</select></label>
+   <label>需求<input type="text" id="f-need" value="${esc(c.need)}" ${canEdit?"":"disabled"}></label>
+   <label>下一步<input type="text" id="f-next" value="${esc(c.nextTask)}" ${canEdit?"":"disabled"}></label>
+   <label>跟進日期<input type="date" id="f-date" value="${c.nextDate}" ${canEdit?"":"disabled"}></label>
+  </div>
+  ${canEdit?`<div><button class="btn sm" data-save="${c.id}">儲存</button></div>`:`<p class="note">你不是這位客戶的負責人，只能檢視。</p>`}
+  <div><h3>商機階段</h3><div class="toolbar" style="margin-top:6px"><select id="f-stage" ${canEdit?"":"disabled"}>${STAGES.map(s=>`<option ${s===c.stage?"selected":""}>${s}</option>`).join("")}</select><input type="text" id="f-why" placeholder="變更原因（手動調整必填）" ${canEdit?"":"disabled"}><button class="btn ghost sm" data-stage="${c.id}" ${canEdit?"":"disabled"}>變更階段</button></div>
+   <p class="small muted" style="margin:6px 0 0" id="stageHint">${STAGE_RULE[c.stage]}</p><p class="warn" id="stageWarn" hidden></p></div>
+  <div><h3>專屬體驗連結</h3><div class="kv" style="margin-top:6px"><span>客戶代碼</span><span class="mono">${c.code}（內部用，不放網址）</span><span>連結碼</span><span class="mono">${c.token}</span><span>網址（範例網域）</span><span class="mono" style="word-break:break-all">${esc(url)}</span><span>同意狀態</span><span>${c.consent||"尚未開啟"}</span><span>來源</span><span>${c.source||"總部直發"}${c.partner?`・<button class="src btn ghost sm" data-partner="${c.partner}">${esc(pById(c.partner).name)}</button>（保護期到 ${c.attrUntil}）`:""}</span></div>
+   <div class="toolbar" style="margin-top:8px">${c.sentAt?`<span class="small muted">已發送 ${c.sentAt}</span>`:`<button class="btn sm" data-sent="${c.id}" ${canEdit?"":"disabled"}>標記已發送</button>`}${isAdmin()?`<button class="btn ghost sm" data-rotate="${c.id}">重發新連結碼（舊的失效）</button>`:""}<button class="btn ghost sm" data-simgo="${c.id}">用這位客戶模擬體驗</button></div></div>
+  ${c.feedback?`<div><h3>客戶回饋</h3><div class="kv" style="margin-top:6px"><span>最有幫助</span><span>${esc(c.feedback.best)}</span><span>最大困擾</span><span>${esc(c.feedback.pain)}</span><span>專屬版本</span><span>${esc(c.feedback.want)}</span><span>聯絡方式</span><span>${esc(c.feedback.contact)}</span></div></div>`:""}
+  <div><h3>待辦</h3>${tasks.length?tasks.map(t=>`<div class="task"><span>${t.done?"✅":"⬜"}</span><span><span class="t">${esc(t.text)}</span><br><span class="m">${uname(t.owner)}・${t.due.slice(5).replace("-","/")}${!t.done&&t.due<TODAY?` <span class="pill red">逾期</span>`:""}${t.result?"・結果："+esc(t.result):""}</span></span><span></span></div>`).join(""):`<p class="small muted" style="margin:4px 0 0">沒有待辦。</p>`}</div>
+  <div><h3>體驗事件（${ev.length}）</h3><div class="tl" style="margin-top:6px">${ev.length?ev.map(x=>`<div><time>${x.ts}</time><span>${EVNAME[x.type]}${x.feature?"：<b>"+esc(x.feature)+"</b>":""}</span></div>`).join(""):`<span class="small muted">沒有事件。</span>`}</div></div>
+  <div><h3>階段紀錄</h3><div class="tl" style="margin-top:6px">${hist.map(h=>`<div><time>${h.ts}</time><span>${h.from} → ${h.to}・${esc(h.by)}・${esc(h.why)}</span></div>`).join("")||`<span class="small muted">沒有紀錄。</span>`}</div></div>
+  ${isAdmin()?`<div><h3>個資</h3><div class="toolbar" style="margin-top:6px"><button class="btn ghost sm" data-del="${c.id}">刪除此客戶的個資與事件</button></div><p class="small muted" style="margin:6px 0 0">刪除後只保留去識別化的統計數字；刪除動作本身寫入操作紀錄。</p></div>`:""}`;
+}
+const EVNAME={page_open:"開啟體驗頁",feature_click:"點選功能",task_complete:"完成體驗任務",consult_click:"點選需求諮詢",feedback_submit:"送出回饋",booking_submit:"送出預約",consent:"同意選擇"};
+
+/* ---------- 商機看板 ---------- */
+function vBoard(){
+  const L=visibleC();
+  return `<p class="lede">商機依階段排列。每一欄上方寫著進入條件；系統只會依「實際操作、回饋、預約」自動往前推，其他階段由商務專人記錄。手動調整必須寫原因。</p>
+  <div class="board">${STAGES.map(s=>{const l=L.filter(c=>c.stage===s);return `<div class="col"><div class="col-h"><b>${s}</b><span class="pill grey">${l.length}</span></div><div class="col-rule">${STAGE_RULE[s]}</div>
+   ${l.map(c=>`<button class="opp ${c.hot?"hot":""}" data-cust="${c.id}"><b>${c.code}・${esc(c.company)}</b><small>${IND[c.industry].name}・${uname(c.owner)}${c.hot?"・高意向":""}</small><small>${esc(c.need)||"需求未記錄"}</small></button>`).join("")}</div>`}).join("")}</div>`;
+}
+
+/* ---------- 待辦 ---------- */
+function vTasks(){
+  const L=S.T.filter(t=>isAdmin()||t.owner===S.me).sort((a,b)=>(a.done-b.done)||a.due.localeCompare(b.due));
+  return `<p class="lede">每個進行中的商機都要有下一步和期限。過期一天沒完成，系統通知負責商務專人；過期三天再通知 Shen。</p>
+  <div class="card">${L.map(t=>{const c=cust(t.cid);return `<div class="task"><span>${t.done?"✅":t.due<TODAY?"🔴":"⬜"}</span>
+   <span><span class="t">${c?c.code+"・"+esc(c.company):""}：${esc(t.text)}</span><br><span class="m">${uname(t.owner)}・期限 ${t.due.slice(5).replace("-","/")}${!t.done&&t.due<TODAY?` <span class="pill red">逾期 ${Math.round((new Date(TODAY)-new Date(t.due))/864e5)} 天</span>`:""}${t.result?"・結果："+esc(t.result):""}</span>
+   ${t.done?"":`<span class="toolbar" style="margin-top:6px" data-tbox="${t.id}" hidden><input type="text" id="tr-${t.id}" placeholder="跟進結果，例如：已通話，下週二洽談"><button class="btn sm" data-tdone="${t.id}">完成</button></span>`}</span>
+   <span>${t.done?"":`<button class="btn ghost sm" data-topen="${t.id}">回報結果</button>`}</span></div>`}).join("")||`<p class="small muted">沒有待辦。</p>`}</div>`;
+}
+
+/* ---------- 通知 ---------- */
+const RNAME={partner:"推薦進度通知夥伴",need:"客戶主動提出需求",book:"客戶預約洽談",hot:"高意向商機",overdue:"商務專人逾期未跟進",daily:"每日商機摘要"};
+function lineMsg(rule,c){
+  if(rule==="daily"){const m=metrics(S.C); return {hd:"【每日商機摘要】10/28",body:`昨日新開啟 2・新操作 1・新回饋 1\n高意向 ${S.C.filter(x=>x.hot).length} 家・待預約 ${S.C.filter(x=>x.stage==="有需求").length} 家\n逾期待辦 ${S.T.filter(t=>!t.done&&t.due<TODAY).length} 件\n累計：發送 ${m.sent}／操作 ${m.acted}／回饋 ${m.fb}／試辦 ${m.trial}`,bt:"開啟戰情室"}}
+  if(rule==="overdue") return {hd:`【逾期未跟進】${c.code}`,body:`${c.company}（${IND[c.industry].name}）\n待辦：${c.nextTask}\n期限：${c.nextDate.slice(5).replace("-","/")}，已逾期`,bt:"開啟客戶頁"};
+  return {hd:`【${RNAME[rule]}】${c.code}`,body:`${c.company}（${IND[c.industry].name}）\n${c.feedback?`最有幫助：${c.feedback.best}\n最大困擾：${c.feedback.pain}\n選擇：${c.feedback.want}`:"客戶完成體驗任務並點選諮詢"}\n負責：${uname(c.owner)}・請於 24 小時內聯繫`,bt:"開啟客戶頁"};
+}
+function vNotify(){
+  const c3=cust("c3"), msg=lineMsg("need",c3), dm=lineMsg("daily");
+  return `<p class="lede">通知規則、發送紀錄和訊息範例。原型不會真的發送；正式版用 LINE 官方帳號（Messaging API）推播給已綁定的同仁，Email 走寄信服務。通知內容不放客戶電話，要看聯絡方式需登入後台。</p>
+  <div class="grid2">
+   <div class="card"><h2>通知規則</h2>${S.R.map(r=>`<div class="rule"><div><b>${r.name}</b><div class="small muted">觸發：${r.when}<br>通知：${r.to}・${r.ch}</div></div><button class="switch" role="switch" aria-checked="${r.on}" aria-label="${r.name}" data-rule="${r.id}" ${isAdmin()?"":"disabled"}></button></div>`).join("")}
+    <p class="note">抑制規則：同一位客戶、同一種通知，24 小時內只發一次。失敗重試：1、5、30 分鐘各重試一次，仍失敗改寄 Email 並標紅。收件人沒綁定 LINE 時自動改寄 Email。</p></div>
+   <div class="card"><h2>LINE 訊息範例</h2><div class="preview line"><div class="bub"><span class="hd">${esc(msg.hd)}</span><span>${esc(msg.body)}</span><span class="bt">${msg.bt}</span></div></div>
+    <div class="preview line"><div class="bub"><span class="hd">${esc(dm.hd)}</span><span>${esc(dm.body)}</span><span class="bt">${dm.bt}</span></div></div></div>
+  </div>
+  <div class="grid2">
+   <div class="card"><h2>Email 範例</h2><div class="preview mail"><div class="mh">寄件者：MIN-003 商機通知 &lt;notify@你的網域.tw&gt;<br>收件者：商務 A<br>主旨：【有需求】${c3.code} ${esc(c3.company)} 想了解專屬版本</div>${esc(msg.body)}
+
+客戶頁面：https://admin.你的網域.tw/c/${c3.code}
+（需登入後台才看得到聯絡方式）</div></div>
+   <div class="card"><h2>發送紀錄</h2><div class="tb"><table><thead><tr><th>時間</th><th>通知</th><th>管道</th><th>收件人</th><th>客戶</th><th>狀態</th></tr></thead><tbody>
+    ${S.N.slice().reverse().map(n=>`<tr><td class="num">${n.ts}</td><td>${RNAME[n.rule]}</td><td>${n.ch}</td><td>${esc(n.to)}</td><td class="mono">${n.cid?cust(n.cid).code:"—"}</td><td><span class="pill ${/成功|已送出/.test(n.status)?"green":/抑制/.test(n.status)?"grey":"amber"}">${esc(n.status)}</span></td></tr>`).join("")}
+   </tbody></table></div><p class="note">全部為模擬紀錄，沒有實際發送任何訊息。</p></div>
+  </div>`;
+}
+
+/* ---------- 客戶體驗模擬 ---------- */
+function vSim(){
+  const c=cust(simCid)||S.C[0], t=TPL[c.tpl], live=t.status==="已上線";
+  const url=`https://demo.你的網域.tw/d/${c.tpl}?t=${c.token}`;
+  const evs=S.E.filter(e=>e.cid===c.id).slice().reverse();
+  return `<p class="lede">模擬客戶在 LINE 點開專屬連結後會發生什麼。左邊是客戶看到的畫面，右邊是系統收到的事件。可以觀察：沒同意時只記錄開啟、LINE 預覽機器人不算開啟、30 分鐘內重複開啟只算一次。</p>
+  <div class="toolbar"><label class="small muted">模擬客戶</label><select id="simSel" style="max-width:320px">${S.C.map(x=>`<option value="${x.id}" ${x.id===c.id?"selected":""}>${x.code}・${esc(x.company)}・${x.stage}</option>`).join("")}</select>
+   <button class="btn ghost sm" id="simBot">模擬 LINE 預覽機器人抓取</button><button class="btn ghost sm" id="simOpen">模擬客戶點開連結</button></div>
+  <div class="simlay">
+   <div class="phone"><div class="urlbar">${esc(url)}</div>
+    ${!live?`<p class="note">這個產業的模板還在規劃中，正式版會先顯示通用 AI 員工介紹頁。</p>`:""}
+    ${simState.opened?`${simState.consent==null?`<div class="consent"><b>這是為您準備的 ${esc(t.name)} 體驗頁</b><span>為了在後續聯繫時更了解您的需求，我們想記錄您試用了哪些功能。這些紀錄只用於安排說明，不會提供給第三方，保存 12 個月。不同意也可以完整試用。</span><div class="toolbar"><button class="btn sm" data-consent="同意記錄操作">同意記錄操作</button><button class="btn ghost sm" data-consent="只看不記錄">只看不記錄</button></div></div>`:`<p class="small muted" style="margin:0">隱私選擇：${simState.consent}　<button class="src btn ghost sm" data-consent="reset">更改</button></p>`}
+    <div><h3>${esc(t.name)}（示範畫面）</h3><div class="feat" style="margin-top:6px">${t.features.map(f=>`<button data-feat="${esc(f)}">${esc(f)}</button>`).join("")}</div></div>
+    <div class="toolbar"><button class="btn ghost sm" data-task="1">完成體驗任務：${esc(t.task)}</button></div>
+    <div class="toolbar"><button class="btn sm" data-consult="1">我想了解專屬版本</button></div>
+    <div class="card" style="padding:12px;gap:8px"><b>30 秒回饋</b>
+     <span class="small muted">哪個功能最有幫助？</span><div class="chips">${t.features.slice(0,4).map(f=>`<button class="chip" data-fb="best" data-v="${esc(f)}" aria-pressed="${simState.best===f}">${esc(f)}</button>`).join("")}</div>
+     <span class="small muted">目前最大的管理困擾？</span><div class="chips">${PAINS.slice(0,5).map(p=>`<button class="chip" data-fb="pain" data-v="${esc(p)}" aria-pressed="${simState.pain===p}">${esc(p)}</button>`).join("")}</div>
+     <span class="small muted">想了解專屬版本嗎？</span><div class="chips">${["想了解專屬版本","先看看就好"].map(p=>`<button class="chip" data-fb="want" data-v="${p}" aria-pressed="${simState.want===p}">${p}</button>`).join("")}</div>
+     <span class="small muted">聯絡方式（自願填寫，可留空）</span><input type="text" id="simContact" placeholder="LINE ID 或電話">
+     <label class="small" style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="simAgree"> 我同意你們用這個聯絡方式和我聯繫，討論專屬版本。</label>
+     <p class="small muted" style="margin:0">送出後，您剛才在這個頁面的試用紀錄（只限您同意記錄的部分）會和這份回饋一起交給負責同仁，用來準備說明內容；保存 12 個月，可隨時要求刪除。</p>
+     <button class="btn sm" id="simFb">送出回饋</button></div>`:`<p class="note">客戶還沒點開。先按上方「模擬客戶點開連結」。</p>`}
+   </div>
+   <div class="card"><h2>系統收到的事件</h2><div class="log">${simState.log&&simState.log.length?simState.log.map(l=>`<div class="ev"><time>${l.t}</time><span><code>${l.type}</code>${l.f?"・"+esc(l.f):""}<br><span class="small muted">${esc(l.why)}</span></span><span class="pill ${l.ok?"green":"grey"}">${l.ok?"記錄":"不記錄"}</span></div>`).join(""):`<p class="small muted">還沒有事件。</p>`}</div>
+    <div><h3>這位客戶目前</h3><div class="kv" style="margin-top:6px"><span>商機階段</span><span>${stagePill(c.stage)}</span><span>體驗狀態</span><span><span class="pill ${expStatus(c)[0]}">${expStatus(c)[1]}</span></span><span>高意向</span><span>${c.hot?"是":"否"}</span><span>累計事件</span><span>${evs.length} 筆</span></div></div>
+    <p class="note">正式版的事件由頁面裡的追蹤程式送到伺服器，伺服器再做去重、機器人過濾、同意檢查，最後才寫入資料庫並觸發通知。</p></div>
+  </div>`;
+}
+function simEvent(type,f,why){
+  const c=cust(simCid), now=new Date(), t=now.toTimeString().slice(0,8);
+  simState.log=simState.log||[];
+  let ok=true;
+  if(type!=="page_open"&&type!=="feedback_submit"&&type!=="consult_click"&&simState.consent!=="同意記錄操作"){ ok=false; why="客戶沒有同意記錄操作，只提供功能，不做個別記錄" }
+  if(ok){ S.E.push({id:S.eid++,cid:c.id,tpl:c.tpl,type,feature:f||"",ts:"10/28 "+t.slice(0,5),consent:simState.consent||"未選",counted:true}); autoAdvance(c,type) }
+  simState.log.unshift({t,type,f,why,ok});
+}
+function autoAdvance(c,type){
+  const before=c.stage, i=stIdx(c.stage);
+  const move=(to,why)=>{ if(stIdx(to)>stIdx(c.stage)&&!["成交","未成交"].includes(c.stage)){ S.H.push({cid:c.id,ts:"10/28 "+new Date().toTimeString().slice(0,5),from:c.stage,to,by:"系統",why}); c.stage=to } };
+  if(["feature_click","task_complete"].includes(type)&&i>=1) move("已體驗","有實際操作");
+  if(type==="feedback_submit"&&c.feedback&&c.feedback.want==="想了解專屬版本") move("有需求","回饋選「想了解專屬版本」");
+  if(type==="consult_click") move("有需求","點選需求諮詢");
+  const done=has(c.id,["task_complete"]), intent=has(c.id,["consult_click"])||(c.feedback&&c.feedback.want==="想了解專屬版本");
+  if(done&&intent&&!c.hot){ c.hot=true; notify("hot",c) }
+  if(before!==c.stage&&c.stage==="有需求") notify("need",c);
+}
+function notify(rule,c){
+  const r=S.R.find(x=>x.id===rule); if(!r||!r.on) return;
+  const ts="10/28 "+new Date().toTimeString().slice(0,5);
+  const dup=S.N.some(n=>n.rule===rule&&n.cid===(c&&c.id)&&n.ts.slice(0,5)==="10/28");
+  S.N.push({id:S.nid++,ts,rule,ch:"LINE",to:rule==="hot"?"Shen":uname(c.owner),cid:c?c.id:null,status:dup?"已抑制（24 小時內通知過）":"已送出（模擬）",tries:dup?0:1});
+  if(!dup) toast(`模擬通知：${RNAME[rule]}（沒有真的發送）`);
+}
+
+/* ---------- 架構與規則 ---------- */
+function vArch(){
+  return `<p class="lede">G1 設計摘要。完整內容（資料表、費用、驗收標準、擴展方式）在技術設計書裡。</p>
+  <div class="card"><h2>系統架構</h2>
+<pre class="mermaid">flowchart LR
+  subgraph 客戶端
+    L[LINE 收到專屬連結] --> P[體驗頁<br/>demo.自有網域]
+  end
+  subgraph Cloudflare
+    P -- 頁面與模板 --> PG[Pages／Workers 靜態資源]
+    P -- 事件 beacon --> API[Worker：/e 事件收件]
+    API --> F{機器人過濾<br/>同意檢查<br/>去重}
+    F --> D1[(D1 資料庫)]
+    CRON[Cron 每 5 分鐘／每日 08:00] --> D1
+    CRON --> OUT[通知寄送 Worker]
+    ADM[管理後台 admin.自有網域] --> D1
+    ACC[Cloudflare Access<br/>Email 一次性密碼] --> ADM
+  end
+  OUT --> LINEAPI[LINE Messaging API<br/>推播給已綁定同仁]
+  OUT --> MAIL[Email 寄送服務]
+  T[產業模板<br/>水電／營造／餐飲…] -. 只引用 track.js .-> P</pre>
+  </div>
+  <div class="grid2">
+   <div class="card"><h2>連結與識別碼</h2><div class="kv">
+    <span>客戶代碼</span><span><span class="mono">W001</span>、<span class="mono">C001</span>、<span class="mono">R001</span>、<span class="mono">H001</span>：產業字首＋流水號，只在後台使用</span>
+    <span>連結碼</span><span>10 碼隨機（去掉易混字的 32 進位，約 50 位元），例：<span class="mono">${S.C[2].token}</span></span>
+    <span>網址</span><span class="mono" style="word-break:break-all">/d/water?t=${S.C[2].token}</span>
+    <span>為什麼不用 ref=W001</span><span>流水號一猜就中，別人可以冒用他人代碼灌數據，也看得出你有幾位客戶</span>
+    <span>無效或停用的連結碼</span><span>照樣顯示體驗頁，但只記成匿名訪客，不對應任何客戶</span>
+    <span>不是登入憑證</span><span>連結碼只用來歸戶體驗事件，不能看任何客戶資料；後台一律要登入</span></div></div>
+   <div class="card"><h2>事件與計數規則</h2><div class="kv">
+    <span>page_open</span><span>頁面可見滿 2 秒才送出；伺服器端渲染、預覽機器人不算</span>
+    <span>feature_click</span><span>點選主要功能（需同意）</span>
+    <span>task_complete</span><span>完成模板指定任務（需同意）</span>
+    <span>consult_click</span><span>點「我想了解專屬版本」（客戶主動）</span>
+    <span>feedback_submit</span><span>送出回饋表單（客戶主動）</span>
+    <span>去重</span><span>同一連結碼、同一事件、30 分鐘內只算一次</span>
+    <span>機器人</span><span>排除 LINE、Facebook 等預覽爬蟲的 User-Agent；同一 IP 每分鐘超過 30 次直接丟棄</span></div></div>
+  </div>
+  <div class="card"><h2>商機階段判定</h2><div class="tb"><table><thead><tr><th>階段</th><th>進入條件</th><th>誰推進</th></tr></thead><tbody>${STAGES.map(s=>`<tr><td>${stagePill(s)}</td><td>${STAGE_RULE[s]}</td><td>${["已體驗","有需求","預約洽談"].includes(s)?"系統自動（也可手動，需寫原因）":"商務專人"}</td></tr>`).join("")}</tbody></table></div>
+  <p class="note">「已開啟」只是體驗狀態，不是商機階段，永遠不會讓客戶進到「已體驗」。</p></div>
+  <div class="card"><h2>三種角色權限</h2><div class="tb"><table><thead><tr><th>能做什麼</th><th>總部管理者</th><th>商務專人</th><th>推薦夥伴</th></tr></thead><tbody>
+   ${[["看客戶名冊、聯絡方式","全部","自己負責的","❌（只看自己推薦的公司名稱與進度）"],["編輯客戶、變更階段、待辦","全部","自己負責的","❌"],["分派商務專人","✅","❌","❌"],["匯入、匯出名冊","✅","❌","❌"],["夥伴名冊與績效","✅","檢視（不含佣金）","只看自己"],["佣金金額","全部","❌","只看自己"],["核准、撥付、取消佣金","✅","❌","❌"],["歸因爭議","決定","提供資料","提出申訴"],["報備客戶","受理","受理","提出"],["通知規則","✅","❌","❌"],["刪除個資","✅","❌","❌"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}
+  </tbody></table></div><p class="note">推薦夥伴從獨立的夥伴入口登入（同樣經 Cloudflare Access），程式層再依角色過濾；夥伴的連結碼不是登入憑證。</p></div>`;
+}
+
+/* ---------- 推薦夥伴模組（V1.2） ---------- */
+const TARGET=[3,5];
+const CFG0={version:1,rate:.10,protectDays:90,coolDays:14,disputeDays:7,renewal:"不給",renewalRate:.05,renewalTimes:1,cap:0,reportKeepDays:90};
+const cfg=()=>(typeof S!=="undefined"&&S&&S.cfg)||CFG0;
+const comm=x=>{const v=x.amount*x.rate; return x.cap?Math.min(v,x.cap):v};
+const addDays=(d,n)=>{const x=new Date(d+"T00:00:00");x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+const daysBetween=(a,b)=>Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5);
+const norm=s=>String(s||"").replace(/[\s　]/g,"").replace(/(股份)?有限公司|工程行|企業社|（模擬）/g,"").toLowerCase();
+const normPhone=s=>String(s||"").replace(/\D/g,"");
+const money=n=>"NT$"+Math.round(n).toLocaleString();
+const pById=id=>S.P.find(p=>p.id===id);
+const myPartner=()=>pById(me().partner);
+function partnerSeed(C){
+ const P=[
+  {id:"P001",name:"模擬夥伴 阿明",type:"水電材料行",tpls:["water"],status:"合作中",agree:"2026-10-01",rate:.10},
+  {id:"P002",name:"模擬夥伴 小華",type:"水電師傅（同業）",tpls:["water"],status:"合作中",agree:"2026-10-03",rate:.10},
+  {id:"P003",name:"模擬夥伴 林會計",type:"會計師事務所",tpls:["water","build"],status:"合作中",agree:"2026-09-20",rate:.10},
+  {id:"P004",name:"模擬夥伴 陳老師",type:"職訓講師",tpls:["water"],status:"合作中",agree:"2026-10-10",rate:.08},
+  {id:"P101",name:"模擬夥伴 吳經理",type:"建材商",tpls:["build"],status:"合作中",agree:"2026-10-05",rate:.10},
+  {id:"P102",name:"模擬夥伴 許顧問",type:"營建管理顧問",tpls:["build"],status:"洽談中",agree:"",rate:.10},
+  {id:"P201",name:"模擬夥伴 曾老闆",type:"食材供應商",tpls:["food"],status:"洽談中",agree:"",rate:.10}];
+ P.forEach(p=>{p.tokens={}; if(p.status==="合作中") p.tpls.forEach(t=>p.tokens[t]=tok())});
+ const AL=[], CM=[], DS=[];
+ const link=(code,pid,date,via)=>{const c=C.find(x=>x.code===code); c.partner=pid; c.attrAt=date; c.attrUntil=addDays(date,cfg().protectDays); c.source="推薦夥伴";
+  AL.push({ts:date,cid:c.id,pid,result:"歸因成立",why:via})};
+ link("W001","P003","2026-09-25","總部受理夥伴報備");
+ link("W002","P001","2026-10-12","客戶透過夥伴連結提出需求");
+ link("W003","P002","2026-10-20","客戶透過夥伴連結提出需求");
+ link("W004","P001","2026-10-21","總部受理夥伴報備");
+ link("C001","P101","2026-10-15","客戶透過夥伴連結提出需求");
+ link("C004","P003","2026-10-18","總部受理夥伴報備");
+ C.forEach(c=>{ if(!c.source) c.source="總部直發" });
+ AL.push({ts:"2026-10-24",cid:C.find(x=>x.code==="W004").id,pid:"P002",result:"不歸因",why:"已由 P001 推薦，保護期到 2027-01-19"});
+ CM.push({id:"CM-0001",pid:"P003",cid:C.find(x=>x.code==="W001").id,deal:"付費試辦 3 個月",amount:15000,rate:.10,status:"已核准",dealAt:"2026-10-10",custPaidAt:"2026-10-12",log:["10/10 成交，佣金待結算","10/12 客戶付款","10/26 冷卻期滿，管理者核准"]});
+ CM.push({id:"CM-0002",pid:"P001",cid:C.find(x=>x.code==="W002").id,deal:"提案：年約",amount:36000,rate:.10,status:"預估",dealAt:"",custPaidAt:"",log:["10/27 提案報價 NT$36,000，佣金預估（不計入應付）"]});
+ DS.push({id:"DS-0001",pid:"P004",cid:C.find(x=>x.code==="W003").id,claim:"上個月在課堂上就介紹過這家，只是沒有報備",evidence:"課堂簽到表照片（模擬）",status:"審查中",filed:"2026-10-26",due:"2026-11-02",decision:""});
+ return {P,AL,CM,DS,caseStep:0,caseNotes:[],cfg:{...CFG0},cfgLog:[{ts:"2026-10-01",by:"Shen",act:"建立初始參數 v1"}]};
+}
+function attribute({company,phone,pid}){
+  const p=pById(pid);
+  if(!p||p.status!=="合作中") return {ok:false,code:"inactive",why:"夥伴尚未簽約或已停權，不受理"};
+  const k1=norm(company), k2=normPhone(phone);
+  if(!k1) return {ok:false,code:"empty",why:"請填公司名稱"};
+  const hit=S.C.find(c=>norm(c.company)===k1||(k2.length>=8&&normPhone(c.phone)===k2));
+  if(!hit) return {ok:true,code:"new",why:`名冊沒有這家客戶，歸因成立，保護期 ${cfg().protectDays} 天`};
+  if(hit.partner===pid) return {ok:false,code:"mine",hit,why:"這家客戶已經歸在你名下"};
+  if(hit.partner&&hit.attrUntil>=TODAY) return {ok:false,code:"other",hit,why:`已由其他夥伴推薦，保護期到 ${hit.attrUntil}`};
+  if(!hit.partner&&hit.sentAt&&hit.stage!=="未成交"&&daysBetween(hit.sentAt,TODAY)<=cfg().protectDays) return {ok:false,code:"hq",hit,why:`總部 ${cfg().protectDays} 天內已主動接觸這家客戶`};
+  if(["成交"].includes(hit.stage)) return {ok:false,code:"won",hit,why:"這家已是成交客戶"};
+  return {ok:true,code:"reassign",hit,why:"原保護期已過或已結案，可重新歸因"};
+}
+function pStatus(c){ const s=c.stage; if(s==="成交") return ["green","已成交"]; if(s==="未成交") return ["grey","未成交"]; if(["有需求","預約洽談","提案報價"].includes(s)) return ["violet","總部洽談中"]; if(s==="已體驗") return ["blue","已體驗"]; return ["grey","已登記"] }
+const CMCLS={"預估":"grey","待結算":"amber","已核准":"blue","已撥付":"green","已取消":"red"};
+function pMetrics(p){
+  const cs=S.C.filter(c=>c.partner===p.id), cm=S.CM.filter(x=>x.pid===p.id);
+  return {n:cs.length, acted:cs.filter(c=>has(c.id,["feature_click","task_complete"])).length, need:cs.filter(c=>stIdx(c.stage)>=3&&c.stage!=="未成交").length,
+   won:cs.filter(c=>c.stage==="成交").length, sales:cm.filter(x=>!["預估","已取消"].includes(x.status)).reduce((a,x)=>a+x.amount,0),
+   pend:cm.filter(x=>["待結算","已核准"].includes(x.status)).reduce((a,x)=>a+comm(x),0), paid:cm.filter(x=>x.status==="已撥付").reduce((a,x)=>a+comm(x),0)};
+}
+function syncCommission(c,to,why){
+  if(!c.partner) return null;
+  const p=pById(c.partner), am=(why||"").match(/(\d[\d,]{2,})/), amt=am?Number(am[1].replace(/,/g,"")):0;
+  let cm=S.CM.find(x=>x.cid===c.id&&!["已撥付","已取消"].includes(x.status));
+  if(to==="提案報價"&&amt){ if(!cm){cm={id:"CM-"+String(S.CM.length+1).padStart(4,"0"),pid:p.id,cid:c.id,deal:"提案",amount:amt,rate:p.rate,cap:cfg().cap,cfgVer:cfg().version,status:"預估",dealAt:"",custPaidAt:"",log:[]};S.CM.push(cm)} cm.amount=amt; cm.log.push(`10/28 提案 ${money(amt)}，佣金預估（不計入應付）`) }
+  if(to==="成交"){ if(!cm){cm={id:"CM-"+String(S.CM.length+1).padStart(4,"0"),pid:p.id,cid:c.id,deal:"",amount:amt,rate:p.rate,cap:cfg().cap,cfgVer:cfg().version,status:"預估",dealAt:"",custPaidAt:"",log:[]};S.CM.push(cm)}
+    if(amt) cm.amount=amt; cm.deal=(am?why.replace(am[1],""):(why||"")).replace(/\s+/g," ").trim()||"成交"; cm.status="待結算"; cm.dealAt=TODAY; cm.log.push(`10/28 成交 ${money(cm.amount)}，佣金 ${money(comm(cm))} 待結算`); notifyPartner(c,`你推薦的 ${c.company} 已成交，佣金 ${money(comm(cm))} 待結算`) }
+  if(to==="未成交"&&cm){ cm.status="已取消"; cm.log.push("10/28 客戶未成交，預估佣金取消") }
+  return cm;
+}
+function notifyPartner(c,text){
+  const r=S.R.find(x=>x.id==="partner"); if(!r||!r.on) return;
+  S.N.push({id:S.nid++,ts:"10/28 "+new Date().toTimeString().slice(0,5),rule:"partner",ch:"LINE",to:pById(c.partner).name,cid:c.id,status:"已送出（模擬）",tries:1,text});
+}
+
+function vPartners(){
+  const cover=Object.keys(TPL).map(k=>({k,n:S.P.filter(p=>p.tpls.includes(k)&&p.status==="合作中").length,talk:S.P.filter(p=>p.tpls.includes(k)&&p.status==="洽談中").length}));
+  const ds=S.DS;
+  return `<p class="lede">每個產業模板配置 3–5 位推薦夥伴。夥伴用自己的專屬連結分享體驗頁；客戶提出需求後由總部接手洽談，夥伴只看得到進度和佣金，看不到客戶聯絡資料。</p>
+  <div class="card"><h2>各模板夥伴配置（目標 ${TARGET[0]}–${TARGET[1]} 位）</h2><div class="tb"><table><thead><tr><th>模板</th><th>狀態</th><th class="r">合作中</th><th class="r">洽談中</th><th>配置</th><th></th></tr></thead><tbody>
+   ${cover.map(x=>`<tr><td>${esc(TPL[x.k].name)}</td><td>${TPL[x.k].status}</td><td class="r num">${x.n}</td><td class="r num">${x.talk}</td><td style="min-width:140px"><span class="fbar" style="display:block;height:10px"><i style="width:${Math.min(x.n/TARGET[1],1)*100}%;background:var(--${x.n>=TARGET[0]?"green":"amber"})"></i></span></td><td>${x.n>=TARGET[1]?`<span class="pill green">已滿 5 位</span>`:x.n>=TARGET[0]?`<span class="pill green">達標</span>`:`<span class="pill amber">還差 ${TARGET[0]-x.n} 位</span>`}</td></tr>`).join("")}
+  </tbody></table></div></div>
+  <div class="card"><h2>夥伴名冊與績效</h2><div class="tb"><table><thead><tr><th>代碼</th><th>夥伴</th><th>類型</th><th>模板</th><th>狀態</th><th class="r">推薦客戶</th><th class="r">實際操作</th><th class="r">有需求以上</th><th class="r">成交</th><th class="r">成交金額</th><th class="r">待結算＋已核准</th><th class="r">已撥付</th></tr></thead><tbody>
+   ${S.P.map(p=>{const m=pMetrics(p);return `<tr class="click" data-partner="${p.id}" tabindex="0"><td class="mono">${p.id}</td><td>${esc(p.name)}</td><td class="small">${esc(p.type)}</td><td class="small">${p.tpls.map(t=>IND[Object.keys(IND).find(k=>IND[k].tpl===t)].name).join("、")}</td><td><span class="pill ${p.status==="合作中"?"green":p.status==="停權"?"red":"grey"}">${p.status}</span></td><td class="r num">${m.n}</td><td class="r num">${m.acted}</td><td class="r num">${m.need}</td><td class="r num">${m.won}</td><td class="r num">${m.sales?money(m.sales):"—"}</td><td class="r num">${isAdmin()?(m.pend?money(m.pend):"—"):"—"}</td><td class="r num">${isAdmin()?(m.paid?money(m.paid):"—"):"—"}</td></tr>`}).join("")}
+  </tbody></table></div>${isAdmin()?"":`<p class="note">佣金金額只有總部管理者看得到。</p>`}</div>
+  <div class="grid2">
+   <div class="card"><h2>重複客戶歸因規則</h2><ol class="small" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+    <li><b>只有「客戶透過夥伴連結提出需求」或「總部受理夥伴報備」才成立歸因。</b>只有開啟、只有操作都不算。</li>
+    <li>同一家客戶用「正規化公司名」或「電話」比對，比對到就是同一家。</li>
+    <li><b>先成立者優先</b>，保護期 ${cfg().protectDays} 天；保護期內有進行中的洽談，延長到結案。</li>
+    <li>保護期內其他夥伴再推薦：記錄但不歸因，通知該夥伴「已有人推薦」，不透露是誰。</li>
+    <li>總部 ${cfg().protectDays} 天內已主動接觸的客戶，夥伴報備不成立。</li>
+    <li>保護期過且沒有進行中洽談，可重新歸因給新夥伴。</li>
+    <li>夥伴不能推薦自己或自己的公司；同一 IP 大量報備會被標記人工審查。</li>
+   </ol></div>
+   <div class="card"><h2>歸因爭議（${ds.filter(d=>d.status==="審查中").length} 件審查中）</h2>
+    ${ds.map(d=>{const c=cust(d.cid), cur=c&&c.partner?pById(c.partner):null;return `<div class="task"><span>${d.status==="審查中"?"⚖️":"✅"}</span><span><span class="t">${d.id}・${c?c.code+" "+esc(c.company):"（客戶已刪除）"}</span><br><span class="m">申訴人：${esc(pById(d.pid).name)}・目前歸屬：${cur?esc(cur.name):"總部"}<br>主張：${esc(d.claim)}<br>證據：${esc(d.evidence)}・提出 ${d.filed}・處理期限 ${d.due}${d.decision?`<br><b>決定：${esc(d.decision)}</b>`:""}</span>
+     ${d.status==="審查中"&&isAdmin()?`<span class="toolbar" style="margin-top:6px"><button class="btn ghost sm" data-dsd="${d.id}" data-v="維持原歸屬">維持原歸屬</button><button class="btn ghost sm" data-dsd="${d.id}" data-v="改判給申訴人">改判給申訴人</button><button class="btn ghost sm" data-dsd="${d.id}" data-v="雙方各半">雙方各半</button></span>`:""}</span><span></span></div>`}).join("")||`<p class="small muted">沒有爭議。</p>`}
+    <p class="note">處理方式：夥伴在入口提出申訴並附證據 → 總部管理者 7 天內決定（維持、改判、各半）→ 決定與理由寫入紀錄並通知雙方。爭議期間相關佣金暫停核准。</p></div>
+  </div>
+  <div class="card"><h2>歸因紀錄</h2><div class="tb"><table><thead><tr><th>日期</th><th>客戶</th><th>夥伴</th><th>結果</th><th>原因</th></tr></thead><tbody>
+   ${S.AL.slice().reverse().map(a=>{const c=cust(a.cid);return `<tr><td class="num">${a.ts}</td><td>${c?c.code+" "+esc(c.company):"—"}</td><td>${esc(pById(a.pid).name)}</td><td><span class="pill ${a.result==="歸因成立"?"green":"grey"}">${a.result}</span></td><td class="small">${esc(a.why)}</td></tr>`}).join("")}
+  </tbody></table></div></div>`;
+}
+function partnerDrawer(p){
+  const cs=S.C.filter(c=>c.partner===p.id), cm=S.CM.filter(x=>x.pid===p.id);
+  return `<div class="kv"><span>夥伴代碼</span><span class="mono">${p.id}</span><span>類型</span><span>${esc(p.type)}</span><span>狀態</span><span>${p.status}</span><span>合作協議</span><span>${p.agree?p.agree+" 簽署":"未簽，不能產生連結"}</span><span>佣金比例</span><span>${isAdmin()?Math.round(p.rate*100)+"%（成交金額）":"僅管理者可見"}</span></div>
+  <div><h3>專屬連結</h3>${Object.keys(p.tokens).length?Object.entries(p.tokens).map(([t,k])=>`<div class="kv" style="margin-top:6px"><span>${esc(TPL[t].name)}</span><span class="mono" style="word-break:break-all">/d/${t}?t=${k}</span></div>`).join(""):`<p class="small muted" style="margin:4px 0 0">尚未產生（需先簽合作協議）。</p>`}
+   ${isAdmin()&&Object.keys(p.tokens).length?`<div class="toolbar" style="margin-top:8px"><button class="btn ghost sm" data-prot="${p.id}">重發連結碼（舊的失效）</button><button class="btn ghost sm" data-pban="${p.id}">${p.status==="停權"?"恢復合作":"停權"}</button></div>`:""}</div>
+  <div><h3>推薦的客戶（${cs.length}）</h3><div class="tl" style="margin-top:6px">${cs.map(c=>`<div><time>${c.attrAt}</time><span>${c.code} ${esc(c.company)}・${stagePill(c.stage)}・保護期到 ${c.attrUntil}</span></div>`).join("")||`<span class="small muted">還沒有。</span>`}</div></div>
+  ${isAdmin()?`<div><h3>佣金</h3><div class="tl" style="margin-top:6px">${cm.map(x=>`<div><time>${x.id}</time><span>${esc(cust(x.cid)?.code||"")}・${esc(x.deal)}・${money(comm(x))}・<span class="pill ${CMCLS[x.status]}">${x.status}</span></span></div>`).join("")||`<span class="small muted">沒有。</span>`}</div></div>`:""}
+  <p class="note">身分證字號、銀行帳戶等撥款資料不放在這個系統，由會計另外保管；系統只記錄撥款日期與金額。</p>`;
+}
+function vCommission(){
+  const sum=st=>S.CM.filter(x=>x.status===st).reduce((a,x)=>a+comm(x),0);
+  return `<p class="lede">佣金依「成交金額 × 夥伴比例」計算。提案時只記預估、不算應付；成交後才產生待結算紀錄；客戶付款且過 ${cfg().coolDays} 天冷卻期，管理者才能核准撥付。</p>
+  <div class="kpis">${["預估","待結算","已核准","已撥付","已取消"].map(s=>`<div class="kpi"><span>${s}</span><b style="font-size:22px">${money(sum(s))}</b><i>${S.CM.filter(x=>x.status===s).length} 筆</i></div>`).join("")}<div class="kpi"><span>爭議暫停</span><b style="font-size:22px">${S.DS.filter(d=>d.status==="審查中").length}</b><i>件</i></div></div>
+  <div class="tablebox"><table><thead><tr><th>編號</th><th>夥伴</th><th>客戶</th><th>項目</th><th class="r">成交金額</th><th class="r">比例</th><th class="r">佣金</th><th>狀態</th><th>紀錄</th><th>動作</th></tr></thead><tbody>
+  ${S.CM.map(x=>{const c=cust(x.cid), hold=S.DS.some(d=>d.cid===x.cid&&d.status==="審查中"), coolOk=x.custPaidAt&&daysBetween(x.custPaidAt,TODAY)>=cfg().coolDays;
+   return `<tr><td class="mono">${x.id}</td><td>${esc(pById(x.pid).name)}</td><td>${c?c.code+" "+esc(c.company):"—"}</td><td class="small">${esc(x.deal)}</td><td class="r num">${money(x.amount)}</td><td class="r num">${Math.round(x.rate*100)}%</td><td class="r num"><b>${money(comm(x))}</b></td><td><span class="pill ${CMCLS[x.status]}">${x.status}</span>${hold?` <span class="pill red">爭議中</span>`:""}</td><td class="small">${x.log.map(esc).join("<br>")}</td>
+   <td><div class="toolbar">${x.status==="待結算"&&!x.custPaidAt?`<button class="btn ghost sm" data-cmpay="${x.id}">客戶已付款</button>`:""}
+    ${x.status==="待結算"&&x.custPaidAt?`<button class="btn sm" data-cmok="${x.id}" ${hold?"disabled":""}>核准${coolOk?"":"（模擬略過冷卻期）"}</button>`:""}
+    ${x.status==="已核准"?`<button class="btn sm" data-cmpaid="${x.id}">標記已撥付</button>`:""}
+    ${["預估","待結算","已核准"].includes(x.status)?`<button class="btn ghost sm" data-cmx="${x.id}">取消</button>`:""}</div></td></tr>`}).join("")}
+  </tbody></table></div>
+  <div class="card"><h2>參數設定（v${cfg().version}）</h2><p class="small muted" style="margin:0">這些數字不寫死在程式裡。改了之後只影響之後新建立的佣金與歸因；已建立的紀錄沿用建立當時的比例與上限。</p>
+   <div class="form">
+    <label>預設佣金比例（%）<input type="text" id="cfg-rate" value="${Math.round(cfg().rate*1000)/10}" inputmode="decimal"></label>
+    <label>佣金上限（每筆 NT$，0＝不設）<input type="text" id="cfg-cap" value="${cfg().cap}" inputmode="numeric"></label>
+    <label>歸因保護期（天）<input type="text" id="cfg-protect" value="${cfg().protectDays}" inputmode="numeric"></label>
+    <label>冷卻期（天）<input type="text" id="cfg-cool" value="${cfg().coolDays}" inputmode="numeric"></label>
+    <label>續約佣金<select id="cfg-renew">${["不給","比例給付"].map(v=>`<option ${cfg().renewal===v?"selected":""}>${v}</option>`).join("")}</select></label>
+    <label>續約比例（%）／次數<input type="text" id="cfg-renewr" value="${Math.round(cfg().renewalRate*1000)/10} / ${cfg().renewalTimes}"></label>
+    <label>爭議處理期限（天）<input type="text" id="cfg-dispute" value="${cfg().disputeDays}" inputmode="numeric"></label>
+    <label>未受理報備保存（天）<input type="text" id="cfg-keep" value="${cfg().reportKeepDays}" inputmode="numeric"></label>
+   </div><div class="toolbar"><button class="btn sm" id="cfgSave">儲存參數</button><span class="small muted" id="cfgMsg"></span></div>
+   <div><h3>參數變更紀錄</h3><div class="tl" style="margin-top:6px">${S.cfgLog.slice().reverse().map(l=>`<div><time>${l.ts}</time><span>${esc(l.by)}：${esc(l.act)}</span></div>`).join("")}</div></div></div>
+  <div class="grid2"><div class="card"><h2>佣金規則</h2><div class="kv"><span>計算</span><span>成交金額（未稅）× 夥伴比例（預設 ${Math.round(cfg().rate*100)}%，個別夥伴依合作協議）${cfg().cap?`，每筆上限 ${money(cfg().cap)}`:"，目前不設上限"}</span><span>產生</span><span>商務專人把推薦客戶改為「成交」並填金額</span><span>核准</span><span>客戶付款＋${cfg().coolDays} 天冷卻期，且沒有爭議</span><span>取消</span><span>未成交、冷卻期內退款、歸因被改判，需寫原因</span><span>續約</span><span>${cfg().renewal==="不給"?"目前設定：續約不給佣金":`目前設定：續約給 ${Math.round(cfg().renewalRate*100)}%，最多 ${cfg().renewalTimes} 次`}（參數可調，待總指揮定案）</span></div></div>
+  <div class="card"><h2>稅務與撥款</h2><p class="small" style="margin:0">撥款前由會計確認所得類別、扣繳與二代健保補充保費，並開立扣繳憑單；系統只記錄撥款日期與金額，不存銀行帳戶與身分證字號。這部分需會計師確認後定案。</p></div></div>`;
+}
+function vPortal(){
+  const p=myPartner(); if(!p) return `<p>找不到夥伴資料。</p>`;
+  const cs=S.C.filter(c=>c.partner===p.id), cm=S.CM.filter(x=>x.pid===p.id&&x.status!=="預估"), m=pMetrics(p);
+  return `<p class="lede">${esc(p.name)} 的推薦入口。這裡只看得到你推薦的客戶進度和你的佣金；客戶的聯絡方式和洽談細節由總部處理。</p>
+  <div class="kpis">${[["推薦客戶",m.n,""],["已體驗",cs.filter(c=>has(c.id,["feature_click","task_complete"])).length,""],["總部洽談中",cs.filter(c=>pStatus(c)[1]==="總部洽談中").length,""],["已成交",m.won,""],["待結算佣金",money(cm.filter(x=>["待結算","已核准"].includes(x.status)).reduce((a,x)=>a+comm(x),0)),""],["已撥付",money(m.paid),""]].map(k=>`<div class="kpi"><span>${k[0]}</span><b style="font-size:${typeof k[1]==="string"?"20px":"28px"}">${k[1]}</b></div>`).join("")}</div>
+  <div class="grid2">
+   <div class="card"><h2>我的專屬連結</h2>${Object.entries(p.tokens).map(([t,k])=>`<div><b>${esc(TPL[t].name)}</b><div class="urlbar" style="margin-top:4px" id="pl-${t}">https://demo.你的網域.tw/d/${t}?t=${k}</div><div class="toolbar" style="margin-top:6px"><button class="btn sm" data-pcopy="${t}">複製連結</button></div></div>`).join("")||`<p class="small muted">合作協議簽署後才會產生連結。</p>`}
+    <p class="note">直接把連結傳給老闆就好。客戶點開不會被當成推薦成立，要客戶自己提出需求、或你先報備經總部受理，才算你的推薦。</p></div>
+   <div class="card"><h2>報備客戶</h2><p class="note">只要填公司名稱；公司電話選填，只用來比對是否重複。請不要填個人手機、身分證、家庭或財務狀況。總部第一次聯繫時會告訴對方是由你推薦、聯繫目的，並詢問是否願意了解；對方拒絕就刪除。未受理或不歸因的報備資料 ${cfg().reportKeepDays} 天後自動刪除。</p>
+    <div class="form"><label>公司名稱<input type="text" id="rp-co" placeholder="例如：模擬水電行 30"></label><label>公司電話（選填，市話或代表號）<input type="text" id="rp-ph"></label></div>
+    <label class="small" style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="rp-ok"> 我已告訴對方會由總部聯繫，並取得同意提供公司名稱與電話。</label>
+    <div><button class="btn sm" id="rpSend">送出報備</button></div><div id="rpOut"></div></div>
+  </div>
+  <div class="card"><h2>我推薦的客戶</h2><div class="tb"><table><thead><tr><th>客戶</th><th>推薦日</th><th>保護期到</th><th>進度</th></tr></thead><tbody>
+   ${cs.map(c=>{const s=pStatus(c);return `<tr><td>${esc(c.company)}</td><td class="num">${c.attrAt}</td><td class="num">${c.attrUntil}</td><td><span class="pill ${s[0]}">${s[1]}</span></td></tr>`}).join("")||`<tr><td colspan="4" class="muted">還沒有推薦的客戶。</td></tr>`}
+  </tbody></table></div></div>
+  <div class="grid2">
+   <div class="card"><h2>我的佣金</h2><div class="tl">${cm.map(x=>`<div><time>${x.id}</time><span>${esc(cust(x.cid)?.company||"")}・${esc(x.deal)}・<b>${money(comm(x))}</b>・<span class="pill ${CMCLS[x.status]}">${x.status}</span></span></div>`).join("")||`<span class="small muted">還沒有佣金紀錄。成交後才會出現。</span>`}</div></div>
+   <div class="card"><h2>提出歸因申訴</h2><input type="text" id="ds-co" placeholder="客戶公司名稱"><textarea id="ds-claim" placeholder="說明為什麼應該算你的推薦，例如何時介紹、怎麼介紹"></textarea><input type="text" id="ds-ev" placeholder="證據（例如：LINE 對話截圖、簽到表）"><div><button class="btn ghost sm" id="dsSend">送出申訴</button></div><p class="note">總部 7 天內回覆。申訴期間相關佣金暫停核准。</p></div>
+  </div>
+  ${S.N.filter(n=>n.rule==="partner"&&n.to===p.name).length?`<div class="card"><h2>給你的通知</h2><div class="tl">${S.N.filter(n=>n.rule==="partner"&&n.to===p.name).reverse().map(n=>`<div><time>${n.ts}</time><span>${esc(n.text||"")}</span></div>`).join("")}</div></div>`:""}`;
+}
+
+/* ---------- 完整模擬案例 ---------- */
+const CASE=[
+ {t:"推薦夥伴分享連結",who:"模擬夥伴 阿明（P001，水電材料行）",desc:"阿明在 LINE 把自己的「水電公司工程管理儀表板」專屬連結傳給熟客「模擬水電行 21」的老闆。分享這件事系統看不到，不產生任何紀錄。",run:()=>"沒有紀錄（LINE 傳送無法偵測）"},
+ {t:"客戶開啟並試用",who:"客戶",desc:"老闆點開連結，選「同意記錄操作」，點了九宮格、完成一次 LINE 回報。此時系統只知道「P001 的連結有人在試用」，還不知道是哪一家公司，所以先記成匿名 session，不建客戶、不算推薦成立。",
+  run:()=>{const sid="sess-case"; ["page_open","feature_click","task_complete"].forEach((t,i)=>S.E.push({id:S.eid++,cid:null,sid,pid:"P001",tpl:"water",type:t,feature:i===1?"九宮格":i===2?TPL.water.task:"",ts:"10/28 20:1"+i,consent:"同意記錄操作",counted:true})); return "匿名事件 3 筆（開啟、點選九宮格、完成任務），歸屬 P001 的連結"}},
+ {t:"客戶提出需求，歸因成立",who:"客戶 → 系統",desc:"老闆在回饋選「想了解專屬版本」，留下 LINE ID 並勾選同意聯繫。系統比對名冊沒有這家 → 建立客戶 W009，歸因給 P001，保護期 90 天；剛才的匿名事件只有「客戶同意記錄」的部分才補歸到 W009（回饋表單上已告知會一併交給負責同仁）；自動進入「有需求」並標成高意向。通知商務 A 與 Shen；也通知阿明「你推薦的客戶已提出需求」，但不附聯絡方式。",
+  run:()=>{const r=attribute({company:"模擬水電行 21",phone:"",pid:"P001"}); if(!r.ok) return "歸因失敗："+r.why;
+   const code="W"+String(S.C.filter(c=>c.industry==="W").length+1).padStart(3,"0");
+   const c={id:"c-case",code,token:tok(),company:"模擬水電行 21",industry:"W",contact:"（客戶自填 LINE）",phone:"",email:"",lineId:"已提供（已同意聯繫）",tpl:"water",owner:"u1",stage:"已發送",need:"工地狀況要一直打電話問",nextTask:"指派商務專人",nextDate:TODAY,sentAt:TODAY,consent:"同意記錄操作",hot:false,trial:false,feedback:{best:"九宮格",pain:"工地狀況要一直打電話問",want:"想了解專屬版本",contact:"已留 LINE（已同意聯繫）"},source:"推薦夥伴",partner:"P001",attrAt:TODAY,attrUntil:addDays(TODAY,cfg().protectDays)};
+   S.C.push(c); S.E.filter(e=>e.sid==="sess-case"&&e.consent==="同意記錄操作").forEach(e=>e.cid=c.id);
+   S.E.push({id:S.eid++,cid:c.id,tpl:"water",type:"feedback_submit",feature:"",ts:"10/28 20:14",consent:"同意記錄操作",counted:true});
+   S.AL.push({ts:TODAY,cid:c.id,pid:"P001",result:"歸因成立",why:"客戶透過夥伴連結提出需求（名冊無重複）"});
+   S.H.push({cid:c.id,ts:"10/28 20:14",from:"待發送",to:"已發送",by:"系統",why:"客戶由夥伴連結自行進入"});
+   autoAdvance(c,"task_complete"); autoAdvance(c,"feedback_submit"); notifyPartner(c,`你推薦的 ${c.company} 已提出需求，總部會在 24 小時內聯繫`);
+   return `建立客戶 ${code}・歸因 P001（保護期到 ${c.attrUntil}）・階段「有需求」・高意向・通知 3 則（模擬）`}},
+ {t:"總部接手洽談",who:"Shen → 商務 A",desc:"Shen 把 W009 指派給商務 A，系統建立「24 小時內聯繫」待辦。商務 A 通話後約好 11/03 到現場展示，階段改為「預約洽談」。",
+  run:()=>{const c=cust("c-case"); if(!c) return "請先完成上一步"; c.owner="u2"; S.T.push({id:"t-case1",cid:c.id,owner:"u2",text:"24 小時內 LINE 聯繫",due:"2026-10-29",done:true,result:"已通話，11/03 現場展示"}); S.H.push({cid:c.id,ts:"10/29 10:20",from:c.stage,to:"預約洽談",by:"商務 A",why:"通話後約 11/03 現場展示"}); c.stage="預約洽談"; c.nextTask="11/03 現場展示"; c.nextDate="2026-11-03"; S.T.push({id:"t-case2",cid:c.id,owner:"u2",text:"11/03 現場展示",due:"2026-11-03",done:false,result:""}); audit(`${c.code} 指派給商務 A`); return "負責人：商務 A・階段「預約洽談」・待辦 2 筆"}},
+ {t:"提案報價",who:"商務 A",desc:"現場展示後提出「付費試辦 3 個月 NT$15,000」。佣金先記為「預估」，不計入應付。",
+  run:()=>{const c=cust("c-case"); if(!c) return "請先完成前面步驟"; S.H.push({cid:c.id,ts:"11/03 16:00",from:c.stage,to:"提案報價",by:"商務 A",why:"付費試辦 3 個月 15000"}); c.stage="提案報價"; const cm=syncCommission(c,"提案報價","付費試辦 3 個月 15000"); return `階段「提案報價」・佣金 ${cm.id} 預估 ${money(comm(cm))}`}},
+ {t:"成交，產生佣金待結算",who:"商務 A",desc:"客戶簽下付費試辦。商務 A 把階段改為「成交」並填金額，系統依阿明的比例 10% 產生 NT$1,500「待結算」紀錄，並通知阿明。之後要等客戶付款、過 14 天冷卻期，管理者才能核准撥付。",
+  run:()=>{const c=cust("c-case"); if(!c) return "請先完成前面步驟"; S.H.push({cid:c.id,ts:"11/05 11:00",from:c.stage,to:"成交",by:"商務 A",why:"付費試辦 3 個月 15000"}); c.stage="成交"; c.trial=true; c.nextTask=""; const cm=syncCommission(c,"成交","付費試辦 3 個月 15000"); return `階段「成交」・佣金 ${cm.id} ${money(comm(cm))}「${cm.status}」・已通知阿明（模擬）`}}
+];
+function vCase(){
+  const st=S.caseStep;
+  return `<p class="lede">完整走一次：推薦夥伴分享水電模板 → 客戶體驗 → 提出需求 → 總部接手 → 成交 → 佣金待結算。每按一步，系統資料就真的變動，可以切到其他畫面或切換身分查看。</p>
+  <div class="card">${CASE.map((s,i)=>`<div class="task"><span style="font-size:20px">${i<st?"✅":i===st?"👉":"⬜"}</span><span><span class="t">第 ${i+1} 步・${esc(s.t)}</span><br><span class="m">${esc(s.who)}</span><p class="small" style="margin:6px 0 0">${esc(s.desc)}</p>${S.caseNotes[i]?`<p class="note" style="margin-top:6px">結果：${esc(S.caseNotes[i])}</p>`:""}</span>
+   <span>${i===st?`<button class="btn sm" data-cstep="${i}">執行這一步</button>`:""}</span></div>`).join("")}
+   ${st>=CASE.length?`<div class="toolbar"><span class="pill green">案例完成</span><button class="btn ghost sm" data-go="commission">看佣金結算</button><button class="btn ghost sm" data-asp="p1">切換成阿明看他的入口</button><button class="btn ghost sm" data-cust="c-case">看 W009 客戶頁</button></div>`:""}
+   <div class="toolbar"><button class="btn ghost sm" id="caseReset">重新開始案例</button><span class="small muted">會連同其他模擬資料一起重設。</span></div></div>`;
+}
+
+S=seed();
+/* ---------- drawer, render, events ---------- */
+function renderDrawer(){
+  if(!drawer){$("#layer").innerHTML="";return}
+  if(String(drawer).startsWith("P:")){const p=pById(drawer.slice(2)); $("#layer").innerHTML=`<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(p.name)}"><div class="dr-h"><h2 style="font-size:18px"><span class="mono">${p.id}</span>・${esc(p.name)}</h2><button class="x" data-close="1" aria-label="關閉">×</button></div><div class="dr-b">${partnerDrawer(p)}</div></aside>`; return}
+  const c=cust(drawer); if(!c){drawer=null;$("#layer").innerHTML="";return}
+  $("#layer").innerHTML=`<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(c.company)}"><div class="dr-h"><h2 style="font-size:18px"><span class="mono">${c.code}</span>・${esc(c.company)}</h2><button class="x" data-close="1" aria-label="關閉">×</button></div><div class="dr-b">${custDrawer(c)}</div></aside>`;
+}
+function render(){
+  $("#asUser").innerHTML=S.U.map(u=>`<option value="${u.id}" ${u.id===S.me?"selected":""}>${u.name}（${u.role}）</option>`).join("");
+  const VV=viewsFor(); if(!VV.some(v=>v[0]===view)) view=VV[0][0];
+  $("#views").innerHTML=VV.map(([k,l])=>`<button class="vbtn" data-view="${k}" ${k===view?'aria-current="page"':""}>${l}</button>`).join("");
+  $("#main").innerHTML=({war:vWar,crm:vCrm,board:vBoard,tasks:vTasks,notify:vNotify,sim:vSim,arch:vArch,partners:vPartners,commission:vCommission,case:vCase,portal:vPortal}[view])();
+  renderDrawer();
+}
+function go(v){view=v;history.replaceState(null,"","#"+v);window.scrollTo({top:0});render()}
+window.addEventListener("hashchange",()=>{const v=location.hash.slice(1);if(viewsFor().some(x=>x[0]===v)&&v!==view){view=v;render()}});
+document.addEventListener("input",e=>{ if(e.target.id==="q"){q=e.target.value.trim(); const pos=e.target.selectionStart; render(); const el=$("#q"); el.focus(); el.setSelectionRange(pos,pos)} if(e.target.id==="impText") importText=e.target.value });
+document.addEventListener("change",e=>{const id=e.target.id;
+  if(id==="fInd"){fInd=e.target.value;render()} if(id==="fStage"){fStage=e.target.value;render()} if(id==="fOwner"){fOwner=e.target.value;render()}
+  if(id==="asUser"){S.me=e.target.value;drawer=null;fOwner="";toast(`切換為 ${me().name}（${me().role}）`);render()}
+  if(id==="simSel"){simCid=e.target.value;simState={consent:null};render()}
+  if(id==="f-stage"){const h=$("#stageHint"); if(h) h.textContent=STAGE_RULE[e.target.value]}
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&drawer){drawer=null;renderDrawer()} if(e.key==="Enter"&&e.target.matches("tr.click")) e.target.click() });
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button,[data-cust],[data-close],[data-partner]"); if(!t) return; const d=t.dataset;
+  if(d.view) return go(d.view);
+  if(d.go) return go(d.go);
+  if(d.close){drawer=null;return renderDrawer()}
+  if(d.cust){drawer=d.cust;return renderDrawer()}
+  if(d.partner){drawer="P:"+d.partner;return renderDrawer()}
+  if(d.asp){S.me=d.asp;drawer=null;toast(`切換為 ${me().name}`);return render()}
+  if(d.cstep!=null&&d.cstep!==undefined&&t.matches("[data-cstep]")){const i=+d.cstep; S.caseNotes[i]=CASE[i].run(); S.caseStep=i+1; toast(`第 ${i+1} 步完成`); return render()}
+  if(t.id==="caseReset"){S=seed();drawer=null;simState={consent:null};toast("案例已重設");return render()}
+  if(d.dsd){const x=S.DS.find(y=>y.id===d.dsd), c=cust(x.cid); x.status="已決定"; x.decision=d.v+"（"+me().name+"，10/28）";
+    if(d.v==="改判給申訴人"&&c){S.AL.push({ts:TODAY,cid:c.id,pid:x.pid,result:"歸因成立",why:`爭議 ${x.id} 改判`}); c.partner=x.pid; c.attrAt=TODAY; c.attrUntil=addDays(TODAY,cfg().protectDays); S.CM.filter(m=>m.cid===c.id&&!["已撥付","已取消"].includes(m.status)).forEach(m=>{m.pid=x.pid;m.log.push(`10/28 爭議改判，改歸 ${x.pid}`)})}
+    if(d.v==="雙方各半"&&c){S.CM.filter(m=>m.cid===c.id&&!["已撥付","已取消"].includes(m.status)).forEach(m=>{m.log.push("10/28 爭議決定雙方各半，撥付時拆兩筆")})}
+    audit(`爭議 ${x.id}：${d.v}`); toast(`爭議 ${x.id} 已決定：${d.v}，已通知雙方（模擬）`); return render()}
+  if(d.prot){const p=pById(d.prot); Object.keys(p.tokens).forEach(k=>p.tokens[k]=tok()); audit(`${p.id} 重發連結碼`); toast("已重發，舊連結改記為匿名訪客"); return render()}
+  if(d.pban){const p=pById(d.pban); p.status=p.status==="停權"?"合作中":"停權"; audit(`${p.id} ${p.status}`); toast(`${p.name} 已${p.status==="停權"?"停權，連結失效":"恢復合作"}`); return render()}
+  if(d.cmpay){const x=S.CM.find(y=>y.id===d.cmpay); x.custPaidAt=TODAY; x.log.push(`10/28 客戶付款，冷卻期到 ${addDays(TODAY,cfg().coolDays)}`); audit(`${x.id} 客戶已付款`); return render()}
+  if(d.cmok){const x=S.CM.find(y=>y.id===d.cmok); x.status="已核准"; x.log.push("10/28 管理者核准"+(daysBetween(x.custPaidAt,TODAY)<cfg().coolDays?"（模擬略過冷卻期）":"")); audit(`${x.id} 核准`); const c=cust(x.cid); if(c) notifyPartner(c,`${c.company} 的佣金 ${money(comm(x))} 已核准，將於下次結算日撥付`); return render()}
+  if(d.cmpaid){const x=S.CM.find(y=>y.id===d.cmpaid); x.status="已撥付"; x.log.push("10/28 已撥付（會計另存撥款憑證）"); audit(`${x.id} 已撥付`); return render()}
+  if(d.cmx){if(d.armed!=="1"){d.armed="1";t.textContent="確定取消？";setTimeout(()=>{if(t.isConnected){t.dataset.armed="";t.textContent="取消"}},4000);return} const x=S.CM.find(y=>y.id===d.cmx); x.status="已取消"; x.log.push("10/28 管理者取消"); audit(`${x.id} 取消`); return render()}
+  if(d.pcopy){const txt=$("#pl-"+d.pcopy).textContent; navigator.clipboard.writeText(txt).then(()=>toast("已複製連結")).catch(()=>toast("請長按連結手動複製")); return}
+  if(t.id==="rpSend"){const co=$("#rp-co").value.trim(), ph=$("#rp-ph").value.trim(), ok=$("#rp-ok").checked, out=$("#rpOut");
+    if(!ok){out.innerHTML=`<p class="warn">請先確認已告知對方並取得同意。</p>`;return}
+    if(/09\d{2}[-\s]?\d{3}[-\s]?\d{3}/.test(ph)){out.innerHTML=`<p class="warn">看起來是個人手機，請改填公司市話或代表號，或留空。</p>`;return}
+    const r=attribute({company:co,phone:ph,pid:me().partner});
+    if(r.ok&&r.code==="new"){const code="W"+String(S.C.filter(c=>c.industry==="W").length+1).padStart(3,"0"); const c={id:"c-r"+Date.now(),code,token:tok(),company:co,industry:"W",contact:"",phone:ph,email:"",lineId:"",tpl:"water",owner:"u1",stage:"待發送",need:"",nextTask:"受理報備，指派商務專人",nextDate:TODAY,sentAt:"",consent:"",hot:false,trial:false,feedback:null,source:"推薦夥伴",partner:me().partner,attrAt:TODAY,attrUntil:addDays(TODAY,cfg().protectDays)}; S.C.push(c); S.AL.push({ts:TODAY,cid:c.id,pid:me().partner,result:"歸因成立",why:"夥伴報備（模擬直接受理）"}); audit(`${me().name} 報備 ${co}`)}
+    else if(r.hit){S.AL.push({ts:TODAY,cid:r.hit.id,pid:me().partner,result:"不歸因",why:r.why})}
+    out.innerHTML=`<p class="small" style="margin:8px 0 0"><span class="pill ${r.ok?"green":"grey"}">${r.ok?"歸因成立":"不歸因"}</span> ${esc(r.code==="other"?"這家已有其他夥伴推薦，在保護期內":r.why)}</p>`; if(r.ok) setTimeout(render,1200); return}
+  if(t.id==="cfgSave"){const num=id=>Number(String($("#"+id).value).trim()); const rr=String($("#cfg-renewr").value).split("/").map(x=>Number(x.trim()));
+    const n={rate:num("cfg-rate")/100,cap:num("cfg-cap"),protectDays:num("cfg-protect"),coolDays:num("cfg-cool"),renewal:$("#cfg-renew").value,renewalRate:(rr[0]||0)/100,renewalTimes:rr[1]||0,disputeDays:num("cfg-dispute"),reportKeepDays:num("cfg-keep")};
+    const bad=[[n.rate>0&&n.rate<=.3,"佣金比例需在 0–30%"],[n.cap>=0,"上限不可為負"],[n.protectDays>=30&&n.protectDays<=365,"保護期需在 30–365 天"],[n.coolDays>=0&&n.coolDays<=90,"冷卻期需在 0–90 天"],[n.disputeDays>=1&&n.disputeDays<=30,"爭議期限需在 1–30 天"],[n.reportKeepDays>=30&&n.reportKeepDays<=365,"保存天數需在 30–365 天"],[n.renewal==="不給"||(n.renewalRate>0&&n.renewalRate<=.3&&n.renewalTimes>=1),"續約比例需在 0–30%、次數至少 1"]].filter(x=>!x[0]||Number.isNaN(x[0]));
+    if(bad.length||Object.values(n).some(v=>typeof v==="number"&&Number.isNaN(v))){$("#cfgMsg").textContent=(bad[0]||[0,"請填數字"])[1];return}
+    const ch=Object.keys(n).filter(k=>n[k]!==S.cfg[k]).map(k=>`${k} ${S.cfg[k]}→${n[k]}`); if(!ch.length){$("#cfgMsg").textContent="沒有變更";return}
+    S.cfg={...S.cfg,...n,version:S.cfg.version+1}; S.cfgLog.push({ts:TODAY,by:me().name,act:`v${S.cfg.version}：${ch.join("、")}`}); audit(`參數更新 v${S.cfg.version}`); toast(`參數已更新為 v${S.cfg.version}`); return render()}
+  if(t.id==="dsSend"){const co=$("#ds-co").value.trim(), cl=$("#ds-claim").value.trim(); const c=S.C.find(x=>norm(x.company)===norm(co)); if(!co||!cl){toast("請填客戶與說明");return} S.DS.push({id:"DS-"+String(S.DS.length+1).padStart(4,"0"),pid:me().partner,cid:c?c.id:null,claim:cl,evidence:$("#ds-ev").value.trim()||"未附",status:"審查中",filed:TODAY,due:addDays(TODAY,7),decision:""}); toast("申訴已送出，總部 7 天內回覆"); return render()}
+  if(t.id==="reset"){S=seed();drawer=null;simState={consent:null};q=fInd=fStage=fOwner="";toast("已重設模擬資料");return render()}
+  if(t.id==="newC"){const n=S.C.filter(c=>c.industry==="W").length+1, code="W"+String(n).padStart(3,"0");
+    S.C.push({id:"c"+(S.C.length+1)+"x"+n,code,token:tok(),company:"新客戶（模擬）",industry:"W",contact:"",phone:"",email:"",lineId:"",tpl:"water",owner:S.me,stage:"待發送",need:"",nextTask:"傳送體驗連結",nextDate:TODAY,sentAt:"",consent:"",hot:false,trial:false,feedback:null});
+    S.T.push({id:"t"+Date.now(),cid:S.C[S.C.length-1].id,owner:S.me,text:"傳送體驗連結",due:TODAY,done:false,result:""}); audit(`新增客戶 ${code}`); drawer=S.C[S.C.length-1].id; toast(`已建立 ${code}，連結碼自動產生`); return render()}
+  if(t.id==="imp"){const b=$("#impBox"); b.hidden=!b.hidden; return}
+  if(t.id==="impCheck"){const lines=($("#impText").value||"").split(/\n/).map(x=>x.trim()).filter(Boolean); let add=0, dup=[];
+    lines.forEach(l=>{const [co,ind,ct,ph]=l.split(",").map(x=>(x||"").trim()); if(!co||!IND[ind]) {dup.push(l+"（格式錯誤）");return}
+     if(S.C.some(c=>c.company===co||(ph&&c.phone===ph))){dup.push(co+"（重複，略過）");return}
+     const n=S.C.filter(c=>c.industry===ind).length+1, code=ind+String(n).padStart(3,"0");
+     S.C.push({id:"c"+(S.C.length+1)+"i",code,token:tok(),company:co,industry:ind,contact:ct||"",phone:ph||"",email:"",lineId:"",tpl:IND[ind].tpl,owner:S.me,stage:"待發送",need:"",nextTask:"傳送體驗連結",nextDate:TODAY,sentAt:"",consent:"",hot:false,trial:false,feedback:null}); add++ });
+    audit(`匯入名冊 ${add} 筆（略過 ${dup.length} 筆）`); importText=""; render(); $("#impBox").hidden=false; $("#impOut").innerHTML=`<p class="small">新增 ${add} 筆。${dup.length?"略過："+dup.map(esc).join("、"):""}</p>`; return}
+  if(t.id==="exp"){const csv=["代碼,公司,產業,窗口,階段,負責,需求"].concat(filtered().map(c=>[c.code,c.company,IND[c.industry].name,c.contact,c.stage,uname(c.owner),c.need].join(","))).join("\n");
+    navigator.clipboard.writeText(csv).then(()=>toast(`已複製 ${filtered().length} 筆 CSV（不含電話）`)).catch(()=>toast("瀏覽器不允許複製，正式版會提供下載")); audit(`匯出名冊 ${filtered().length} 筆（不含電話）`); return}
+  if(d.save){const c=cust(d.save); const f=k=>$("#f-"+k).value.trim(); const old=JSON.stringify([c.company,c.contact,c.phone,c.email,c.owner,c.need,c.nextTask,c.nextDate]);
+    Object.assign(c,{company:f("company"),contact:f("contact"),phone:f("phone"),email:f("email"),owner:$("#f-owner").value,need:f("need"),nextTask:f("next"),nextDate:$("#f-date").value});
+    const tk=S.T.find(x=>x.cid===c.id&&!x.done); if(c.nextTask){ if(tk){tk.text=c.nextTask;tk.due=c.nextDate;tk.owner=c.owner} else S.T.push({id:"t"+Date.now(),cid:c.id,owner:c.owner,text:c.nextTask,due:c.nextDate,done:false,result:""}) }
+    if(old!==JSON.stringify([c.company,c.contact,c.phone,c.email,c.owner,c.need,c.nextTask,c.nextDate])) audit(`編輯 ${c.code} 客戶資料`); toast("已儲存"); return render()}
+  if(d.stage){const c=cust(d.stage), to=$("#f-stage").value, why=$("#f-why").value.trim(), w=$("#stageWarn");
+    if(to===c.stage) return;
+    const auto={"已體驗":has(c.id,["feature_click","task_complete"]),"有需求":has(c.id,["consult_click","feedback_submit"]),"預約洽談":has(c.id,["booking_submit"])};
+    if(!why&&!(to in auto&&auto[to])){w.hidden=false;w.textContent=to==="已體驗"&&has(c.id,["page_open"])?"這位客戶只有開啟、沒有操作紀錄，不能直接算已體驗。請寫明原因（例如：電話中確認已試用）。":"手動變更階段請寫原因。";return}
+    if(to==="成交"&&!why){w.hidden=false;w.textContent="成交請寫類型（例如：付費試辦 3 個月）";return}
+    if(to==="成交"&&c.partner&&!/\d{3,}/.test(why)){w.hidden=false;w.textContent="推薦夥伴的客戶成交，請在原因寫金額，例如：付費試辦 3 個月 15000（用來計算佣金）";return}
+    S.H.push({cid:c.id,ts:"10/28 "+new Date().toTimeString().slice(0,5),from:c.stage,to,by:me().name,why:why||"符合系統條件"}); if(to==="成交"&&/試辦/.test(why)) c.trial=true; if(to==="未成交") c.lost=why;
+    audit(`${c.code} 商機階段：${c.stage} → ${to}`); c.stage=to; syncCommission(c,to,why); if(to==="預約洽談") notify("book",c); toast(`已變更為「${to}」`); return render()}
+  if(d.sent){const c=cust(d.sent); c.sentAt="2026-10-28"; S.H.push({cid:c.id,ts:"10/28",from:c.stage,to:"已發送",by:me().name,why:"商務專人按「已發送」"}); c.stage="已發送"; const tk=S.T.find(x=>x.cid===c.id&&!x.done); if(tk){tk.text="3 天後電話確認是否打開";tk.due="2026-10-31"} c.nextTask="3 天後電話確認是否打開"; c.nextDate="2026-10-31"; audit(`${c.code} 標記已發送`); toast("已標記發送，系統自動排了 3 天後的跟進"); return render()}
+  if(d.rotate){const c=cust(d.rotate); c.token=tok(); audit(`${c.code} 重發連結碼，舊碼失效`); toast("已產生新連結碼，舊連結改記為匿名訪客"); return render()}
+  if(d.simgo){simCid=d.simgo; simState={consent:null}; drawer=null; return go("sim")}
+  if(d.del){if(d.armed!=="1"){d.armed="1";t.textContent="確定刪除？再按一次";setTimeout(()=>{if(t.isConnected){t.dataset.armed="";t.textContent="刪除此客戶的個資與事件"}},4000);return}
+    const c=cust(d.del); S.E=S.E.filter(x=>x.cid!==c.id); S.T=S.T.filter(x=>x.cid!==c.id); S.C=S.C.filter(x=>x.id!==c.id); audit(`刪除 ${c.code} 的個資與事件（保留去識別統計）`); drawer=null; toast(`已刪除 ${c.code}`); return render()}
+  if(d.topen){const b=document.querySelector(`[data-tbox="${d.topen}"]`); b.hidden=!b.hidden; return}
+  if(d.tdone){const tk=S.T.find(x=>x.id===d.tdone), r=$("#tr-"+tk.id).value.trim(); if(!r){toast("請寫跟進結果");return} tk.done=true; tk.result=r; audit(`完成待辦：${cust(tk.cid).code} ${tk.text}`); toast("已完成，記得設定下一步"); return render()}
+  if(d.rule){if(!isAdmin())return; const r=S.R.find(x=>x.id===d.rule); r.on=!r.on; audit(`通知規則「${r.name}」${r.on?"開啟":"關閉"}（模擬）`); return render()}
+  if(t.id==="simBot"){simState.log=simState.log||[]; simState.log.unshift({t:new Date().toTimeString().slice(0,8),type:"page_open",f:"",why:"User-Agent 是 LINE 預覽爬蟲，伺服器直接丟棄，不算開啟",ok:false}); return render()}
+  if(t.id==="simOpen"){const now=Date.now(); if(simState.lastOpen&&now-simState.lastOpen<30*60*1000){simState.log.unshift({t:new Date().toTimeString().slice(0,8),type:"page_open",f:"",why:"同一連結碼 30 分鐘內重複開啟，只算一次",ok:false})} else {simState.opened=true; simState.lastOpen=now; simEvent("page_open","","頁面可見滿 2 秒才送出；只代表連結被打開")} simState.opened=true; return render()}
+  if(d.consent){ if(d.consent==="reset"){simState.consent=null; return render()} simState.consent=d.consent; const c=cust(simCid); c.consent=d.consent; simState.log.unshift({t:new Date().toTimeString().slice(0,8),type:"consent",f:d.consent,why:"同意紀錄存檔（時間、版本、選擇），之後可撤回",ok:true}); return render()}
+  if(d.feat){simEvent("feature_click",d.feat,"點選主要功能"); return render()}
+  if(d.task){simEvent("task_complete",TPL[cust(simCid).tpl].task,"完成模板指定的體驗任務"); return render()}
+  if(d.consult){simEvent("consult_click","","客戶主動點選，屬於客戶自己提出的請求"); return render()}
+  if(d.fb){simState[d.fb]=d.v; return render()}
+  if(t.id==="simFb"){const c=cust(simCid), contact=$("#simContact").value.trim(), agree=$("#simAgree").checked;
+    if(contact&&!agree){toast("留聯絡方式需要勾選同意聯繫");return}
+    c.feedback={best:simState.best||"未選",pain:simState.pain||"未選",want:simState.want||"未選",contact:contact?"已留聯絡方式（已同意聯繫）":"沒有留聯絡方式"}; if(simState.pain&&!c.need) c.need=simState.pain;
+    simEvent("feedback_submit","",contact?"客戶主動送出，聯絡方式附同意紀錄":"客戶主動送出，未留聯絡方式"); toast("回饋已送出（模擬）"); return render()}
+});
+render();
+</script>
