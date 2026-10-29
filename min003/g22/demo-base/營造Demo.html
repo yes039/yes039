@@ -1,0 +1,624 @@
+<title>營造公司管理儀表板</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: top bar with six views, nine-grid first; boss view sits in a phone frame on wide screens; detail opens in a side drawer (bottom sheet on phones) */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --sunk:#f5f7f9; --ink:#1c2632; --muted:#5a6776; --line:#d6dde5;
+  --vest:#f4b400; --vest-soft:#fff3cc; --vest-ink:#1c2632;
+  --blue:#1d5ea6; --blue-soft:#e3eefb;
+  --red:#c0352b; --red-soft:#fbe4e2; --amber:#a86200; --amber-soft:#fcefd6; --green:#2b7a4b; --green-soft:#e1f2e8; --grey:#8b96a3; --grey-soft:#eceff2;
+  --line-green:#06c755;
+  --display:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --sunk:#141b22; --ink:#e5eaf0; --muted:#98a5b3; --line:#2a3440;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1c2632; --blue:#82b3ec; --blue-soft:#1d2d42;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222b35;
+  --line-green:#2fd27a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --sunk:#141b22; --ink:#e5eaf0; --muted:#98a5b3; --line:#2a3440;
+  --vest:#f4b400; --vest-soft:#3a3010; --vest-ink:#1c2632; --blue:#82b3ec; --blue-soft:#1d2d42;
+  --red:#f07b72; --red-soft:#3a1c1a; --amber:#e6a94f; --amber-soft:#352812; --green:#6cc290; --green-soft:#183025; --grey:#7d8a98; --grey-soft:#222b35;
+  --line-green:#2fd27a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:6}
+header.top .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:10px}
+h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0;white-space:nowrap}
+h1 .tape{background:var(--vest);color:var(--vest-ink);padding:0 .25em;border-radius:4px}
+.demo{font-size:12px;color:var(--amber);background:var(--amber-soft);border-radius:999px;padding:2px 10px;white-space:nowrap}
+nav.views{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1 1 320px;min-width:0}
+.vbtn{flex:0 0 auto;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:7px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.vbtn[aria-current="page"]{background:var(--ink);color:var(--surface)}
+main .wrap{padding-block:18px 64px}
+h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+h3{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0;font-weight:700}
+.muted{color:var(--muted)} .small{font-size:13px}
+.lede{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:62ch}
+button{font:inherit}
+.btn{border:0;border-radius:9px;padding:7px 14px;font-weight:700;cursor:pointer;background:var(--vest);color:var(--vest-ink);white-space:nowrap}
+.btn.ghost{background:var(--sunk);color:var(--ink);border:1.5px solid var(--line);font-weight:500}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input[type=text],textarea,select{border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:9px;padding:7px 10px;font:inherit;min-width:0;width:100%}
+textarea{resize:vertical;min-height:70px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.pill.red{background:var(--red-soft);color:var(--red)} .pill.amber{background:var(--amber-soft);color:var(--amber)}
+.pill.green{background:var(--green-soft);color:var(--green)} .pill.grey{background:var(--grey-soft);color:var(--grey)}
+.pill.blue{background:var(--blue-soft);color:var(--blue)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.dot.red{background:var(--red)} .dot.amber{background:var(--amber)} .dot.green{background:var(--green)} .dot.grey{background:transparent;border:2px dashed var(--grey)}
+.src{border:0;background:none;color:var(--blue);cursor:pointer;padding:0;font-size:13px;text-decoration:underline;text-underline-offset:2px}
+.prov{font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:1px}
+.prov.ai{background:var(--blue-soft);color:var(--blue)} .prov.human{background:var(--green-soft);color:var(--green)} .prov.rule{background:var(--grey-soft);color:var(--muted)}
+
+/* boss view */
+.bosslay{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.bosslay{grid-template-columns:1fr}.phone-notes{display:none}}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 30px rgba(20,30,40,.08)}
+@media (max-width:860px){.phone{border-radius:var(--r);box-shadow:none}}
+.ph-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ph-head b{font-family:var(--display);font-weight:400;font-size:19px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--sunk);border-radius:10px;padding:8px 10px}
+.kpi span{display:block;font-size:12px;color:var(--muted)}
+.kpi b{font-size:20px;font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec-h{display:flex;justify-content:space-between;align-items:center}
+.item{border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:6px;border-left-width:4px}
+.item.red{border-left-color:var(--red)} .item.amber{border-left-color:var(--amber)} .item.grey{border-left-color:var(--grey)}
+.item-t{font-weight:700}
+.item-m{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.handle{display:flex;gap:6px}
+.lights{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.light{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--ink)}
+.light b{font-family:var(--display);font-weight:400;font-size:18px}
+.light small{font-size:11px;color:var(--muted)}
+.phone-notes{display:flex;flex-direction:column;gap:14px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.note p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.empty-s{font-size:13px;color:var(--muted);padding:4px 2px}
+
+/* overview */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar label{display:flex;gap:6px;align-items:center;font-size:14px;cursor:pointer}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--sunk);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.r{cursor:pointer} tr.r:hover td{background:var(--sunk)}
+tr.r.unrep td{color:var(--muted)}
+td.num{font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--grey-soft);border-radius:3px;overflow:hidden;margin-top:4px;width:80px}
+.bar i{display:block;height:100%;background:var(--blue)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+@media (max-width:640px){.drawer{top:auto;left:0;width:100%;max-height:86%;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding-left:env(safe-area-inset-left,0px)}}
+.dr-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dr-b{overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.x{border:0;background:var(--sunk);color:var(--ink);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1}
+.msg{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:14px}
+.msg .who{font-size:12px;color:var(--muted);margin-bottom:2px}
+.fields{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px}
+.fld{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px}
+.fld:last-child{border-bottom:0}
+.fld span:first-child{color:var(--muted);font-size:13px}
+.fld .edit-row{grid-column:1/-1;display:flex;gap:6px}
+.hist{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
+
+/* report (LINE mock) */
+.replay{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.replay{grid-template-columns:1fr}}
+.chat{background:#8fa8c4;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line)}
+:root[data-theme="dark"] .chat{background:#2a3a4d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chat{background:#2a3a4d}}
+.chat-h{background:var(--surface);padding:10px 14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.chat-b{padding:12px;display:flex;flex-direction:column;gap:10px;min-height:300px;max-height:460px;overflow-y:auto}
+.bub{max-width:85%;border-radius:16px;padding:8px 12px;font-size:14px;white-space:pre-wrap}
+.bub.me{align-self:flex-end;background:#c6f3a8;color:#1c2632}
+.bub.bot{align-self:flex-start;background:var(--surface);color:var(--ink)}
+.ccard{align-self:flex-start;background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;width:88%;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ccard .row2{display:grid;grid-template-columns:52px 1fr;gap:6px}
+.ccard .row2 span:first-child{color:var(--muted)}
+.chat-in{background:var(--surface);padding:10px;display:flex;flex-direction:column;gap:8px}
+.menu4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.menu4 button{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:8px;padding:6px 2px;font-size:12px;cursor:pointer}
+.sendrow{display:flex;gap:6px;align-items:flex-end}
+.sendrow textarea{min-height:44px}
+.sendbtn{background:var(--line-green);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer}
+
+/* issues */
+.isslay{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.isslay{grid-template-columns:1fr}}
+.ilist{display:flex;flex-direction:column;gap:8px}
+.ilist .item{cursor:pointer;background:var(--surface)}
+.ilist .item[aria-current="true"]{outline:2px solid var(--blue)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.flow{display:flex;gap:4px;flex-wrap:wrap}
+.flow button{border:1.5px solid var(--line);background:var(--sunk);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.flow button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--surface)}
+.log{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.log div{background:var(--sunk);border-radius:8px;padding:6px 10px}
+.log time{color:var(--muted);font-size:12px;margin-right:6px;font-variant-numeric:tabular-nums}
+.warnline{font-size:13px;color:var(--red)}
+
+/* nine grid */
+.nine{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;text-align:left;color:var(--ink);cursor:pointer;min-width:0;overflow:hidden;border-top:6px solid var(--grey)}
+.tile.red{border-top-color:var(--red)} .tile.amber{border-top-color:var(--amber)} .tile.green{border-top-color:var(--green)} .tile.grey{border-top-style:dashed;background:var(--sunk)}
+.tile:hover{border-color:var(--ink)}
+.t-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.t-id{font-family:var(--display);font-size:30px;line-height:1}
+.t-name{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-prog{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;font-weight:700}
+.t-prog .bar{flex:1;width:auto;margin:0;height:8px;border-radius:4px}
+.t-lines{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
+.t-lines div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-lines .k{color:var(--muted)}
+.t-badges{display:flex;gap:4px;flex-wrap:wrap}
+.hub{background:var(--ink);color:var(--surface);border:0;border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.hub h2{font-size:18px;color:var(--surface)}
+.hub .hk{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hub .hk div{background:rgba(255,255,255,.08);border-radius:8px;padding:6px 8px}
+.hub .hk span{display:block;font-size:11px;opacity:.75}
+.hub .hk b{font-size:20px;font-variant-numeric:tabular-nums}
+.hub .hk b.alert{color:var(--vest)}
+.hub .btn{align-self:stretch}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:14px;align-items:center}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+@media (max-width:640px){
+ .nine{gap:6px}
+ .tile{padding:8px 8px 7px;gap:5px;border-top-width:5px}
+ .t-id{font-size:22px} .t-name,.t-lines .opt,.hub .btn,.hub .sub{display:none}
+ .t-prog{font-size:13px;gap:5px} .t-prog .bar{height:6px}
+ .t-lines{font-size:11px}
+ .t-top .pill{font-size:10px;padding:0 6px}
+ .hub{padding:8px;gap:6px} .hub h2{font-size:14px}
+ .hub .hk{grid-template-columns:1fr;gap:3px} .hub .hk div{padding:2px 6px} .hub .hk span{font-size:10px} .hub .hk b{font-size:14px}
+}
+
+/* summary */
+.sumcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 14px;max-width:640px;display:flex;flex-direction:column;gap:14px}
+.sumcard h4{margin:0;font-size:15px}
+.sumcard ol,.sumcard ul{margin:4px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.sumcard .foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+.six{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.six{gap:6px}}
+.blk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;text-align:left;color:var(--ink);cursor:pointer;min-width:0;border-top:6px solid var(--grey)}
+.blk:hover{border-color:var(--ink)}
+.blk.red{border-top-color:var(--red)} .blk.amber{border-top-color:var(--amber)} .blk.green{border-top-color:var(--green)}
+.blk.decide{background:var(--ink);color:var(--surface);border-color:var(--ink);border-top-color:var(--vest)}
+.blk.decide .muted,.blk.decide h3{color:var(--surface);opacity:.75}
+.b-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.b-big{font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.b-big small{font-family:var(--body);font-size:13px;margin-left:4px}
+.b-lines{display:flex;flex-direction:column;gap:4px;font-size:13px;min-width:0}
+.b-lines div{display:flex;gap:6px;align-items:center;min-width:0}
+.b-lines .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.b-more{font-size:12px;color:var(--blue);margin-top:auto}
+.blk.decide .b-more{color:var(--vest)}
+.pv{display:grid;grid-template-columns:28px 1fr;gap:6px;align-items:center;font-size:12px}
+.b-lines .pv{display:grid}
+.pvbar{display:block;position:relative;height:8px;background:var(--grey-soft);border-radius:4px}
+.pvbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--blue)}
+.pvbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.tag{font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;background:var(--grey-soft);color:var(--muted);white-space:nowrap}
+@media (max-width:900px){.b-lines .opt{display:none}}
+@media (max-width:760px){
+ .blk{padding:8px;gap:4px;border-top-width:5px}
+ .blk h3{font-size:11px;letter-spacing:0}
+ .b-big{font-size:22px}
+ .b-big small{display:block;font-size:10px;margin:2px 0 0}
+ .b-lines,.b-more{display:none}
+ .lede{font-size:13px}
+}
+@media (max-width:640px){
+ .gridlede{display:none}
+ .six{aspect-ratio:9/16;grid-template-rows:repeat(3,minmax(0,1fr));gap:6px}
+ .blk{overflow:hidden;gap:6px}
+ .blk h3{font-size:12px}
+ .b-big{font-size:24px}
+ .b-lines{display:flex;font-size:11px;gap:5px}
+ .b-lines .opt,.b-lines .tag{display:none}
+ .b-lines .pill{font-size:10px;padding:0 6px}
+ .pv{grid-template-columns:14px 1fr;gap:4px;font-size:11px}
+ .pvbar{height:6px}
+ .b-more{display:block;font-size:11px}
+}
+.row{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-left-width:4px}
+.row.red{border-left-color:var(--red)} .row.amber{border-left-color:var(--amber)} .row.green{border-left-color:var(--green)} .row.grey{border-left-color:var(--grey)}
+.row .t{font-weight:700}
+.row .m{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.dnote{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px;margin:0}
+.tb{overflow-x:auto}
+.tb table{min-width:420px;font-size:13px}
+.tb th{padding:6px 8px;background:none}
+.tb td{padding:7px 8px}
+td.r,th.r{text-align:right}
+
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>營造公司<span class="tape">管理儀表板</span></h1>
+  <span class="demo">示範資料・非真實工程</span>
+  <nav class="views" id="views"></nav>
+  <button class="btn ghost sm" id="reset">重設示範</button>
+</div></header>
+<main><div class="wrap" id="main"></div></main>
+<div id="layer"></div>
+<div id="toastBox"></div>
+
+<script>
+const TODAY=[10,28], TODAY_S="10/28（二）", NOW="08:30";
+const VIEWS=[["grid","九宮格"],["boss","老闆手機首頁"],["overview","工程總覽"],["report","主任 LINE 回報"],["issues","異常與缺失"],["summary","今日摘要"]];
+function seed(){return {
+ projects:[
+  {id:"甲",name:"區民活動中心新建",kind:"公共",lead:"林主任",plan:62,act:58},
+  {id:"乙",name:"社區集合住宅",kind:"民間",lead:"周主任",plan:40,act:31},
+  {id:"丁",name:"國小校舍補強",kind:"公共",lead:"許主任",plan:90,act:91},
+  {id:"戊",name:"廠房擴建",kind:"民間",lead:"吳主任",plan:25,act:24,last:"10/26"}],
+ msgs:{
+  "M-甲1":{p:"甲",who:"林主任",time:"10/27 17:40",kind:"語音 0:42＋照片 4 張",text:"甲案今天晴天，模板8人鋼筋6人水電2人，三樓柱牆模板組立跟鋼筋綁紮，吊車一台，明天三樓柱筋查驗"},
+  "M-甲2":{p:"甲",who:"林主任",time:"10/27 16:10",kind:"照片 2 張＋文字",text:"監造說三樓柱筋保護層不夠，要改善後再查驗"},
+  "M-乙1":{p:"乙",who:"周主任",time:"10/27 18:05",kind:"語音 0:35＋照片 3 張",text:"乙案陰天，泥作10人水電4人，五樓隔間砌磚，明天五樓粉刷，水電師傅只來4個"},
+  "M-乙2":{p:"乙",who:"周主任",time:"10/25 14:30",kind:"照片 1 張＋文字",text:"監造巡查說五樓樓板開口沒有護欄，要改善"},
+  "M-丁1":{p:"丁",who:"許主任",time:"10/27 17:20",kind:"文字＋照片 2 張",text:"丁案晴，油漆6人，二樓教室收尾，明天跟學校約初驗"},
+  "M-戊1":{p:"戊",who:"吳主任",time:"10/27 15:50",kind:"照片 1 張＋文字",text:"今天吊車吊鋼構，沒有拉警戒線，下午補了一部分"}},
+ reports:{
+  甲:{id:"DR-1027-甲",time:"10/27 17:40",src:"M-甲1",f:{weather:["晴","ai"],crew:["模板 8、鋼筋 6、水電 2（16 人）","ai"],done:["3F 柱牆模板組立、鋼筋綁紮","ai"],equip:["吊車 1","ai"],tomorrow:["3F 柱筋查驗","ai"]},hist:[]},
+  乙:{id:"DR-1027-乙",time:"10/27 18:05",src:"M-乙1",f:{weather:["陰","ai"],crew:["泥作 10、水電 4（14 人）","ai"],done:["5F 隔間砌磚","ai"],equip:["—","rule"],tomorrow:["5F 粉刷","ai"]},hist:[]},
+  丁:{id:"DR-1027-丁",time:"10/27 17:20",src:"M-丁1",f:{weather:["晴","ai"],crew:["油漆 6（6 人）","ai"],done:["2F 教室收尾","ai"],equip:["—","rule"],tomorrow:["與學校約初驗","ai"]},hist:[]}},
+ issues:[
+  {id:"Q-1025-乙",p:"乙",type:"工安",title:"5F 樓板開口未設護欄（監造巡查缺失）",owner:"周主任",due:"10/27",status:"處理中",src:"M-乙2",log:[["10/26 09:00","周主任","護欄材料已叫，10/27 到"]],hist:[]},
+  {id:"Q-1027-甲",p:"甲",type:"品質",title:"3F 柱筋保護層不足，改善後重新查驗",owner:"林主任",due:"10/30",status:"新開",src:"M-甲2",log:[],hist:[]},
+  {id:"Q-1027-戊",p:"戊",type:"工安",title:"吊車作業未設警戒區",owner:"吳主任",due:"10/29",status:"新開",src:"M-戊1",log:[],hist:[]}],
+ decide:[
+  {id:"V-甲-3",kind:"估驗",p:"甲",title:"甲案第 3 期估驗待核准",detail:"本期估驗 NT$3,860,000，累計 58%，與日報進度相符。",done:null},
+  {id:"S-乙-2",kind:"付款",p:"乙",title:"乙案水電分包請款比現場進度多 12%",detail:"分包請款累計 52%，日報水電進度 40%。建議先核對現場再付款。",done:null},
+  {id:"T-丙",kind:"投標",p:"丙",title:"丙標投標截止剩 5 天（11/02）",detail:"招標文件 AI 整理完成，7 項疑義待工務確認。要不要投，由你決定。",done:null}],
+ tender:{name:"丙標・市立圖書館分館新建",items:186,due:"11/02",
+  clauses:[["逾期罰款","每日契約總價千分之一，上限 20%","第 18 條，p.24"],["保固","結構 5 年、其他 2 年","第 21 條，p.31"],["押標金","NT$1,500,000","投標須知 第 7 點"],["估驗","每月一次，扣 5% 保留款","第 5 條，p.9"]],
+  doubts:[["工項 3.2.14 數量與圖面不一致（詳細表 420 m²，圖面約 380 m²）","p.58",0],["電梯規格未註明載重","p.112",0],["第 4 章缺 p.77–78","—",0],["鋼筋單價分析表缺少損耗率","p.66",0],["臨時用電是否含於假設工程","p.40",0],["景觀植栽保活期未寫","p.131",0],["工期 360 日曆天與附件甘特圖 330 天不符","p.6",0]]},
+ subs:[
+  {p:"甲",name:"鋼筋工程",contract:8200000,valued:4920000,paid:4300000,next:"11/05 第 3 期"},
+  {p:"乙",name:"水電工程",contract:6500000,valued:3380000,paid:2600000,next:"10/31 第 2 期",flag:"請款 52%，現場 40%"},
+  {p:"丁",name:"防水工程",contract:1800000,valued:1620000,paid:1620000,next:"結案驗收"},
+  {p:"戊",name:"鋼構工程",contract:12000000,valued:2400000,paid:2400000,next:"11/15 第 2 期"}],
+ recv:[{p:"甲",billed:24600000,got:20740000,next:"11/10 第 4 期"},{p:"乙",billed:11200000,got:9400000,next:"住戶分期款",late:18},{p:"丁",billed:8700000,got:8700000,next:"驗收後尾款"},{p:"戊",billed:9800000,got:9800000,next:"11/20 第 2 期"}],
+ changes:[{id:"C1",p:"乙",text:"住戶變更設計 3 戶（廚房、浴室）",amt:480000,status:"待業主簽認",done:false},{id:"C2",p:"甲",text:"機關追加無障礙坡道",amt:1250000,status:"已核定",done:true},{id:"C3",p:"丁",text:"取消部分外牆塗料",amt:-180000,status:"議價中",done:false}],
+ actions:[
+  {id:"A1",p:"乙",text:"水電分包補足現場人力至 6 人",who:"周主任",due:"10/25",done:false},
+  {id:"A2",p:"甲",text:"送審第二次材料樣品（磁磚）",who:"林主任",due:"10/30",done:false},
+  {id:"A3",p:"戊",text:"確認鋼構進場日期與吊車",who:"吳主任",due:"10/31",done:false},
+  {id:"A4",p:"丁",text:"安排業主初驗",who:"許主任",due:"11/04",done:false}],
+ cost:[{p:"甲",budget:52000000,actual:29100000,progress:58,margin:8.5},{p:"乙",budget:38000000,actual:13900000,progress:31,margin:3.2},{p:"丁",budget:9600000,actual:8500000,progress:91,margin:6.1},{p:"戊",budget:61000000,actual:14200000,progress:24,margin:9.8}],
+ reminded:{}, feedback:null, seq:1
+}}
+let S=seed(), view=(location.hash||"#grid").slice(1), drawer=null, selIssue="Q-1025-乙", chat=[], pending=null;
+if(!VIEWS.some(v=>v[0]===view)) view="grid";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const md=s=>{const [m,d]=String(s).split(" ")[0].split("/").map(Number); return m*100+d};
+const daysTo=s=>{const [m,d]=s.split("/").map(Number);return Math.round((new Date(2026,m-1,d)-new Date(2026,TODAY[0]-1,TODAY[1]))/864e5)};
+const overdue=i=>(i.status?i.status!=="結案":!i.done)&&md(i.due)<TODAY[0]*100+TODAY[1];
+const wan=n=>(n/10000).toLocaleString("zh-TW",{maximumFractionDigits:0})+" 萬";
+const proj=id=>S.projects.find(p=>p.id===id);
+const lag=p=>p.act-p.plan;
+const openIss=pid=>S.issues.filter(i=>i.p===pid&&i.status!=="結案");
+const fv=(r,k)=>r&&r.f[k]?r.f[k][0]:"";
+function light(pid){
+  const p=proj(pid);
+  if(!S.reports[pid]) return "grey";
+  if(openIss(pid).some(overdue)||lag(p)<=-5) return "red";
+  if(openIss(pid).length||lag(p)<0) return "amber";
+  return "green";
+}
+const LIGHT_TXT={red:"要處理",amber:"注意",green:"正常",grey:"日報未交"};
+const unreported=()=>S.projects.filter(p=>!S.reports[p.id]);
+const days=p=>S.reports[p.id]?0:TODAY[1]-1-Number((p.last||"10/27").split("/")[1]);
+function toast(t){$("#toastBox").innerHTML=`<div class="toast" role="status">${esc(t)}</div>`; clearTimeout(toast.t); toast.t=setTimeout(()=>$("#toastBox").innerHTML="",2400)}
+const openDecide=()=>S.decide.filter(d=>!d.done);
+
+/* ---------- 九宮格 ---------- */
+function blocks(){
+  const dec=openDecide();
+  const red=S.projects.filter(p=>lag(p)<=-5).length, amb=S.projects.filter(p=>lag(p)<0&&lag(p)>-5).length;
+  const doubtLeft=S.tender.doubts.filter(d=>!d[2]).length;
+  const flagged=S.subs.filter(s=>s.flag&&!s.cleared).length;
+  const rep=S.projects.length-unreported().length, openA=S.actions.filter(a=>!a.done), odA=openA.filter(overdue).length;
+  const lowM=S.cost.filter(c=>c.margin<5).length;
+  const un=S.recv.reduce((a,r)=>a+r.billed-r.got,0), late=S.recv.filter(r=>r.late&&!r.chased);
+  const opQ=S.issues.filter(i=>i.status!=="結案"), odQ=opQ.filter(overdue);
+  const pd=S.changes.filter(c=>!c.done), sum=pd.reduce((a,c)=>a+c.amt,0);
+  return {
+   decide:{cls:"decide",h:"今日要你決定",big:dec.length,unit:"件",lines:dec.slice(0,3).map(d=>`<div><span class="tag">${d.kind}</span><span class="t">${esc(d.title)}</span></div>`).join("")||`<div>今天沒有待決事項</div>`},
+   proj:{cls:red?"red":amb?"amber":"green",h:"工程進度",big:S.projects.length,unit:"件進行中",
+    lines:S.projects.map(p=>`<div class="pv"><span>${p.id}</span><span class="pvbar" title="計畫 ${p.plan}%，實際 ${p.act}%"><i style="width:${p.act}%;background:var(--${lag(p)<=-5?"red":lag(p)<0?"amber":"blue"})"></i><b style="left:${p.plan}%"></b></span></div>`).join("")+`<div class="opt">${red?`<span class="pill red">落後 ${red} 件</span>`:""}${amb?`<span class="pill amber">注意 ${amb} 件</span>`:""}</div>`},
+   tender:{cls:doubtLeft?"amber":"green",h:"標案與文件",big:doubtLeft,unit:"項疑義待確認",
+    lines:`<div><span class="t">${esc(S.tender.name)}</span></div><div class="opt"><span class="t muted">工項 ${S.tender.items} 項・截止 ${S.tender.due}</span></div><div><span class="pill ${daysTo(S.tender.due)<=7?"red":"amber"}">剩 ${daysTo(S.tender.due)} 天</span></div>`},
+   subs:{cls:flagged?"red":"green",h:"採購・發包・估驗",big:wan(S.subs.reduce((a,s)=>a+s.valued-s.paid,0)),unit:"已估未付",
+    lines:`${flagged?`<div><span class="pill red">差異 ${flagged}</span><span class="t">乙案水電請款 > 現場進度</span></div>`:`<div>沒有差異提醒</div>`}<div class="opt"><span class="t muted">本週到期：乙案水電第 2 期（10/31）</span></div>`},
+   recv:{cls:late.length?"red":un?"amber":"green",h:"請款與收款",big:wan(un),unit:"已請未收",
+    lines:`${late.map(r=>`<div><span class="pill red">逾期 ${r.late} 天</span><span class="t">${r.p}案 ${wan(r.billed-r.got)}</span></div>`).join("")}<div class="opt"><span class="t muted">下一筆：甲案第 4 期（11/10）</span></div>`},
+   daily:{cls:odA||rep<S.projects.length?"amber":"green",h:"日報與會議",big:`${rep}/${S.projects.length}`,unit:"日報已交",
+    lines:`${rep<S.projects.length?`<div><span class="pill amber">未交</span><span class="t">${unreported().map(p=>p.id+"案").join("、")}</span></div>`:""}<div><span class="t">待追蹤決議 ${openA.length} 件</span>${odA?`<span class="pill red">逾期 ${odA}</span>`:""}</div>`},
+   safety:{cls:odQ.length?"red":opQ.length?"amber":"green",h:"工安與品質",big:opQ.length,unit:"項缺失未改善",
+    lines:`${odQ.length?`<div><span class="pill red">逾期 ${odQ.length}</span><span class="t">${esc(odQ[0].p+"案 "+odQ[0].title)}</span></div>`:""}<div class="opt"><span class="t muted">工安 ${opQ.filter(q=>q.type==="工安").length}・品質 ${opQ.filter(q=>q.type==="品質").length}</span></div>`},
+   change:{cls:pd.length?"amber":"green",h:"變更設計與追加減",big:pd.length,unit:"件尚未簽認",
+    lines:`<div><span class="t">待簽金額 ${sum>=0?"+":"−"}${wan(Math.abs(sum))}</span></div><div class="opt"><span class="t muted">做了沒簽認，就可能收不到錢</span></div>`},
+   cost:{cls:lowM?"amber":"green",h:"成本與毛利",big:(S.cost.reduce((a,c)=>a+c.margin*c.budget,0)/S.cost.reduce((a,c)=>a+c.budget,0)).toFixed(1)+"%",unit:"預估毛利",
+    lines:`${lowM?`<div><span class="pill amber">偏低</span><span class="t">${S.cost.filter(c=>c.margin<5).map(c=>c.p+"案 "+c.margin+"%").join("、")}</span></div>`:""}<div><span class="tag">完整企業版功能</span></div>`}
+  };
+}
+function vGrid(){
+  const B=blocks(), ORDER=["proj","tender","subs","recv","decide","daily","safety","change","cost"];
+  return `<p class="lede gridlede">老闆每天早上看這九格。中間是今天要你決定的事，周圍八格是工程、標案、發包、請款、日報會議、工安品質、變更設計、成本。點任何一格看細節和原始文件。</p>
+  <div class="six">${ORDER.map(k=>{const b=B[k];return `<button class="blk ${b.cls}" data-blk="${k}"><div class="b-h"><h3>${b.h}</h3></div><div class="b-big">${b.big}<small>${b.unit}</small></div><div class="b-lines">${b.lines}</div><span class="b-more">看細節 →</span></button>`}).join("")}</div>
+  <div class="legend"><span><span class="dot red"></span>要處理</span><span><span class="dot amber"></span>注意</span><span><span class="dot green"></span>正常</span><span>顏色依固定規則判斷，不靠 AI</span></div>`;
+}
+const BTITLE={decide:"今日要你決定",proj:"工程進度",tender:"標案與文件",subs:"採購・發包・估驗",recv:"請款與收款",daily:"日報與會議",safety:"工安與品質",change:"變更設計與追加減",cost:"成本與毛利"};
+function decRow(d){return `<div class="row ${d.done?"grey":"red"}"><span class="t">${esc(d.title)}</span><span class="m">${esc(d.detail)}</span>
+  ${d.done?`<span class="pill green">已${esc(d.done)}</span>`:`<div class="acts">${d.kind==="投標"?`<button class="btn sm" data-dec="${d.id}" data-v="決定投標">決定投標</button><button class="btn ghost sm" data-dec="${d.id}" data-v="決定不投">不投</button>`:`<button class="btn sm" data-dec="${d.id}" data-v="核准">核准</button><button class="btn ghost sm" data-dec="${d.id}" data-v="退回">退回</button>`}</div>`}</div>`}
+function blkBody(k){
+  if(k==="decide") return S.decide.map(decRow).join("")+`<p class="dnote">AI 只整理資料和提醒，核准、付款、投不投標都由你決定，按下去會記錄誰、什麼時候決定（示範）。</p>`;
+  if(k==="proj") return `<div class="tb"><table><thead><tr><th>工程</th><th class="r">計畫</th><th class="r">實際</th><th class="r">差距</th><th>主任</th></tr></thead><tbody>${S.projects.map(p=>`<tr class="r" data-site="${p.id}"><td>${p.id}案・${esc(p.name)}</td><td class="r num">${p.plan}%</td><td class="r num">${p.act}%</td><td class="r num"><span class="pill ${lag(p)<=-5?"red":lag(p)<0?"amber":"green"}">${lag(p)>0?"+":""}${lag(p)}%</span></td><td>${p.lead}</td></tr>`).join("")}</tbody></table></div>
+    <p class="dnote">實際進度來自每天的工程日報，計畫進度來自進度表。落後 5% 以上標紅、0–5% 標黃。點一列看那個工程。</p>`;
+  if(k==="tender"){const t=S.tender; return `<div><h2 style="font-size:17px">${esc(t.name)}</h2><p class="small muted" style="margin:4px 0 0">AI 從招標文件整理出工項 ${t.items} 項・截止 ${t.due}・每點附頁碼。</p></div>
+    <div><h3>重點條款</h3><div class="tb"><table><tbody>${t.clauses.map(c=>`<tr><td><b>${c[0]}</b></td><td>${c[1]}</td><td class="muted">${c[2]}</td></tr>`).join("")}</tbody></table></div></div>
+    <div><h3>疑義清單（${t.doubts.filter(d=>!d[2]).length} 項待確認）</h3><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${t.doubts.map((d,i)=>`<div class="row ${d[2]?"grey":"amber"}"><span class="t" style="font-weight:500">${esc(d[0])}</span><span class="m">${d[1]}${d[2]?`<span class="pill green">工務已確認</span>`:`<button class="btn ghost sm" data-doubt="${i}">工務確認</button>`}</span></div>`).join("")}</div></div>
+    <p class="dnote">數量、單價一律由工務抽核，AI 不做最終計算。</p>`}
+  if(k==="subs") return `<div class="tb"><table><thead><tr><th>工程・分包</th><th class="r">合約</th><th class="r">已估驗</th><th class="r">已付</th><th>下一筆</th></tr></thead><tbody>${S.subs.map(s=>`<tr><td>${s.p}案・${s.name}${s.flag&&!s.cleared?` <span class="pill red">${s.flag}</span>`:""}</td><td class="r num">${wan(s.contract)}</td><td class="r num">${wan(s.valued)}</td><td class="r num">${wan(s.paid)}</td><td>${s.next}</td></tr>`).join("")}</tbody></table></div>
+    ${S.subs.filter(s=>s.flag&&!s.cleared).map(s=>`<div class="row red"><span class="t">${s.p}案${s.name}：${s.flag}</span><span class="m">分包請款累計和日報進度差超過 10% 就提醒。</span><div class="acts"><button class="btn ghost sm" data-clear="${s.p}">工務已核對現場</button></div></div>`).join("")}`;
+  if(k==="recv") return `<div class="tb"><table><thead><tr><th>工程</th><th class="r">已請款</th><th class="r">已收</th><th class="r">未收</th><th>下一筆</th></tr></thead><tbody>${S.recv.map(r=>`<tr><td>${r.p}案${r.late&&!r.chased?` <span class="pill red">逾期 ${r.late} 天</span>`:""}</td><td class="r num">${wan(r.billed)}</td><td class="r num">${wan(r.got)}</td><td class="r num">${wan(r.billed-r.got)}</td><td>${r.next}</td></tr>`).join("")}</tbody></table></div>
+    ${S.recv.filter(r=>r.late&&!r.chased).map(r=>`<div class="row red"><span class="t">${r.p}案有 ${wan(r.billed-r.got)} 超過付款期限 ${r.late} 天</span><div class="acts"><button class="btn ghost sm" data-recv="${r.p}">已通知行政催收</button></div></div>`).join("")}
+    <p class="dnote">對業主的請款、收款在這一格；對下包的付款在「採購・發包・估驗」。</p>`;
+  if(k==="daily") return `<div><h3>昨天（10/27）的工程日報</h3><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${S.projects.map(p=>{const r=S.reports[p.id];return `<div class="row ${r?"green":"amber"}"><span class="t">${p.id}案・${esc(p.name)}</span><span class="m">${r?`${r.time} 送出（主任 LINE 語音＋照片，AI 產草稿，主任確認）<button class="src" data-site="${p.id}">看日報</button>`:`<span class="pill amber">還沒交</span><button class="btn ghost sm" data-remind="${p.id}" ${S.reminded[p.id]?"disabled":""}>${S.reminded[p.id]?"已提醒":"提醒主任"}</button>`}</span></div>`}).join("")}</div></div>
+    <div><h3>會議決議追蹤</h3><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${S.actions.map(a=>`<div class="row ${a.done?"grey":overdue(a)?"red":"amber"}"><span class="t" style="font-weight:500">${a.p}案・${esc(a.text)}</span><span class="m">${a.who}・期限 ${a.due}${overdue(a)?` <span class="pill red">逾期</span>`:""}${a.done?` <span class="pill green">已完成</span>`:` <button class="btn ghost sm" data-act="${a.id}">標記完成</button>`}</span></div>`).join("")}</div></div>`;
+  if(k==="safety") return S.issues.map(i=>`<div class="row ${i.status==="結案"?"grey":overdue(i)?"red":"amber"}"><span class="t" style="font-weight:500"><span class="pill ${i.type==="工安"?"red":"blue"}">${i.type}</span> ${i.p}案・${esc(i.title)}</span><span class="m">改善期限 ${i.due}${overdue(i)?` <span class="pill red">逾期</span>`:""}<span class="pill ${i.status==="結案"?"green":"amber"}">${i.status}</span><button class="src" data-issue="${i.id}">追蹤</button></span></div>`).join("")+`<p class="dnote">缺失來自監造巡查、自主檢查或主任回報。工安類一律由人判斷，AI 只整理和提醒。</p>`;
+  if(k==="change") return S.changes.map(c=>`<div class="row ${c.done?"green":"amber"}"><span class="t" style="font-weight:500">${c.p}案・${esc(c.text)}</span><span class="m"><span class="num">${c.amt>=0?"+":"−"}${wan(Math.abs(c.amt))}</span><span class="pill ${c.done?"green":"amber"}">${c.status}</span>${c.done?"":` <button class="btn ghost sm" data-chg="${c.id}">已簽認</button>`}</span></div>`).join("")+`<p class="dnote">業主或機關要求的變更，先簽認再施工，金額才能列入請款。</p>`;
+  if(k==="cost") return `<p class="dnote">這一格屬於完整企業版，要先建立成本科目和預算才有真實數字。下面是示範數字。</p>
+    <div class="tb"><table><thead><tr><th>工程</th><th class="r">預算</th><th class="r">已發生</th><th class="r">進度</th><th class="r">預估毛利</th></tr></thead><tbody>${S.cost.map(c=>`<tr><td>${c.p}案</td><td class="r num">${wan(c.budget)}</td><td class="r num">${wan(c.actual)}</td><td class="r num">${c.progress}%</td><td class="r num"><span class="pill ${c.margin<5?"amber":"green"}">${c.margin}%</span></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- 老闆手機首頁 ---------- */
+function vBoss(){
+  const rep=S.projects.length-unreported().length, dec=openDecide(), opQ=S.issues.filter(i=>i.status!=="結案"), od=opQ.filter(overdue).length;
+  const late=S.recv.filter(r=>r.late&&!r.chased), behind=S.projects.filter(p=>lag(p)<=-5);
+  return `<div class="bosslay"><div class="phone" aria-label="老闆手機首頁">
+   <div class="ph-head"><b>營造管理儀表板</b><span class="small muted">${TODAY_S} ${NOW}</span></div>
+   <div class="kpis"><div class="kpi"><span>昨日日報</span><b>${rep}/${S.projects.length}</b></div><div class="kpi"><span>要你決定</span><b>${dec.length}</b></div><div class="kpi"><span>逾期缺失</span><b style="color:${od?"var(--red)":"inherit"}">${od}</b></div></div>
+   <div class="sec"><h3>① 要你決定（${dec.length}）</h3>
+    ${dec.length?dec.map(d=>`<div class="item red"><span class="item-t">${esc(d.title)}</span><span class="item-m">${esc(d.detail)}</span>
+     <div class="acts">${d.kind==="投標"?`<button class="btn sm" data-dec="${d.id}" data-v="決定投標">決定投標</button><button class="btn ghost sm" data-dec="${d.id}" data-v="決定不投">不投</button>`:`<button class="btn sm" data-dec="${d.id}" data-v="核准">核准</button><button class="btn ghost sm" data-dec="${d.id}" data-v="退回">退回</button>`}</div></div>`).join(""):`<p class="empty-s">今天沒有要你決定的事。</p>`}
+   </div>
+   <div class="sec"><h3>② 異常與缺失（未結 ${opQ.length}）</h3>
+    ${opQ.map(i=>`<div class="item ${overdue(i)?"red":"amber"}"><span class="item-t">${i.p} 案・${esc(i.title)}</span><span class="item-m">${overdue(i)?`<span class="pill red">逾期 ${-daysTo(i.due)} 天</span>`:`<span class="pill amber">${i.status}</span>`}<span class="pill ${i.type==="工安"?"red":"blue"}">${i.type}</span>${esc(i.owner)}<button class="src" data-issue="${i.id}">追蹤</button></span></div>`).join("")}
+    ${behind.map(p=>`<div class="item red"><span class="item-t">${p.id} 案・進度落後 ${-lag(p)}%</span><span class="item-m">計畫 ${p.plan}%、實際 ${p.act}%<button class="src" data-site="${p.id}">看工程</button></span></div>`).join("")}
+    ${late.map(r=>`<div class="item red"><span class="item-t">${r.p} 案・${wan(r.billed-r.got)} 收款逾期 ${r.late} 天</span><span class="item-m"><button class="src" data-blk="recv">看請款</button></span></div>`).join("")}
+   </div>
+   <div class="sec"><h3>③ 日報未交（${unreported().length}）</h3>
+    ${unreported().length?unreported().map(p=>`<div class="item grey"><span class="item-t">${p.id} 案・${esc(p.name)}</span><span class="item-m">${days(p)>=2?`<span class="pill red">連續 ${days(p)} 天</span>`:`<span class="pill grey">昨日</span>`}${esc(p.lead)}<button class="btn ghost sm" data-remind="${p.id}" ${S.reminded[p.id]?"disabled":""}>${S.reminded[p.id]?"已提醒":"提醒主任"}</button></span></div>`).join(""):`<p class="empty-s">每個工程的日報都交了。</p>`}
+   </div>
+   <div class="sec"><h3>④ 工程燈號</h3><div class="lights">${S.projects.map(p=>{const l=light(p.id);return `<button class="light" data-site="${p.id}"><b>${p.id}</b><span class="dot ${l}"></span><small>${LIGHT_TXT[l]}</small></button>`}).join("")}</div></div>
+   <button class="btn" data-go="summary">看今日摘要</button>
+  </div>
+  <div class="phone-notes">
+   <div class="note"><h3>老闆的看法順序</h3><p>先處理「要你決定」：估驗核准、分包付款、投不投標，在手機上按一下就好。再看缺失和落後，最後看誰的日報沒交。</p></div>
+   <div class="note"><h3>每一條都查得到原話</h3><p>點「追蹤」或工程燈號，可以看到主任當時在 LINE 傳的語音、照片和文字。AI 整理錯了可以直接改，改過留紀錄。</p></div>
+   <div class="note"><h3>顏色不是 AI 判斷的</h3><p>紅＝有逾期缺失或進度落後 5% 以上；黃＝有未結缺失或稍微落後；灰虛線＝日報沒交；綠＝正常。</p></div>
+   <div class="note"><h3>試試看</h3><p>核准甲案第 3 期估驗；到「主任 LINE 回報」替戊案補交昨天的日報，回來看燈號和日報未交清單怎麼變。</p></div>
+  </div></div>`;
+}
+
+/* ---------- 工程總覽 ---------- */
+let fOnlyIss=false,fOnlyUn=false;
+function vOverview(){
+  const rows=S.projects.filter(p=>(!fOnlyIss||openIss(p.id).length)&&(!fOnlyUn||!S.reports[p.id])).map(p=>{
+    const r=S.reports[p.id], l=light(p.id), iss=openIss(p.id), sub=S.subs.find(s=>s.p===p.id), rv=S.recv.find(x=>x.p===p.id);
+    return `<tr class="r ${r?"":"unrep"}" data-site="${p.id}" tabindex="0">
+     <td><b>${p.id} 案</b><br><span class="small muted">${esc(p.name)}・${p.kind}</span></td>
+     <td><span class="pill ${l}"><span class="dot ${l}"></span>${LIGHT_TXT[l]}</span></td>
+     <td class="num">${r?r.time.split(" ")[1]:`<span class="pill ${days(p)>=2?"red":"grey"}">${days(p)>=2?"連續 "+days(p)+" 天":"未交"}</span>`}</td>
+     <td>${r?esc(fv(r,"done")):"—"}</td>
+     <td class="num">${p.act}% <span class="muted">／${p.plan}%</span><div class="bar"><i style="width:${p.act}%;background:var(--${lag(p)<=-5?"red":lag(p)<0?"amber":"blue"})"></i></div></td>
+     <td>${r?esc(fv(r,"crew")):"—"}</td>
+     <td>${iss.length?iss.map(i=>`<span class="pill ${overdue(i)?"red":"amber"}">${overdue(i)?"逾期":""}${i.type}</span>`).join(" "):"0"}</td>
+     <td class="num">${sub?`${sub.name} ${Math.round(sub.valued/sub.contract*100)}%`:"—"}${sub&&sub.flag&&!sub.cleared?` <span class="pill red">差異</span>`:""}</td>
+     <td class="num">${rv?wan(rv.billed-rv.got):"—"}${rv&&rv.late&&!rv.chased?` <span class="pill red">逾期</span>`:""}</td>
+     <td>${r?esc(fv(r,"tomorrow")):"—"}</td><td>${esc(p.lead)}</td></tr>`}).join("");
+  return `<p class="lede">電腦版給工務、行政和管理者用。點任一列打開右側細節：日報原話、每個欄位是 AI 整理還是人工改過、缺失、分包和請款。</p>
+  <div class="toolbar"><label><input type="checkbox" id="fIss" ${fOnlyIss?"checked":""}> 只看有缺失</label><label><input type="checkbox" id="fUn" ${fOnlyUn?"checked":""}> 只看日報未交</label><span class="small muted">日報日期：10/27</span></div>
+  <div class="tablebox"><table><thead><tr><th>工程</th><th>燈號</th><th>日報</th><th>昨日完成</th><th>實際／計畫</th><th>出工</th><th>未結缺失</th><th>分包估驗</th><th>業主未收</th><th>今日計畫</th><th>主任</th></tr></thead><tbody>${rows||`<tr><td colspan="11" class="muted">沒有符合條件的工程。</td></tr>`}</tbody></table></div>`;
+}
+
+/* ---------- 主任 LINE 回報 ---------- */
+const SAMPLES={
+  report:"戊案昨天晴天，鋼構6人吊車司機1人，二號廠房鋼柱吊裝12支，吊車一台，明天吊鋼樑",
+  issue:"乙案五樓外牆鷹架有一段鬆脫，先停用那一段，等鷹架廠商來",
+  meeting:"今天工務會議決議：甲案磁磚樣品週五前送審，林主任負責",
+  fix:"戊案吊車警戒區已經全部拉好，有拍照"};
+function vReport(){
+  return `<div class="replay"><div class="chat" aria-label="LINE 對話模擬">
+    <div class="chat-h"><span>○○營造（官方帳號）</span><span class="small muted">主任一對一</span></div>
+    <div class="chat-b" id="chatB">${chatHtml()}</div>
+    <div class="chat-in">
+      <div class="menu4"><button data-sample="report">📋 工程日報</button><button data-sample="issue">⚠️ 異常缺失</button><button data-sample="meeting">📝 會議決議</button><button data-sample="fix">✅ 改善完成</button></div>
+      <div class="sendrow"><textarea id="msgIn" rows="2" placeholder="打字或講語音都可以"></textarea><button class="sendbtn" id="send">送出</button></div>
+    </div></div>
+   <div class="phone-notes">
+    <div class="note"><h3>主任只要用 LINE</h3><p>下班前講一段語音、拍幾張照片：天候、出工人數和工種、做了什麼、用了什麼機具、明天做什麼。不用再打 Word 日報。</p></div>
+    <div class="note"><h3>AI 產日報草稿，主任確認</h3><p>按「正確」才算數，日報進到儀表板；需要對外提送的日報（例如公共工程施工日誌），由權責人簽核後才輸出。</p></div>
+    <div class="note"><h3>示範說明</h3><p>這頁用簡單的關鍵字規則模擬 AI 整理，正式版才會接 AI。按「工程日報」替戊案補交，再回到九宮格或老闆首頁看變化。</p></div>
+   </div></div>`;
+}
+function chatHtml(){
+  if(!chat.length) return `<div class="bub bot">主任好，下班前傳今天的日報就好：天候、出工人數和工種、完成項目、機具、明天要做什麼。有缺失或會議決議，也可以直接傳。</div>`;
+  return chat.map(c=>c.card?cardHtml(c.card,c.done):`<div class="bub ${c.me?"me":"bot"}">${esc(c.text)}</div>`).join("");
+}
+function cardHtml(p,done){
+  const rows=[["工程",p.p?p.p+" 案":"（沒抓到，請修改）"],["類型",p.kind],p.weather&&["天候",p.weather],p.crew&&["出工",p.crew],p.done&&["完成",p.done],p.equip&&["機具",p.equip],p.issue&&["缺失",p.issue],p.action&&["決議",p.action],p.tomorrow&&["明天",p.tomorrow]].filter(Boolean);
+  return `<div class="ccard"><b>確認卡：我理解為</b>${rows.map(r=>`<div class="row2"><span>${r[0]}</span><span>${esc(r[1])}</span></div>`).join("")}
+   ${done?`<span class="pill green">已${esc(done)}</span>`:`<div class="acts"><button class="btn sm" id="ok" ${p.p?"":"disabled"}>✅ 正確</button><button class="btn ghost sm" id="fix">✏️ 修改</button></div>
+   <div id="fixBox" hidden style="display:flex;flex-direction:column;gap:6px">
+    <select id="fxSite">${S.projects.map(x=>`<option value="${x.id}" ${x.id===p.p?"selected":""}>${x.id} 案・${esc(x.name)}</option>`).join("")}</select>
+    <button class="btn sm" id="fxSave">改好了，送出</button></div>`}</div>`;
+}
+const CN={一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9,十:10,兩:2};
+function parse(t){
+  const p={raw:t}; const sm=t.match(/([甲乙丙丁戊])\s*案/); p.p=sm&&proj(sm[1])?sm[1]:null;
+  const w=t.match(/(晴|陰|雨)/); if(w) p.weather=w[1];
+  const crews=[...t.matchAll(/([一-龥]{2,4}?)(\d+)\s*人/g)].map(m=>m[1].replace(/^(天|晴天|陰天|雨天|昨天|今天)/,"")+" "+m[2]); if(crews.length) p.crew=crews.join("、");
+  const eq=t.match(/(吊車|挖土機|怪手|泵浦車|堆高機)[一二三四五六七八九十\d]台/)||t.match(/(吊車|挖土機|怪手|泵浦車|堆高機)(?!司機)/); if(eq) p.equip=eq[0];
+  const tm=t.match(/明天([^，。,]+)/); if(tm) p.tomorrow=tm[1];
+  if(/決議/.test(t)) {p.kind="會議決議"; p.action=t.replace(/^.*?決議[：:]?/,"")}
+  else if(/改善|已經全部|補好/.test(t)) {p.kind="改善完成"}
+  else if(/鬆脫|停用|缺失|沒有拉|未設|漏|裂|倒/.test(t)) {p.kind="異常缺失"; p.issue=t.replace(/^[甲乙丙丁戊]\s*案/,"").split(/[，。]/).slice(0,2).join("，")}
+  else {p.kind="工程日報"; const parts=t.split(/[，,。]/).filter(x=>!/晴|陰|雨|\d+\s*人|吊車|明天|^\S*案$/.test(x)||/吊裝|組立|澆置|綁紮|砌/.test(x)); p.done=(parts.find(x=>/吊裝|組立|澆置|綁紮|砌|施作|完成|收尾/.test(x))||parts[0]||"（未寫）").replace(/^[甲乙丙丁戊]案(昨天|今天)?/,"").trim()}
+  return p;
+}
+function commit(p){
+  const now="08:"+String(30+S.seq).padStart(2,"0"), mid="M-X"+S.seq, pr=proj(p.p);
+  S.msgs[mid]={p:p.p,who:pr.lead,time:"10/28 "+now,kind:"文字（示範）",text:p.raw};
+  if(p.kind==="工程日報"){
+    S.reports[p.p]={id:"DR-1027-"+p.p,time:"10/28 "+now+"（補交）",src:mid,f:{weather:[p.weather||"",p.weather?"ai":"rule"],crew:[p.crew||"",p.crew?"ai":"rule"],done:[p.done||"",p.edited?"human":"ai"],equip:[p.equip||"—",p.equip?"ai":"rule"],tomorrow:[p.tomorrow||"",p.tomorrow?"ai":"rule"]},hist:[]};
+    delete S.reminded[p.p];
+  }
+  if(p.kind==="異常缺失") S.issues.push({id:`Q-1028-${p.p}${S.seq}`,p:p.p,type:/鷹架|吊|警戒|開口|護欄|墜/.test(p.raw)?"工安":"品質",title:p.issue,owner:pr.lead,due:"10/30",status:"新開",src:mid,log:[],hist:["類型與期限：AI 建議，待工務確認"]});
+  if(p.kind==="會議決議") S.actions.push({id:"A"+(S.actions.length+1),p:p.p||"甲",text:p.action,who:pr.lead,due:"10/31",done:false});
+  if(p.kind==="改善完成"){ const q=S.issues.find(i=>i.p===p.p&&i.status!=="結案"); if(q){ q.status="待確認"; q.log.push(["10/28 "+now,pr.lead,p.raw]); q.hist.push(`狀態→待確認（主任 LINE 回報改善，10/28 ${now}）`) } }
+  S.seq++;
+}
+
+/* ---------- 異常與缺失 ---------- */
+function vIssues(){
+  const list=S.issues.slice().sort((a,b)=>(a.status==="結案")-(b.status==="結案")||overdue(b)-overdue(a));
+  const i=S.issues.find(x=>x.id===selIssue)||list[0]; if(i) selIssue=i.id;
+  const FLOW=["新開","處理中","待確認","結案"];
+  return `<p class="lede">工安、品質缺失和現場異常都在這裡。每件有編號、負責人、改善期限、狀態；過期沒改善自動標紅，每天進老闆摘要直到結案。</p>
+  <div class="isslay"><div class="ilist">${list.map(x=>`<div class="item ${x.status==="結案"?"grey":overdue(x)?"red":"amber"}" data-sel="${x.id}" aria-current="${x.id===selIssue}" tabindex="0">
+    <span class="item-t">${x.p} 案・${esc(x.title)}</span><span class="item-m"><span class="pill ${x.type==="工安"?"red":"blue"}">${x.type}</span><span class="pill ${x.status==="結案"?"green":overdue(x)?"red":"amber"}">${overdue(x)?"逾期・":""}${x.status}</span>#${x.id}</span></div>`).join("")}</div>
+  ${i?`<div class="panel">
+    <div><h2>${i.p} 案・${esc(i.title)}</h2><p class="small muted" style="margin:4px 0 0">#${i.id}・${esc(proj(i.p).name)}・類型 ${i.type}</p></div>
+    <div class="flow">${FLOW.map(f=>`<button data-flow="${f}" aria-pressed="${i.status===f}">${f}</button>`).join("")}</div>
+    <p class="warnline" id="flowWarn" hidden>要結案，請先寫改善說明並勾選「已附改善照片」。${i.type==="工安"?"工安缺失結案須由工務或老闆確認。":""}</p>
+    <div class="item-m">負責人 <b style="color:var(--ink)">${esc(i.owner)}</b>・改善期限 <b style="color:${overdue(i)?"var(--red)":"var(--ink)"}">${i.due}${overdue(i)?"（逾期）":""}</b><button class="src" data-msg="${i.src}">看原始回報</button></div>
+    <div><h3>處理紀錄</h3><div class="log" style="margin-top:6px">${i.log.length?i.log.map(l=>`<div><time>${esc(l[0])}</time><b>${esc(l[1])}</b>：${esc(l[2])}</div>`).join(""):`<span class="small muted">還沒有處理紀錄。</span>`}</div></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><textarea id="logIn" placeholder="新增處理紀錄，例如：護欄已安裝，請監造複查"></textarea>
+     <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="photo"> 已附改善照片（示範）</label>
+     <div class="acts"><button class="btn sm" id="addLog">新增紀錄</button></div></div>
+    ${i.hist.length?`<div><h3>修改歷程</h3><ul class="hist">${i.hist.map(h=>`<li>${esc(h)}</li>`).join("")}</ul></div>`:""}
+  </div>`:""}</div>`;
+}
+
+/* ---------- 今日摘要 ---------- */
+function vSummary(){
+  const dec=openDecide(), opQ=S.issues.filter(i=>i.status!=="結案"), od=opQ.filter(overdue), un=unreported();
+  const behind=S.projects.filter(p=>lag(p)<=-5), late=S.recv.filter(r=>r.late&&!r.chased), flag=S.subs.filter(s=>s.flag&&!s.cleared), pd=S.changes.filter(c=>!c.done);
+  const ref=(id,src)=>src?`<button class="src" data-msg="${src}">〔#${id}〕</button>`:`<span class="muted">〔#${id}〕</span>`;
+  const L=(arr,f)=>arr.length?`<ol>${arr.map(f).join("")}</ol>`:`<p class="small" style="margin:4px 0 0">無</p>`;
+  const money=[...late.map(r=>`<li>${r.p} 案業主款 ${wan(r.billed-r.got)} 逾期 ${r.late} 天未收。<span class="muted">〔#R-${r.p}〕</span></li>`),...flag.map(s=>`<li>${s.p} 案${s.name}分包${s.flag}，付款前先核對。<span class="muted">〔#S-${s.p}〕</span></li>`),...pd.map(c=>`<li>${c.p} 案${esc(c.text)} ${c.amt>=0?"+":"−"}${wan(Math.abs(c.amt))}，${c.status}。<span class="muted">〔#${c.id}〕</span></li>`)];
+  const focus=S.projects.filter(p=>S.reports[p.id]&&/查驗|驗收|初驗|吊/.test(fv(S.reports[p.id],"tomorrow")));
+  return `<p class="lede">每天早上 08:00 推給老闆。固定五段、每段最多 5 條、每條附編號，點了就看到原話。下面是用目前畫面上的資料即時產生的。</p>
+  <div class="sumcard"><div><b style="font-family:var(--display);font-weight:400;font-size:19px">【營造日報摘要】${TODAY_S}</b><span class="small muted">　昨日日報 ${S.projects.length-un.length}/${S.projects.length}</span></div>
+   <div><h4>■ 需要你決定（${dec.length}）</h4>${L(dec.slice(0,5),d=>`<li>${esc(d.title)}。<span class="muted">〔#${d.id}〕</span></li>`)}</div>
+   <div><h4>■ 工安、品質與進度（缺失 ${opQ.length}／逾期 ${od.length}）</h4>${L([...od,...behind].slice(0,5),x=>x.title?`<li>${x.p} 案${x.type}缺失：${esc(x.title)}，逾期 ${-daysTo(x.due)} 天，${esc(x.owner)}${x.status}。${ref(x.id,x.src)}</li>`:`<li>${x.id} 案進度落後 ${-lag(x)}%（計畫 ${x.plan}%、實際 ${x.act}%）。</li>`)}</div>
+   <div><h4>■ 日報未交</h4>${un.length?`<ul>${un.map(p=>`<li>${p.id} 案 ${days(p)>=2?"連續 "+days(p)+" 天":"昨日"}日報未交（${esc(p.lead)}）</li>`).join("")}</ul>`:`<p class="small" style="margin:4px 0 0">無</p>`}</div>
+   <div><h4>■ 錢的事</h4>${money.length?`<ol>${money.slice(0,5).join("")}</ol>`:`<p class="small" style="margin:4px 0 0">無</p>`}</div>
+   <div><h4>■ 今日重點</h4>${L(focus,p=>`<li>${p.id} 案 ${esc(fv(S.reports[p.id],"tomorrow"))}。${ref(S.reports[p.id].id,S.reports[p.id].src)}</li>`)}</div>
+   <div class="foot">本摘要依昨日日報與系統紀錄整理，〔 〕是紀錄編號。日報未交的工程不在本摘要內。<br>
+    這份摘要有幫助嗎？ <button class="btn ghost sm" data-fb="有用" ${S.feedback?"disabled":""}>有用</button> <button class="btn ghost sm" data-fb="沒用" ${S.feedback?"disabled":""}>沒用</button> ${S.feedback?`<span class="pill green">已回饋：${S.feedback}</span>`:""}</div>
+  </div>`;
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(kind,id){drawer={kind,id}; renderDrawer()}
+function closeDrawer(){drawer=null; $("#layer").innerHTML=""}
+function renderDrawer(){
+  if(!drawer){$("#layer").innerHTML="";return}
+  let h="",b="";
+  if(drawer.kind==="blk"){ h=BTITLE[drawer.id]; b=blkBody(drawer.id) }
+  else if(drawer.kind==="msg"){ const m=S.msgs[drawer.id], p=proj(m.p);
+    h=`原始訊息・${m.p} 案`; b=`<div class="msg"><div class="who">${esc(m.who)}・${esc(m.time)}・${esc(m.kind)}</div>${esc(m.text)}</div>
+    <p class="small muted" style="margin:0">這是主任在 LINE 傳的原文（示範）。系統永遠保留原文，AI 整理的每個欄位都對應回這則訊息。</p>
+    <button class="btn ghost" data-site="${m.p}">看 ${m.p} 案・${esc(p.name)}</button>`;
+  } else { const p=proj(drawer.id), r=S.reports[p.id], l=light(p.id), sub=S.subs.find(s=>s.p===p.id), rv=S.recv.find(x=>x.p===p.id);
+    h=`${p.id} 案・${esc(p.name)}`;
+    const LAB={weather:"天候",crew:"出工",done:"完成項目",equip:"機具",tomorrow:"今日計畫"}, PV={ai:"AI",human:"人工",rule:"空白"};
+    b=`<div class="item-m"><span class="pill ${l}"><span class="dot ${l}"></span>${LIGHT_TXT[l]}</span>${p.kind}工程・主任 ${esc(p.lead)}・計畫 ${p.plan}%／實際 ${p.act}%</div>`+
+     (r?`<div><h3>工程日報 #${r.id}・${esc(r.time)}</h3></div>
+      <div class="fields">${Object.keys(LAB).map(k=>`<div class="fld"><span>${LAB[k]}</span><span>${esc(r.f[k][0])||"—"}<span class="prov ${r.f[k][1]}">${PV[r.f[k][1]]}</span></span><button class="btn ghost sm" data-edit="${k}">改</button>
+        <div class="edit-row" data-erow="${k}" hidden><input type="text" id="ed-${k}" value="${esc(r.f[k][0])}"><button class="btn sm" data-esave="${k}">存</button></div></div>`).join("")}</div>
+      <button class="src" data-msg="${r.src}" style="align-self:flex-start">看這份日報的原話</button>
+      ${r.hist.length?`<div><h3>修改紀錄</h3><ul class="hist">${r.hist.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:`<p class="small muted" style="margin:0">藍色「AI」是 AI 整理的欄位；改過變綠色「人工」，舊值留在修改紀錄，AI 不會再蓋掉。</p>`}`
+     :`<div class="item grey"><span class="item-t">昨天（10/27）日報還沒交</span><span class="item-m">${days(p)>=2?`連續 ${days(p)} 天沒交`:"昨日未交"}</span>
+       <div class="acts"><button class="btn ghost sm" data-remind="${p.id}" ${S.reminded[p.id]?"disabled":""}>${S.reminded[p.id]?"已提醒":"提醒主任"}</button></div></div>`)+
+     `<div><h3>未結缺失</h3>${openIss(p.id).length?openIss(p.id).map(i=>`<div class="item ${overdue(i)?"red":"amber"}" style="margin-top:6px"><span class="item-t">${esc(i.title)}</span><span class="item-m">${i.type}・${i.status}・期限 ${i.due}<button class="src" data-issue="${i.id}">追蹤</button></span></div>`).join(""):`<p class="small muted" style="margin:4px 0 0">沒有。</p>`}</div>
+     <div><h3>錢</h3><div class="tb"><table><tbody>
+      ${sub?`<tr><td>分包・${sub.name}</td><td class="r num">已估 ${wan(sub.valued)}／合約 ${wan(sub.contract)}</td></tr>`:""}
+      ${rv?`<tr><td>業主款</td><td class="r num">已請 ${wan(rv.billed)}・未收 ${wan(rv.billed-rv.got)}${rv.late&&!rv.chased?` <span class="pill red">逾期 ${rv.late} 天</span>`:""}</td></tr>`:""}
+     </tbody></table></div></div>`;
+  }
+  $("#layer").innerHTML=`<div class="scrim" data-close="1"></div><aside class="drawer" role="dialog" aria-label="${esc(h)}"><div class="dr-h"><h2 style="font-size:18px">${h}</h2><button class="x" data-close="1" aria-label="關閉">×</button></div><div class="dr-b">${b}</div></aside>`;
+}
+
+/* ---------- render & events ---------- */
+function render(){
+  $("#views").innerHTML=VIEWS.map(([k,l])=>`<button class="vbtn" data-view="${k}" ${k===view?'aria-current="page"':""}>${l}</button>`).join("");
+  $("#main").innerHTML=({grid:vGrid,boss:vBoss,overview:vOverview,report:vReport,issues:vIssues,summary:vSummary}[view])();
+  if(view==="report"){const cb=$("#chatB"); cb.scrollTop=cb.scrollHeight}
+  renderDrawer();
+}
+function go(v){view=v; history.replaceState(null,"","#"+v); window.scrollTo({top:0}); render()}
+window.addEventListener("hashchange",()=>{const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v)&&v!==view){view=v;render()}});
+document.addEventListener("change",e=>{ if(e.target.id==="fIss"){fOnlyIss=e.target.checked;render()} if(e.target.id==="fUn"){fOnlyUn=e.target.checked;render()} });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&drawer) closeDrawer(); if(e.key==="Enter"&&e.target.matches("tr.r,[data-sel]")) e.target.click() });
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-view],[data-go],[data-blk],[data-site],[data-msg],[data-issue],[data-close],[data-remind],[data-dec],[data-doubt],[data-clear],[data-recv],[data-chg],[data-act],[data-edit],[data-esave],[data-sample],[data-sel],[data-flow],[data-fb],button");
+  if(!t) return; const d=t.dataset;
+  if(d.view) return go(d.view);
+  if(d.go) return go(d.go);
+  if(d.close) return closeDrawer();
+  if(d.blk) return openDrawer("blk",d.blk);
+  if(d.msg) return openDrawer("msg",d.msg);
+  if(d.site) return openDrawer("site",d.site);
+  if(d.issue){ selIssue=d.issue; closeDrawer(); return go("issues") }
+  if(d.remind){ S.reminded[d.remind]=1; toast(`已用 LINE 提醒 ${proj(d.remind).lead}（示範，沒有真的送出）`); return render() }
+  if(d.dec){ const x=S.decide.find(y=>y.id===d.dec); x.done=d.v; if(x.kind==="付款"&&d.v==="退回"){} toast(`已${d.v}（示範紀錄：老闆，10/28 ${NOW}）`); return render() }
+  if(d.doubt){ S.tender.doubts[+d.doubt][2]=1; toast("已標記工務確認"); return render() }
+  if(d.clear){ S.subs.find(s=>s.p===d.clear).cleared=1; toast("差異提醒已解除，核對紀錄已保存"); return render() }
+  if(d.recv){ S.recv.find(r=>r.p===d.recv).chased=1; toast("已記錄催收（示範）"); return render() }
+  if(d.chg){ const c=S.changes.find(x=>x.id===d.chg); c.done=true; c.status="已簽認"; toast("已簽認，可列入請款"); return render() }
+  if(d.act){ S.actions.find(a=>a.id===d.act).done=true; toast("決議已標記完成"); return render() }
+  if(d.edit){ const row=document.querySelector(`[data-erow="${d.edit}"]`); row.hidden=!row.hidden; return }
+  if(d.esave){ const r=S.reports[drawer.id], k=d.esave, nv=document.getElementById("ed-"+k).value.trim(), old=r.f[k][0];
+    if(String(old)===nv){ document.querySelector(`[data-erow="${k}"]`).hidden=true; return }
+    r.f[k]=[nv,"human"]; r.hist.push(`${({weather:"天候",crew:"出工",done:"完成項目",equip:"機具",tomorrow:"今日計畫"})[k]}：「${old}」改成「${nv}」（工務，${NOW}）`); toast("已更正，舊值留在修改紀錄"); return render() }
+  if(d.sample){ const ta=$("#msgIn"); ta.value=SAMPLES[d.sample]; ta.focus(); return }
+  if(t.id==="send"){ const v=$("#msgIn").value.trim(); if(!v){toast("先打一句話");return} chat.push({me:1,text:v}); pending=parse(v); chat.push({card:pending}); $("#msgIn").value=""; return render() }
+  if(t.id==="ok"&&pending){ commit(pending); chat[chat.length-1].done="寫入儀表板"; chat.push({text:`收到！已記錄到 ${pending.p} 案。${pending.kind==="異常缺失"?"缺失已通知工務"+(/鷹架|吊|開口/.test(pending.raw)?"，工安類會同步給老闆。":"。"):""}${pending.kind==="改善完成"?"已改成「待確認」，請工務複查後結案。":""}`}); pending=null; return render() }
+  if(t.id==="fix"){ const b=$("#fixBox"); b.hidden=!b.hidden; return }
+  if(t.id==="fxSave"&&pending){ pending.p=$("#fxSite").value; commit(pending); chat[chat.length-1].done="修改後寫入"; chat.push({text:`收到！已記錄到 ${pending.p} 案。`}); pending=null; return render() }
+  if(d.sel){ selIssue=d.sel; return render() }
+  if(d.flow){ const i=S.issues.find(x=>x.id===selIssue);
+    if(d.flow==="結案"){ const note=$("#logIn").value.trim(), ph=$("#photo").checked; if(!note||!ph){ $("#flowWarn").hidden=false; return } i.log.push([`10/28 ${NOW}`,"工務",note+"（附改善照片）"]) }
+    if(i.status!==d.flow){ i.hist.push(`狀態 ${i.status}→${d.flow}（${NOW}）`); i.status=d.flow } return render() }
+  if(t.id==="addLog"){ const v=$("#logIn").value.trim(); if(!v){toast("先寫處理內容");return} const i=S.issues.find(x=>x.id===selIssue); i.log.push([`10/28 ${NOW}`,i.owner,v]); toast("已新增處理紀錄"); return render() }
+  if(d.fb){ S.feedback=d.fb; toast("謝謝，回饋會用來調整摘要內容"); return render() }
+  if(t.id==="reset"){ S=seed(); chat=[]; pending=null; drawer=null; selIssue="Q-1025-乙"; toast("已重設示範資料"); return render() }
+});
+render();
+</script>
