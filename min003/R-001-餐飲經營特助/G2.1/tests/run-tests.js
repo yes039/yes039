@@ -52,7 +52,7 @@ const R = []; const rec = (group, name, pass, detail = '') => R.push({ group, na
   {
     const p = await newPage();
     await tap(p, '[data-consent="full"]');
-    await tap(p, '[data-go="case-food"]'); await shot(p, 'G21-x-Demo決策單-發現問題');
+    await tap(p, '#moreDemo summary'); await tap(p, '[data-go="case-food"]'); await shot(p, 'G21-x-Demo決策單-發現問題');
     await tap(p, '[data-cnext="1"]'); await tap(p, '[data-cnext="2"]'); await shot(p, 'G21-x-Demo決策單-規則建議');
     await tap(p, '[data-cnext="3"]'); await tap(p, '[data-cpick="AB"]'); await tap(p, '#cDecide');
     const todos = await p.evaluate(() => S.todos.length);
@@ -136,6 +136,80 @@ const R = []; const rec = (group, name, pass, detail = '') => R.push({ group, na
     await p.context().close();
   }
 
+  /* G2.1-008 T01 隱私選擇：不遮九宮格；未選擇前不記錄操作 */
+  {
+    const p = await newPage();
+    const cover = await p.evaluate(() => { const g = document.getElementById('grid').getBoundingClientRect(); const pts = []; for (const fx of [.15, .5, .85]) for (const fy of [.1, .5, .9]) pts.push([g.left + g.width * fx, g.top + g.height * fy]);
+      const blocked = pts.filter(([x, y]) => { const el = document.elementFromPoint(x, y); return !el || !document.getElementById('grid').contains(el) });
+      const fixed = [...document.querySelectorAll('body *')].filter(e => { const cs = getComputedStyle(e); return (cs.position === 'fixed' || cs.position === 'sticky') && !e.hidden && e.offsetHeight > 0 && e.id !== 'toast' && !e.classList.contains('top') });
+      const card = document.getElementById('consentCard'), cta = document.getElementById('mainCta');
+      return { blocked: blocked.length, fixed: fixed.map(e => e.className || e.id), card: !!card, cardBelowCta: card && cta && card.getBoundingClientRect().top >= cta.getBoundingClientRect().bottom } });
+    await shot(p, 'G21-08-01-首屏-未選隱私');
+    rec('T01 隱私選擇', '首次開啟九宮格不被任何浮層遮住', cover.blocked === 0 && cover.fixed.length === 0, JSON.stringify(cover));
+    rec('T01 隱私選擇', '告知卡（V1.2 文字）放在主要 CTA 下方', cover.card && cover.cardBelowCta && /保存 12 個月/.test(await p.textContent('#consentCard')));
+    // 未選擇前：可看 Demo、點卡片、走完換成我的店與一張決策單，但不送 feature_click / task_complete
+    await tap(p, '#tile-food'); await hash(p, ''); await tap(p, '#mainCta'); await tap(p, '[data-wpreset="bento"]');
+    for (let i = 0; i < 4; i++) await tap(p, '#wzNext');
+    await tap(p, '#guideStart'); for (const n of [1, 2, 3]) await tap(p, `[data-cnext="${n}"]`); await tap(p, '#cDecide'); await tap(p, '#cSim'); await tap(p, '#cClose');
+    await p.waitForTimeout(2200);
+    const ev = await p.evaluate(() => ({ types: S.events.map(e => e.type), hash: location.hash, consent: S.consent }));
+    rec('T01 隱私選擇', '未選擇前可完整體驗（到成果卡），且不記錄操作事件', ev.hash === '#result' && !ev.types.includes('feature_click') && !ev.types.includes('task_complete') && ev.consent === null, ev.types.join(','));
+    await hash(p, ''); const still = !!(await p.$('#consentCard'));
+    await tap(p, '#consentCard [data-consent="full"]'); await tap(p, '#tile-food');
+    const after = await p.evaluate(() => ({ gone: !document.getElementById('consentCard'), fc: S.events.filter(e => e.type === 'feature_click').length }));
+    rec('T01 隱私選擇', '告知卡在選擇前持續顯示；同意後才開始記錄', still && after.gone && after.fc > 0, JSON.stringify(after));
+    await p.context().close();
+  }
+
+  /* G2.1-008 T02 體驗入口：Demo 首頁只留九宮格、主要 CTA、告知卡、摘要；其他收合 */
+  {
+    const p = await newPage();
+    const r = await p.evaluate(() => { const app = document.getElementById('app'); const vis = e => e.getClientRects().length > 0 && !e.closest('details:not([open])');
+      const golds = [...app.querySelectorAll('.btn.gold')].filter(vis).map(b => b.textContent.trim());
+      const visibleCta = [...app.querySelectorAll('[data-cta]')].filter(vis).length; const more = document.getElementById('moreDemo');
+      return { golds, visibleCta, moreOpen: more && more.open, adv: [...app.querySelectorAll('.adv')].filter(vis).length } });
+    rec('T02 體驗入口', 'Demo 首頁唯一的主要按鈕是「30 秒免費體驗｜換成我的店」', r.golds.length === 1 && /換成我的店/.test(r.golds[0]), r.golds.join('|'));
+    rec('T02 體驗入口', '其他 CTA、決策清單、進階功能收進「更多 Demo 內容」', r.visibleCta === 0 && r.moreOpen === false && r.adv === 0, JSON.stringify(r));
+    await tap(p, '#moreDemo summary'); const opened = await p.evaluate(() => [...document.querySelectorAll('#moreDemo [data-cta]')].filter(e => e.getClientRects().length).length);
+    rec('T02 體驗入口', '展開後仍可使用原有 Demo 功能', opened === 3);
+    await p.context().close();
+  }
+
+  /* G2.1-008 T03「想多了解」卡片：對比、箭頭對齊、留白（淺色＋深色） */
+  for (const scheme of ['light', 'dark']) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: scheme }); const p = await ctx.newPage();
+    await p.goto(FILE); await p.waitForTimeout(300); await p.click('#moreDemo summary'); await p.waitForTimeout(80);
+    const r = await p.evaluate(() => {
+      const rgb = c => (c.match(/[\d.]+/g) || []).slice(0, 3).map(Number), lum = ([r, g, b]) => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4) }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b) };
+      const ratio = (a, b) => { const [x, y] = [lum(rgb(a)), lum(rgb(b))].sort((m, n) => n - m); return (x + .05) / (y + .05) };
+      const items = [...document.querySelectorAll('#moreDemo .link-list .item')];
+      return items.map(it => { const bg = getComputedStyle(it).backgroundColor, t = it.querySelector('.txt b'), d = it.querySelector('.txt span'), go = it.querySelector('.go').getBoundingClientRect(), ir = it.getBoundingClientRect(), tr = it.querySelector('.txt').getBoundingClientRect();
+        return { title: +ratio(getComputedStyle(t).color, bg).toFixed(2), desc: +ratio(getComputedStyle(d).color, bg).toFixed(2), goRight: Math.round(ir.right - go.right), goMid: Math.round((go.top + go.bottom) / 2 - (ir.top + ir.bottom) / 2), txtLeft: Math.round(tr.left - ir.left), h: Math.round(ir.height) } }) });
+    await p.evaluate(() => { const el = document.querySelector('#moreDemo .link-list'); el.scrollIntoView({ block: 'center' }) }); await p.waitForTimeout(80);
+    await shot(p, `G21-08-03-想多了解-${scheme}`, false);
+    const ok = r.length === 3 && r.every(x => x.title >= 4.5 && x.desc >= 4.5 && Math.abs(x.goMid) <= 3 && x.h < 90) && new Set(r.map(x => x.goRight)).size === 1 && new Set(r.map(x => x.txtLeft)).size === 1;
+    rec('T03 視覺', `「想多了解」三張卡（${scheme === 'light' ? '淺色' : '深色'}）：對比 ≥ 4.5、箭頭同一位置並垂直置中、文字左緣對齊`, ok, JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* G2.1-008 T04 決策單一致性：名稱、觸發指標、門檻、解釋 */
+  {
+    const p = await newPage();
+    const r = await p.evaluate(() => Object.keys(PRESETS).flatMap(id => { const X = build({ ...DEFAULT_PROFILE, preset: id }); return X.cases.filter(c => !c.merged).map(c => {
+      const why = (c.why || []).join(' ');
+      const whyLvl = /→ 異常/.test(why) ? 'bad' : /→ 注意/.test(why) ? 'warn' : 'none';
+      const tok = (c.metric.match(/[−+]?\$?[\d,.]+%?/) || [''])[0];
+      return { id: id + ':' + c.id, level: c.level, whyLvl, tok, hasTok: !!tok && (why.includes(tok) || c.title.includes(tok)), shortInTitle: c.title.includes((c.short.match(/[−+]?\$?[\d,.]+%?/) || [''])[0]), verify: c.verify.label, kind: c.kind || '' } }) }));
+    const bad = r.filter(x => x.level !== x.whyLvl || !x.hasTok || !x.shortInTitle);
+    rec('T04 決策單一致性', `四店型 ${r.length} 張決策單：燈號與判定依據一致、標題與觸發指標同一個數字`, bad.length === 0, bad.map(x => JSON.stringify(x)).join(' '));
+    const lab = r.find(x => x.id === 'teppan:labor'); const t = await p.evaluate(() => { const c = build({ ...DEFAULT_PROFILE }).cases.find(x => x.id === 'labor'); return { title: c.title, metric: c.metric, rule: c.ruleText, verify: c.verify.label, why: c.why.join(' ') } });
+    rec('T04 決策單一致性', '「超時 1 小時」以超時為觸發與驗收，不以正常的人事成本率充當依據', lab.kind === 'ot' && /超時/.test(t.title) && /超時/.test(t.metric) && !/人事成本率/.test(t.metric) && /超時/.test(t.verify) && /超過排定下班/.test(t.why) && /未超標/.test(t.rule), JSON.stringify(t));
+    const fd = await p.evaluate(() => ['teppan', 'noodle', 'cafe', 'bento'].map(id => { const c = build({ ...DEFAULT_PROFILE, preset: id }).cases.find(x => x.id === 'food'); return id + ':' + c.kind + ':' + c.verify.label }));
+    rec('T04 決策單一致性', '食材決策單依較嚴重的觸發條件決定標題與驗收指標', fd.join() === 'teppan:spike:漲價影響回補率,noodle:rate:食材成本率,cafe:spike:漲價影響回補率,bento:rate:食材成本率', fd.join(' '));
+    await hash(p, 'case-labor'); await shot(p, 'G21-08-04-超時決策單');
+    await p.context().close();
+  }
+
   /* T06 改善價值試算 */
   {
     const p = await newPage(); await tap(p, '[data-consent="full"]'); await hash(p, 'value');
@@ -152,7 +226,7 @@ const R = []; const rec = (group, name, pass, detail = '') => R.push({ group, na
     const p = await newPage('#t-HXEZ2JM5KR'); await tap(p, '[data-consent="full"]');
     const tok = await p.evaluate(() => [S.token, location.hash]);
     rec('T07 CTA 與歸因', '讀取夥伴連結碼 #t-…（Artifact）並從網址移除', tok[0] === 'HXEZ2JM5KR' && tok[1] === '', JSON.stringify(tok));
-    for (const c of ['report', 'line', 'booking']) { await hash(p, ''); await tap(p, `button.item[data-cta="${c}"]`); }
+    for (const c of ['report', 'line', 'booking']) { await hash(p, ''); await tap(p, '#moreDemo summary'); await tap(p, `button.item[data-cta="${c}"]`); }
     await hash(p, 'devlog'); 
     const before = await p.textContent('#attrBox');
     rec('T07 CTA 與歸因', '只開啟／試用不成立推薦', /尚未成立/.test(before));
@@ -173,7 +247,7 @@ const R = []; const rec = (group, name, pass, detail = '') => R.push({ group, na
     await p.context().close();
     // 只看不記錄：功能點擊不記錄，CTA 與表單照常
     const q = await newPage('#t-Q4N8VW2KTD'); await tap(q, '[data-consent="view"]');
-    await tap(q, '#tile-food'); await hash(q, ''); await tap(q, 'button.item[data-cta="report"]');
+    await tap(q, '#tile-food'); await hash(q, ''); await tap(q, '#moreDemo summary'); await tap(q, 'button.item[data-cta="report"]');
     const ev = await q.evaluate(() => S.events.filter(e => e.session_id === S.session).map(e => e.type));
     rec('T07 CTA 與歸因', '「只看不記錄」：不送 feature_click，CTA 照常', !ev.includes('feature_click') && ev.includes('consult_click'), ev.join(','));
     await q.context().close();

@@ -200,6 +200,21 @@ pre.code{background:var(--surface);border-radius:10px;padding:10px;font-size:11p
 .main-cta{margin-top:12px;display:grid;gap:6px;text-align:center}
 .main-cta .btn{width:100%;padding:15px 16px;font-size:16.5px;border-radius:14px;box-shadow:0 4px 14px color-mix(in srgb,var(--gold-strong) 35%,transparent)}
 .main-cta .note{font-size:12px}
+.consent{margin-top:12px;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface);display:grid;gap:8px}
+.consent b{font-size:13.5px}
+.consent p{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.more{margin-top:18px;border-top:1px solid var(--line);padding-top:4px}
+.more>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:12px 2px;font-size:14px;font-weight:700;color:var(--ink)}
+.more>summary::-webkit-details-marker{display:none}
+.more>summary::after{content:'展開';font-size:12px;font-weight:400;color:var(--ink-2)}
+.more[open]>summary::after{content:'收合'}
+.more>summary:focus-visible{outline:2px solid var(--gold-strong);outline-offset:2px;border-radius:6px}
+.link-list{display:grid;gap:8px}
+.link-list .item{align-items:center;color:var(--ink);background:var(--card)}
+.link-list .item .txt b{color:var(--ink)}
+.link-list .item .txt span{color:var(--ink-2)}
+.link-list .item .ic{margin-top:0}
+.link-list .item .go{font-size:16px;color:var(--ink-2)}
 .setup{margin-top:12px;border:2px solid var(--gold-strong);border-radius:var(--r);padding:14px;display:grid;gap:12px;background:var(--card)}
 .setup .stepname{font-size:11.5px;color:var(--gold-ink);font-weight:700;letter-spacing:.04em}
 .numrow{display:grid;gap:4px}
@@ -226,17 +241,16 @@ pre.code{background:var(--surface);border-radius:10px;padding:10px;font-size:11p
 </style>
 
 <div class="app" id="app"></div>
-<div id="sheet" class="sheet" hidden></div>
 <div id="toast" class="toast" hidden></div>
 
 <script>
 /* ============================================================
-   R-001 餐飲老闆 AI 經營特助｜G2.1-007 互動原型（客戶體驗動線版；G2-006 功能全保留）
+   R-001 餐飲老闆 AI 經營特助｜G2.1-008 互動原型（手機體驗修正；G2-006 功能全保留）
    - 全部模擬資料；不連接 POS、不呼叫 AI 模型或付費 API、不送出網路請求或通知
    - 依 MIN-003 V1.2 模板契約：只透過 MIN.track / task / consult / submit 記錄事件
    ============================================================ */
 'use strict';
-const PRODUCT='R-001',TEMPLATE_ID='food',VER='G2.1-007',STORE_KEY='r001-proto-g21';
+const PRODUCT='R-001',TEMPLATE_ID='food',VER='G2.1-008',STORE_KEY='r001-proto-g21';
 const COMMON={minWage:196,ptLoad:1.11,ftLoad:1.17,otMult:1.34,cardFee:.02,invGap:.02,taxRate:.2};
 const PT_RATE=COMMON.minWage*COMMON.ptLoad;
 
@@ -501,23 +515,36 @@ const VFMT={pct0:v=>pct(v,0),pct1:v=>pct(v,1),money:v=>$(v),num:v=>fmt(v)+' 家'
 const RULES={
  food(D){
   const ing=D.ing,t=D.targets.food,spike=r3(ing.now/ing.base-1),impactPct=r3(D.ingImpact/D.rev);
-  let lvl=D.foodRate<=t?'ok':D.foodRate<=r3(t+.015)?'warn':'bad';
-  if(spike>=.3&&lvl==='ok')lvl='warn';
-  if(spike>=.5&&impactPct>=.01)lvl='bad';
+  /* 兩個觸發條件分開判斷，標題與驗收跟著「燈號較嚴重的那一個」 */
+  const rateLvl=D.foodRate<=t?'ok':D.foodRate<=r3(t+.015)?'warn':'bad';
+  const spikeLvl=spike>=.5&&impactPct>=.01?'bad':spike>=.3?'warn':'ok';
+  const lvl=worst([rateLvl,spikeLvl]);
   if(lvl==='ok'||D.ingImpact<=0)return null;
+  const kind=RANK[spikeLvl]<=RANK[rateLvl]?'spike':'rate';
+  const why=[];
+  if(rateLvl!=='ok')why.push(`食材成本 ${$(D.food)} ÷ 營收 ${$(D.rev)} ＝ ${pct(D.foodRate)}，${rateLvl==='bad'?`超過目標 ${pct(t,0)} 1.5 點以上 → 異常`:`超過目標 ${pct(t,0)} → 注意`}`);
+  if(spikeLvl==='bad')why.push(`${ing.name}進價 ${sgnP(spike,0)}，影響占營收 ${pct(impactPct)}（漲 ≥ 50% 且影響 ≥ 1%）→ 異常`);
+  else if(spikeLvl==='warn')why.push(`${ing.name}進價 ${sgnP(spike,0)}（漲 ≥ 30%）→ 注意`);
   const byUse=[...D.items].filter(i=>i.u>0).sort((a,b)=>(b.qty+b.wq)*b.u-(a.qty+a.wq)*a.u),dish=byUse[0],step=D.P.priceStep;
-  const rec=g=>r3(g/D.ingImpact),A=r=>dish.qty*step*.95*r,B=r=>D.ingImpact*.35*r,C=r=>D.ingUse*(ing.now-ing.base)*.4*r;
-  return {id:'food',card:'food',level:lvl,title:`${ing.name}進價 ${sgnP(spike,0)}，食材成本率 ${pct(D.foodRate)}`,short:`${ing.name}進價 ${sgnP(spike,0)}`,
-   metric:`食材成本率 ${pct(D.foodRate)}（目標 ${pct(t,0)}）`,
-   ruleText:'食材成本率超過目標 1.5 點以上，或關鍵食材漲 ≥ 50% 且影響 ≥ 營收 1% → 異常；漲 ≥ 30% 或超過目標 → 注意',
+  const mk=(revAdd,save)=>({gain:r=>revAdd(r)+save(r),after:kind==='spike'?(r=>r3((revAdd(r)+save(r))/D.ingImpact)):(r=>r3((D.food-save(r))/(D.rev+revAdd(r))))});
+  const zero=()=>0,A=r=>dish.qty*step*.95*r,B=r=>D.ingImpact*.35*r,C=r=>D.ingUse*(ing.now-ing.base)*.4*r;
+  const oA=mk(A,zero),oB=mk(zero,B),oC=mk(zero,C),oAB=mk(A,B);
+  const verify=kind==='spike'?{label:'漲價影響回補率',fmt:'pct0',target:.7,dir:'ge',before:0,note:'進價無法由店家控制，驗收看漲價損失補回多少（回補金額 ÷ 今日漲價影響）'}
+    :{label:'食材成本率',fmt:'pct1',target:t,dir:'le',before:D.foodRate,note:'食材成本 ÷ 營收'};
+  const title=kind==='spike'?`${ing.name}進價 ${sgnP(spike,0)}，每天多花 ${$(D.ingImpact)}`:`食材成本率 ${pct(D.foodRate)}，超過目標 ${pct(t,0)}`;
+  const short=kind==='spike'?`${ing.name}進價 ${sgnP(spike,0)}`:`食材成本率 ${pct(D.foodRate)}`;
+  const metric=kind==='spike'?`${ing.name}進價 ${sgnP(spike,0)}・影響占營收 ${pct(impactPct)}`:`食材成本率 ${pct(D.foodRate)}（目標 ${pct(t,0)}）`;
+  const rules=[];if(rateLvl!=='ok')rules.push('食材成本率超過目標 → 注意、超過 1.5 點以上 → 異常');if(spikeLvl!=='ok')rules.push('關鍵食材漲 ≥ 30% → 注意；漲 ≥ 50% 且影響 ≥ 營收 1% → 異常');
+  return {id:'food',card:'food',level:lvl,kind,title,short,metric,why,ruleText:rules.join('；'),
    analysis:[['data',`${ing.name}進價 ${ing.base} → ${ing.now} 元/${ing.unit}，${ing.why}`],['calc',`今日用量約 ${D.ingUse.toFixed(1)} ${ing.unit}（含報廢），食材成本多 ${$(D.ingImpact)}，占營收 ${pct(impactPct)}`],
-    ['calc',`影響最大：${byUse.slice(0,3).map(i=>`${i.n}（毛利率 ${pct(1-i.c/i.p,0)}→${pct(1-i.unitNow/i.p,0)}）`).join('、')}`],['rule',`食材成本率 ${pct(D.foodBaseRate)} → ${pct(D.foodRate)}，目標 ${pct(t,0)}`]],
+    ...(D.wasteFood&&kind==='rate'?[['calc',`其中報廢 ${$(D.wasteFood)}，占食材成本 ${pct(D.wasteRate)}（另見報廢決策單）`]]:[]),
+    ['calc',`影響最大：${byUse.slice(0,3).map(i=>`${i.n}（毛利率 ${pct(1-i.c/i.p,0)}→${pct(1-i.unitNow/i.p,0)}）`).join('、')}`],['rule',`正常進價下食材成本率 ${pct(D.foodBaseRate)}，今日 ${pct(D.foodRate)}，目標 ${pct(t,0)}`]],
    options:[
-    mkOpt('A',`${dish.n} 暫調 +${step} 元`,'標示「時價」，兩週後依進價再檢討',A,r=>rec(A(r)),[`${dish.n} 每日 ${dish.qty} 份`,'調價後單量 −5%'],['更新菜單與 POS 價格','店員說明時價原因','兩週後記錄進價'],.9),
-    mkOpt('B',`降低${ing.name}用量`,`配菜改當季便宜蔬菜，用量減少約 35%`,B,r=>rec(B(r)),['替代蔬菜成本與原菜相同','不影響單量'],['確認替代蔬菜與份量','更新備料單','拍照建立標準份量'],.85),
-    mkOpt('C','找第二家供應商比價','詢價並分批進貨',C,r=>rec(C(r)),['可議回漲幅的 40%'],['詢問 2 家報價','試進一週','比較品質與價格'],.6),
-    mkOpt('AB','A＋B 組合','調價並減少用量',r=>A(r)+B(r),r=>rec(A(r)+B(r)),['同 A、B 假設，效果相加'],['更新菜單與 POS 價格','確認替代蔬菜與份量','更新備料單'],.9)],
-   verify:{label:'漲價影響回補率',fmt:'pct0',target:.7,dir:'ge',before:0,note:'回補金額 ÷ 今日漲價影響'}};
+    mkOpt('A',`${dish.n} 暫調 +${step} 元`,'標示「時價」，兩週後依進價再檢討',oA.gain,oA.after,[`${dish.n} 每日 ${dish.qty} 份`,'調價後單量 −5%'],['更新菜單與 POS 價格','店員說明時價原因','兩週後記錄進價'],.9),
+    mkOpt('B',`降低${ing.name}用量`,`配菜改當季便宜蔬菜，用量減少約 35%`,oB.gain,oB.after,['替代蔬菜成本與原菜相同','不影響單量'],['確認替代蔬菜與份量','更新備料單','拍照建立標準份量'],.85),
+    mkOpt('C','找第二家供應商比價','詢價並分批進貨',oC.gain,oC.after,['可議回漲幅的 40%'],['詢問 2 家報價','試進一週','比較品質與價格'],.6),
+    mkOpt('AB','A＋B 組合','調價並減少用量',oAB.gain,oAB.after,['同 A、B 假設，效果相加'],['更新菜單與 POS 價格','確認替代蔬菜與份量','更新備料單'],.9)],
+   verify};
  },
  waste(D){
   if(D.wasteFood<=0)return null;
@@ -525,7 +552,7 @@ const RULES={
   const w=D.items.filter(i=>i.wq>0),wf=D.wasteFood,rateAfter=red=>r3(wf*(1-red)/(D.food-wf*red));
   const clearRev=sum(w.map(i=>i.wq*i.p))*.6*.7*.8;
   return {id:'waste',card:'food',level:lvl,title:`報廢率 ${pct(D.wasteRate)}，今天丟掉 ${$(wf)}`,short:`備料報廢 ${pct(D.wasteRate)}`,
-   metric:`報廢成本 ÷ 食材成本 ${pct(D.wasteRate)}（目標 ≤ ${pct(t,0)}）`,ruleText:'報廢率 > 目標 2 點 → 異常；> 目標 → 注意',
+   metric:`報廢率 ${pct(D.wasteRate)}（目標 ≤ ${pct(t,0)}）`,why:[`報廢成本 ${$(wf)} ÷ 食材成本 ${$(D.food)} ＝ ${pct(D.wasteRate)}，${lvl==='bad'?`超過目標 ${pct(t,0)} 2 點以上 → 異常`:`超過目標 ${pct(t,0)} → 注意`}`],ruleText:'報廢率 > 目標 2 點 → 異常；> 目標 → 注意',
    analysis:[['data',`打烊報廢登記：${w.map(i=>`${i.n} ${i.wq} 份`).join('、')}（模擬）`],['calc',`備餐量＝售出＋報廢；報廢份數占備餐 ${pct(sum(w.map(i=>i.wq))/sum(w.map(i=>i.wq+i.qty)),0)}`],
     ['calc',`報廢成本 ${$(wf)}，一個月約 ${$(wf*D.P.openDays)}`],['rule','備餐量依經驗決定，沒有對照前幾週同星期的實際銷量']],
    options:[
@@ -537,8 +564,8 @@ const RULES={
  attach(D){
   const a=D.P.attach,drop=D.lwAttach?r3(1-D.attach/D.lwAttach):0,lvl=drop>.2?'bad':drop>.1?'warn':'ok';if(lvl==='ok')return null;
   const gap=Math.max(0,(D.lwAttach-D.attach)*D.O),after=rc=>r=>r3(D.attach+gap*rc*r/D.O);
-  return {id:'attach',card:'products',level:lvl,title:`${a.label} ${pct(D.attach,0)}（上週 ${pct(D.lwAttach,0)}）`,short:`${a.label}下滑 ${pct(drop,0)}`,
-   metric:`${a.what}份數 ÷ 訂單數 ${pct(D.attach,0)}`,ruleText:'比上週同日下降 > 20% → 異常；> 10% → 注意',
+  return {id:'attach',card:'products',level:lvl,title:`${a.label} ${pct(D.attach,0)}，比上週同日 ${pct(D.lwAttach,0)} 下滑 ${pct(drop,0)}`,short:`${a.label}下滑 ${pct(drop,0)}`,
+   metric:`${a.label} ${pct(D.attach,0)}，上週同日 ${pct(D.lwAttach,0)}（下滑 ${pct(drop,0)}）`,why:[`${a.label}＝${a.what}份數 ${D.aQty} ÷ 訂單 ${D.O} ＝ ${pct(D.attach,0)}，上週同日 ${pct(D.lwAttach,0)}，下滑 ${pct(drop,0)}（${drop>.2?'> 20% → 異常':'> 10% → 注意'}）`],ruleText:'比上週同日下降 > 20% → 異常；> 10% → 注意',
    analysis:[['data',`${a.what}今日 ${D.aQty} 份，上週同日 ${D.aLw} 份；主餐份數接近`],['calc',`回到上週水準可多 ${fmt(gap)} 份，營收約 ${$(gap*D.aP)}`],
     ['calc',`${a.what}平均每份毛利 ${$(D.aCm)}，毛利率 ${pct(D.aP?D.aCm/D.aP:0,0)}`],['rule','客單價下滑時，先看加點率是否同步下滑']],
    options:[
@@ -550,7 +577,7 @@ const RULES={
   const lvl=D.achieve>=1?'ok':D.achieve>=.9?'warn':'bad';if(lvl==='ok')return null;
   const extra=D.mem.friends*.015*4/D.P.openDays;/* 每週推播一次，每次 1.5% 好友回店 */
   return {id:'rev',card:'revenue',level:lvl,title:`營收達成 ${pct(D.achieve,0)}，差目標 ${$(D.target-D.rev)}`,short:`營收達成 ${pct(D.achieve,0)}`,
-   metric:`營收 ÷ 今日目標 ${pct(D.achieve,0)}`,ruleText:'達成率 < 90% → 異常；90–100% → 注意',
+   metric:`營收達成 ${pct(D.achieve,0)}（${$(D.rev)} ÷ 目標 ${$(D.target)}）`,why:[`營收 ${$(D.rev)} ÷ 目標 ${$(D.target)} ＝ ${pct(D.achieve,0)}（${D.achieve<.9?'< 90% → 異常':'90–100% → 注意'}）`],ruleText:'達成率 < 90% → 異常；90–100% → 注意',
    analysis:[['data',`今日營收 ${$(D.rev)}，目標 ${$(D.target)}`],['calc',`單數 ${D.O}（上週 ${D.lwO}），客單 ${$(D.ticket)}（上週 ${$(D.lwTicket)}）`],['rule','營收＝單數 × 客單，兩邊分開找原因']],
    options:[
     mkOpt('A','每週 LINE 推播平日優惠','券值 30 元，限平日使用',r=>extra*r*(D.ticket*D.gpRate-30),r=>r3((D.rev+extra*r*D.ticket)/D.target),[`好友 ${fmt(D.mem.friends)} 人，每次推播 1.5% 回店，每月 4 次`,`平均每營業日多 ${extra.toFixed(1)} 單`,'券值 30 元'],['設計券面與使用條件','排定每週推播','POS 記錄核銷'],.75),
@@ -561,33 +588,41 @@ const RULES={
   const lvl=D.vsLw>=-.03?'ok':D.vsLw>=-.1?'warn':'bad';if(lvl==='ok')return null;
   const volEff=R((D.O-D.lwO)*D.lwTicket),tixEff=D.rev-D.lwRev-volEff,into=Math.abs(tixEff)>Math.abs(volEff)?'attach':'rev';
   return {id:'vslw',card:'orders',level:lvl,title:`營收比上週同日 ${sgnP(D.vsLw)}`,short:`比上週 ${sgnP(D.vsLw)}`,
-   metric:`營收 ${$(D.rev)}，上週同日 ${$(D.lwRev)}`,ruleText:'比上週同日 < −10% → 異常；−3% ~ −10% → 注意',
+   metric:`比上週同日 ${sgnP(D.vsLw)}（${$(D.rev)} vs ${$(D.lwRev)}）`,why:[`營收 ${$(D.rev)} 比上週同日 ${$(D.lwRev)} ${sgnP(D.vsLw)}（${D.vsLw<-.1?'< −10% → 異常':'−3% ~ −10% → 注意'}）`],ruleText:'比上週同日 < −10% → 異常；−3% ~ −10% → 注意',
    analysis:[['calc',`單數效果 ${sgn(volEff)}（${sgn(D.O-D.lwO)} 單 × 上週客單）`],['calc',`客單效果 ${sgn(tixEff)}（營收差 − 單數效果）`],
     ['rule',into==='attach'?'客單效果較大：主因是點得少':'單數效果較大：主因是來客少']],options:[],merged:into,verify:null};
  },
  labor(D){
   const t=D.targets.labor,lowProd=D.salesPerHour<D.targets.prod;let lvl=D.laborRate<=t?'ok':D.laborRate<=r3(t+.05)?'warn':'bad';
   if(lvl==='ok'&&(D.otStaff.length||lowProd))lvl='warn';if(lvl==='ok')return null;
-  const after=g=>r3((D.labor-g)/D.rev),opts=[];
+  const byRate=D.laborRate>t,after=g=>r3((D.labor-g)/D.rev),opts=[];let analysisFirst=null;
   if(D.otCost>0)opts.push(mkOpt('A','超時改為提早交接＋打烊清潔分工',`${D.otStaff.map(s=>s.n).join('、')}不再超時`,r=>D.otCost*r,r=>after(D.otCost*r),[`超時 ${sum(D.otStaff.map(s=>s.ot))} 小時全部取消`],['列出打烊清潔清單','排定分工','連續一週記錄下班時間'],.9));
-  opts.push(mkOpt('B','非尖峰縮短 1 位兼職 2 小時','工時移到尖峰前備料',r=>2*PT_RATE*r,r=>after(2*PT_RATE*r),['每天少 2 個兼職工時','不影響出餐'],['找出非尖峰時段','調整排班表','觀察出餐時間'],.9));
+  if(byRate||lowProd)opts.push(mkOpt('B','非尖峰縮短 1 位兼職 2 小時','工時移到尖峰前備料',r=>2*PT_RATE*r,r=>after(2*PT_RATE*r),['每天少 2 個兼職工時','不影響出餐'],['找出非尖峰時段','調整排班表','觀察出餐時間'],.9));
   if(lowProd)opts.push(mkOpt('C','下午改 1 位兼職兼顧吧台與外場','減少下午重疊人力 3 小時',r=>3*PT_RATE*r,r=>after(3*PT_RATE*r),['每天少 3 個兼職工時'],['重新分配下午工作','調整排班','一週後檢查出餐時間'],.85));
-  const byRate=D.laborRate>t;
   const verify=byRate?{label:'人事成本率',fmt:'pct1',target:t,dir:'le',before:D.laborRate,note:'人事成本 ÷ 營收'}
    :lowProd?{label:'每工時營收',fmt:'money',target:D.targets.prod,dir:'ge',before:D.salesPerHour,note:'營收 ÷ 計薪工時'}
    :{label:'每日超時成本',fmt:'money',target:R(D.otCost*.2),dir:'le',before:D.otCost,note:'超時時段的人力成本（容許偶發 2 成）'};
   const otH=sum(D.otStaff.map(s=>s.ot));
   if(!byRate){opts.forEach(o=>{const g=o.gain;if(lowProd)o.after=r=>R(D.rev/Math.max(1,D.paidHours-g(r)/PT_RATE));else o.after=o.id==='A'?(r=>R(D.otCost*(1-r))):(()=>D.otCost)})}
-  return {id:'labor',card:'labor',level:lvl,title:`人事成本率 ${pct(D.laborRate)}${lowProd?`、每工時營收 ${$(D.salesPerHour)}`:''}${D.otStaff.length?'、有超時':''}`,short:byRate?`人事成本率 ${pct(D.laborRate)}`:lowProd?`每工時營收 ${$(D.salesPerHour)}`:`超時 ${otH} 小時`,
-   metric:`人事成本 ÷ 營收 ${pct(D.laborRate)}（目標 ≤ ${pct(t,0)}）`,ruleText:`> 目標 5 點 → 異常；> 目標、有超時、或每工時營收 < ${fmt(D.targets.prod)} → 注意`,
-   analysis:[['data',`今日 ${D.staff.length} 人、${D.laborHours} 工時（計薪 ${D.paidHours}）`],['calc',`正職日攤 ${$(D.ftCost)}、兼職 ${$(D.ptCost)}`],
+  const why=[];
+  if(byRate)why.push(`人事成本 ${$(D.labor)} ÷ 營收 ${$(D.rev)} ＝ ${pct(D.laborRate)}，${D.laborRate>r3(t+.05)?`超過目標 ${pct(t,0)} 5 點以上 → 異常`:`超過目標 ${pct(t,0)} → 注意`}`);
+  if(lowProd)why.push(`每工時營收 ${$(D.salesPerHour)} 低於參考 ${$(D.targets.prod)} → 注意`);
+  if(D.otStaff.length)why.push(`${D.otStaff.map(s=>s.n).join('、')} 超過排定下班時間 ${otH} 小時，超時成本 ${$(D.otCost)} → 注意`);
+  const kind=byRate?'rate':lowProd?'prod':'ot';
+  const title={rate:`人事成本率 ${pct(D.laborRate)}，超過目標 ${pct(t,0)}`,prod:`每工時營收 ${$(D.salesPerHour)}，低於參考 ${$(D.targets.prod)}`,ot:`${D.otStaff.map(s=>s.n).join('、')}超時 ${otH} 小時，超時成本 ${$(D.otCost)}`}[kind];
+  const metric={rate:`人事成本率 ${pct(D.laborRate)}（目標 ≤ ${pct(t,0)}）`,prod:`每工時營收 ${$(D.salesPerHour)}（參考 ≥ ${$(D.targets.prod)}）`,ot:`超時 ${otH} 小時・超時成本 ${$(D.otCost)}／日`}[kind];
+  const ruleText=[byRate?'人事成本率 > 目標 → 注意、> 目標 5 點 → 異常':'',lowProd?`每工時營收 < ${fmt(D.targets.prod)} → 注意`:'',D.otStaff.length?'有員工超過排定下班時間 → 注意':''].filter(Boolean).join('；')+(byRate?'':'（人事成本率本身未超標）');
+  if(kind==='ot')analysisFirst=[['data',`${D.otStaff.map(s=>s.n+'排到 '+hh(s.rg[s.rg.length-1][1]-s.ot)+'，實際做到 '+hh(s.rg[s.rg.length-1][1])).join('、')}`],['calc',`超時 ${otH} 小時含加班費共 ${$(D.otCost)}，一個月約 ${$(D.otCost*D.P.openDays)}`],['rule',`人事成本率 ${pct(D.laborRate)} 仍在目標 ${pct(t,0)} 內，問題是超時，不是總人力`]];
+  return {id:'labor',card:'labor',level:lvl,kind,title,short:{rate:`人事成本率 ${pct(D.laborRate)}`,prod:`每工時營收 ${$(D.salesPerHour)}`,ot:`超時 ${otH} 小時`}[kind],why,
+   metric,ruleText,
+   analysis:analysisFirst||[['data',`今日 ${D.staff.length} 人、${D.laborHours} 工時（計薪 ${D.paidHours}）`],['calc',`正職日攤 ${$(D.ftCost)}、兼職 ${$(D.ptCost)}`],
     ['calc',`每工時營收 ${$(D.salesPerHour)}（參考 ≥ ${fmt(D.targets.prod)}）`],...(D.otStaff.length?[['data',`${D.otStaff.map(s=>s.n).join('、')}超時，含加班費共 ${$(D.otCost)}`]]:[])],
    options:opts,verify};
  },
  offpeak(D){
   if(D.offPtCost<=0)return null;
   return {id:'offpeak',card:'labor',level:'warn',title:`離峰 ${D.offHours.map(h=>h+'時').join('、')} 只有 ${D.offOrders} 單，兼職成本 ${$(D.offPtCost)}`,short:'離峰排班偏多',
-   metric:`離峰兼職成本 ${$(D.offPtCost)}／日`,ruleText:'營業中單數 ≤ 尖峰 15% 的離峰時段有兼職在班 → 注意',
+   metric:`離峰 ${D.offOrders} 單・兼職成本 ${$(D.offPtCost)}／日`,why:[`${D.offHours.map(h=>h+'時').join('、')} 共 ${D.offOrders} 單（每小時 ≤ 尖峰 15%），仍有兼職在班，成本 ${$(D.offPtCost)} → 注意`],ruleText:'營業中單數 ≤ 尖峰 15% 的離峰時段有兼職在班 → 注意',
    analysis:[['data',`離峰 ${D.offHours.length} 小時共 ${D.offOrders} 張單`],['calc',`同時段在班 ${D.offStaffHours} 人時，其中兼職成本 ${$(D.offPtCost)}`],['rule','正職離峰多在備料；兼職可改排尖峰']],
    options:[
     mkOpt('A','離峰兼職不排班（改排尖峰）','兼職上班時間避開離峰',r=>D.offPtCost*r,r=>R(D.offPtCost*(1-r)),['離峰兼職成本全數省下'],['調整兼職排班表','通知兼職新時段','觀察離峰出餐'],.9),
@@ -600,7 +635,7 @@ const RULES={
   const dI=D.aItems,dP=dI.length?sum(dI.map(i=>i.p))/dI.length:0,dC=dI.length?sum(dI.map(i=>i.unitNow))/dI.length:0;
   const nA=r=>D.aftO*.35*r,nB=r=>D.aftO*.25*r,dr=[...D.items].filter(i=>!D.P.attach.cats.includes(i.cat)).sort((a,b)=>b.qty-a.qty)[0];
   return {id:'lowticket',card:'orders',level:lvl,title:`下午客單 ${$(D.aftTicket)}，只有全日的 ${pct(D.aftRatio,0)}`,short:'下午低客單',
-   metric:`下午客單 ÷ 全日客單 ${pct(D.aftRatio,0)}`,ruleText:'< 55% → 異常；< 70% → 注意',
+   metric:`下午客單 ${$(D.aftTicket)}，只有全日 ${$(D.ticket)} 的 ${pct(D.aftRatio,0)}`,why:[`下午客單 ${$(D.aftTicket)} ÷ 全日客單 ${$(D.ticket)} ＝ ${pct(D.aftRatio,0)}（${D.aftRatio<.55?'< 55% → 異常':'< 70% → 注意'}）`],ruleText:'< 55% → 異常；< 70% → 注意',
    analysis:[['data',`下午 ${D.aftO} 張單、營收 ${$(D.aftRev)}`],['calc',`下午客單 ${$(D.aftTicket)}，全日 ${$(D.ticket)}`],['rule','下午多為一杯飲品久坐，座位被占但營收低']],
    options:[
     mkOpt('A','下午茶套餐（飲品＋甜點折 30 元）','14 點後供應',r=>nA(r)*(dP-30-dC),r=>r3((D.aftRev+nA(r)*(dP-30))/D.aftO/D.ticket),['35% 下午客人點套餐',`甜點平均 ${fmt(dP)} 元`],['設計套餐與桌卡','設定 POS 套餐鍵','記錄下午客單'],.8),
@@ -614,7 +649,7 @@ const RULES={
   const gA=r=>{const ri=1+inc*r,rv=1-(1-vol)*r;return D.deliRev*ri*rv*(1-c)-cost*rv-D.chanCm[2]};
   const aA=r=>{const ri=1+inc*r,rv=1-(1-vol)*r;return r3((D.chanCm[2]+gA(r))/(D.deliRev*ri*rv))};
   return {id:'deli',card:'delivery',level:lvl,title:`外送扣抽成後貢獻率 ${pct(D.deliCmRate)}`,short:`外送貢獻率 ${pct(D.deliCmRate)}`,
-   metric:`外送貢獻 ÷ 外送營收 ${pct(D.deliCmRate)}（目標 ≥ ${pct(t,0)}）`,ruleText:'< 目標 10 點 → 異常；< 目標 → 注意',
+   metric:`外送貢獻率 ${pct(D.deliCmRate)}（目標 ≥ ${pct(t,0)}）`,why:[`外送貢獻 ${$(D.chanCm[2])} ÷ 外送營收 ${$(D.deliRev)} ＝ ${pct(D.deliCmRate)}，${lvl==='bad'?`低於目標 ${pct(t,0)} 10 點以上 → 異常`:`低於目標 ${pct(t,0)} → 注意`}`],ruleText:'< 目標 10 點 → 異常；< 目標 → 注意',
    analysis:[['data',`外送 ${D.orders[2]} 單、營收 ${$(D.deliRev)}${D.P.rates.deliMarkup?`（已比店內價高 ${pct(D.P.rates.deliMarkup,0)}）`:''}`],['calc',`平台抽成 ${pct(c,0)} = ${$(D.commission)}；包材 ${$(D.chanPack[2])}`],
     ['calc',`外送貢獻 ${$(D.chanCm[2])}；內用貢獻率 ${pct(D.chanRev[0]?D.chanCm[0]/D.chanRev[0]:0,0)}`]],
    options:[
@@ -626,7 +661,7 @@ const RULES={
   const t=D.targets.pack,lvl=D.packRate>r3(t+.02)?'bad':D.packRate>t?'warn':'ok';if(lvl==='ok')return null;
   const n=D.orders[1]+D.orders[2];
   return {id:'pack',card:'delivery',level:lvl,title:`包材占營收 ${pct(D.packRate)}`,short:`包材 ${pct(D.packRate)}`,
-   metric:`包材 ÷ 營收 ${pct(D.packRate)}（目標 ≤ ${pct(t,0)}）`,ruleText:'> 目標 2 點 → 異常；> 目標 → 注意',
+   metric:`包材占營收 ${pct(D.packRate)}（目標 ≤ ${pct(t,0)}）`,why:[`包材 ${$(D.pack)} ÷ 營收 ${$(D.rev)} ＝ ${pct(D.packRate)}，${lvl==='bad'?`超過目標 ${pct(t,0)} 2 點以上 → 異常`:`超過目標 ${pct(t,0)} → 注意`}`],ruleText:'> 目標 2 點 → 異常；> 目標 → 注意',
    analysis:[['data',`外帶＋外送 ${n} 單，每單包材 ${D.P.rates.pack} 元`],['calc',`今日包材 ${$(D.pack)}，一個月約 ${$(D.pack*D.P.openDays)}`],['rule','外帶比例越高，包材越該當成一項成本管理']],
    options:[
     mkOpt('A','換規格化便當盒（每單 −1.5 元）','統一尺寸、整箱採購',r=>n*1.5*r,r=>r3((D.pack-n*1.5*r)/D.rev),['每單省 1.5 元'],['詢價統一規格便當盒','試用一週'],.9),
@@ -637,14 +672,14 @@ const RULES={
   const m=D.mem;
   if(m.type==='rep'){
    const lvl=m.rep30>=.3?'ok':m.rep30>=.25?'warn':'bad';if(lvl==='ok')return null;
-   return {id:'members',card:'members',level:lvl,title:`30 天回購率 ${pct(m.rep30,0)}`,short:`回購率 ${pct(m.rep30,0)}`,metric:`回購率 ${pct(m.rep30,0)}`,ruleText:'< 25% → 異常；25–30% → 注意',
+   return {id:'members',card:'members',level:lvl,title:`30 天回購率 ${pct(m.rep30,0)}`,short:`回購率 ${pct(m.rep30,0)}`,metric:`30 天回購率 ${pct(m.rep30,0)}`,why:[`30 天回購率 ${pct(m.rep30,0)}（${m.rep30<.25?'< 25% → 異常':'25–30% → 注意'}）`],ruleText:'< 25% → 異常；25–30% → 注意',
     analysis:[['data',`沉睡會員 ${fmt(m.dormant)} 位`]],options:[mkOpt('A','沉睡會員喚回券','券值 30 元，有效 14 天',r=>m.dormant*.08*r*(D.ticket*D.gpRate-30)/D.P.openDays,r=>r3(m.rep30+.03*r),['8% 回來消費一次'],['篩選沉睡名單','LINE 推播'],.8)],
     verify:{label:'30 天回購率',fmt:'pct0',target:.3,dir:'ge',before:m.rep30,note:''}};
   }
   if(m.type==='coverage'){
    if(m.memberShare>=.2)return null;const nonM=D.O-m.memberOrders;
    return {id:'members',card:'members',level:'warn',title:`會員單只占 ${pct(m.memberShare,0)}`,short:`會員覆蓋 ${pct(m.memberShare,0)}`,
-    metric:`會員單 ÷ 訂單 ${pct(m.memberShare,0)}（目標 ≥ 20%）`,ruleText:'會員單占比 < 20% → 注意（回購率只算得到會員）',
+    metric:`會員單占比 ${pct(m.memberShare,0)}（目標 ≥ 20%）`,why:[`會員單 ${m.memberOrders} ÷ 訂單 ${D.O} ＝ ${pct(m.memberShare,0)}（< 20% → 注意）`],ruleText:'會員單占比 < 20% → 注意（回購率只算得到會員）',
     analysis:[['data',`今日非會員單 ${nonM} 張；30 天回購率 ${pct(m.rep30,0)} 只代表少數熟客`],['rule','熟客多但沒加 LINE，漲價或公休時無法通知']],
     options:[
      mkOpt('A','結帳掃碼加 LINE 送滷蛋','每位新會員成本 4 元',r=>-nonM*.15*r*4,r=>r3(m.memberShare+.1*r),['非會員 15% 願意加入','一個月後會員單占比 +10 點'],['印製掃碼立牌','店員結帳詢問'],.8),
@@ -654,7 +689,7 @@ const RULES={
   if(m.type==='group'){
    const g=m.group;if(!g||g.inactive<3)return null;const perDay=r=>2*r*g.avgQty/5;
    return {id:'members',card:'members',level:'warn',title:`團訂客戶 ${g.inactive} 家本月未下單`,short:`團訂流失 ${g.inactive} 家`,
-    metric:`未下單團訂客戶 ${g.inactive} / ${g.accounts} 家`,ruleText:'本月未下單的團訂客戶 ≥ 3 家 → 注意',
+    metric:`團訂客戶 ${g.inactive} / ${g.accounts} 家本月未下單`,why:[`團訂客戶 ${g.accounts} 家中 ${g.inactive} 家本月未下單（≥ 3 家 → 注意）`],ruleText:'本月未下單的團訂客戶 ≥ 3 家 → 注意',
     analysis:[['data',`團訂客戶 ${g.accounts} 家，平均每次 ${g.avgQty} 個`],['calc',`每家每週一次，3 家約占每日 ${fmt(3*g.avgQty/5)} 個便當`]],
     options:[
      mkOpt('A','專人回訪＋滿 20 送湯','老闆親自打電話',r=>perDay(r)*(D.ticket*D.gpRate-5),r=>R(g.inactive-2*r),['3 家回來 2 家','送湯成本 5 元'],['列出 3 家聯絡人','電話回訪','記錄回覆'],.67),
@@ -830,23 +865,25 @@ function viewHome(){
      <div class="btns"><button class="btn sm pri" data-go="mystore">修改條件</button><button class="btn sm" id="toDemo">返回 Demo</button></div></div>`
     :`<div class="demo-tag"><span>示範餐廳：<b>${esc(D.storeName)}</b>・${esc(D.label)}・10/29（四）打烊後</span>${S.mine?'<button class="btn sm" id="toMine">看我的店</button>':''}</div>`;
   const mainCta=setup||mine?'':`<div class="main-cta"><button class="btn gold" data-go="mystore" id="mainCta">30 秒免費體驗｜換成我的店</button><span class="note">不用登入、不用留資料，選店型、拉一下數字就好</span></div>`;
-  return `${head}${topBar}${setup?setupPanel():gridBlock()}${mainCta}${setup?'':guideCard()}
-  <section class="brief" aria-label="30 秒摘要">
+  const brief=`<section class="brief" aria-label="30 秒摘要">
     <div class="row"><span class="k">今天賺多少</span><span class="v">營收 <b>${fmt(D.rev)}</b>・營業利益估 <b>${fmt(D.op)}</b></span></div>
     <div class="row"><span class="k">哪裡出問題</span><span class="v">${cs.length?esc(top)+(cs.length>2?` 等 ${cs.length} 項`:''):'今天沒有異常'}</span></div>
-    <div class="row"><span class="k">明天做什麼</span><span class="v">${esc(tomorrow)}</span></div>
-  </section>
-  <section class="sec"><div class="sec-h"><h3>需要老闆決定</h3><small>${cs.length} 張決策單・<button class="mi" data-go="cases">全部</button></small></div>
-    <div class="list">${cs.map(caseItem).join('')||'<p class="note">沒有待決策事項。</p>'}</div></section>
-  <section class="sec"><div class="sec-h"><h3>想多了解</h3><small>不急，看完再決定</small></div>
-    <div class="ctas" style="grid-template-columns:1fr">${[['report','領取經營體檢摘要','看你的店先改哪三件事'],['booking','預約專人診斷','30 分鐘，電話或視訊'],['line','加入 LINE 了解 AI 經營特助','示範帳號，本原型不會傳訊息']].map(([k,t,d])=>`<button class="item" data-cta="${k}"><span class="ic dot info"></span><span class="txt"><b>${t}</b><span>${d}</span></span><span class="go">→</span></button>`).join('')}</div></section>
-  <section class="sec"><div class="sec-h"><h3>進階功能</h3><small>第二層</small></div>
-    <div class="adv"><button data-go="timeslot">營業時段分析<small>時段自訂</small></button><button data-go="amoeba">阿米巴核算<small>時段貢獻利益</small></button><button data-go="multistore">多店管理<small>進階版規劃</small></button></div></section>
-  <footer class="foot">
+    <div class="row"><span class="k">明天做什麼</span><span class="v">${esc(tomorrow)}</span></div></section>`;
+  const decide=`<section class="sec"><div class="sec-h"><h3>需要老闆決定</h3><small>${cs.length} 張決策單・<button class="mi" data-go="cases">全部</button></small></div>
+    <div class="list">${cs.map(caseItem).join('')||'<p class="note">沒有待決策事項。</p>'}</div></section>`;
+  const learn=`<section class="sec"><div class="sec-h"><h3>想多了解</h3><small>不急，看完再決定</small></div>
+    <div class="link-list">${[['report','領取經營體檢摘要','看你的店先改哪三件事'],['booking','預約專人診斷','30 分鐘，電話或視訊'],['line','加入 LINE 了解 AI 經營特助','示範帳號，本原型不會傳訊息']].map(([k,t,d])=>`<button class="item" data-cta="${k}"><span class="ic dot info"></span><span class="txt"><b>${t}</b><span>${d}</span></span><span class="go" aria-hidden="true">›</span></button>`).join('')}</div></section>`;
+  const adv=`<section class="sec"><div class="sec-h"><h3>進階功能</h3><small>第二層</small></div>
+    <div class="adv"><button data-go="timeslot">營業時段分析<small>時段自訂</small></button><button data-go="amoeba">阿米巴核算<small>時段貢獻利益</small></button><button data-go="multistore">多店管理<small>進階版規劃</small></button></div></section>`;
+  const foot=`<footer class="foot">
     <p>MIN-003 百業 AI 員工體驗原型（${PRODUCT}・模板 ${TEMPLATE_ID}・${VER}）。所有數字為模擬資料，未連接 POS、會計或外送平台。「AI 經營特助」目前是固定規則與情境試算，<b>尚未串接 AI 模型</b>。</p>
     <div class="btns"><button class="btn sm ghost" data-go="guide">體驗導覽</button><button class="btn sm ghost" data-go="value">改善試算</button><button class="btn sm ghost" data-go="plans">服務方案</button><button class="btn sm ghost" data-go="formulas">公式與自檢</button><button class="btn sm ghost" data-go="privacy">隱私選擇</button><button class="btn sm ghost" data-go="devlog">整合測試</button><button class="btn sm ghost" id="resetBtn">重設模擬資料</button></div>
     <div id="resetConfirm" hidden class="callout"><span>要清除這台裝置上的「我的店」、決策單、待辦與表單，回到 Demo 嗎？事件紀錄與隱私選擇會保留。</span><div class="btns"><button class="btn sm pri" id="resetYes">確定重設</button><button class="btn sm" id="resetNo">取消</button></div></div>
   </footer>`;
+  if(setup)return `${head}${setupPanel()}${consentNotice()}`;
+  if(!mine)return `${head}${topBar}${gridBlock()}${mainCta}${consentNotice()}${brief}
+  <details class="more" id="moreDemo"><summary>更多 Demo 內容：決策單、進階功能、聯絡我們</summary>${decide}${learn}${adv}</details>${foot}`;
+  return `${head}${topBar}${gridBlock()}${guideCard()}${consentNotice()}${brief}${decide}${learn}${adv}${foot}`;
 }
 /* 完成第一次體驗：管理體檢成果卡與下一步 */
 function viewResult(){
@@ -1083,7 +1120,7 @@ function viewCase(id){
   const strip=guided?`<div class="guide-strip"><b>體驗導引・第 ${view+1} / 6 步：${STAGES[view]}</b><span>${GH[view]}</span></div>`:'';
   const next=(label,n)=>`<div class="btns"><button class="btn pri" data-cnext="${n}" style="${guided?'width:100%':''}">${label}</button></div>`;
   let body='';
-  if(view===0)body=`${strip}<div class="box" style="display:grid;gap:6px"><p>${TAG.rule}<b>${esc(c.metric)}</b></p><p class="note">觸發規則：${esc(c.ruleText)}</p><p class="note">資料時間：10/29 打烊後（模擬）</p></div>${st.stage===0?next('分析原因 →',1):''}`;
+  if(view===0)body=`${strip}<div class="box" style="display:grid;gap:6px"><p>${TAG.rule}<b>${esc(c.metric)}</b></p><div style="display:grid;gap:2px"><span class="note"><b>判定依據</b></span>${(c.why||[]).map(w=>`<span style="font-size:13px">・${esc(w)}</span>`).join('')}</div><p class="note">觸發規則：${esc(c.ruleText)}</p><p class="note">驗收指標：${esc(c.verify.label)}${c.verify.note?'（'+esc(c.verify.note)+'）':''}</p><p class="note">資料時間：10/29 打烊後（模擬）</p></div>${st.stage===0?next('分析原因 →',1):''}`;
   if(view===1)body=`${strip}<div class="box" style="display:grid;gap:6px">${c.analysis.map(([t,x])=>`<p style="font-size:13px">${TAG[t]}${esc(x)}</p>`).join('')}<p class="note">${TAG.ai}AI 分析：未啟用。以上原因由規則與試算整理。</p></div>${st.stage===1?next('看規則建議 →',2):''}`;
   if(view===2)body=`${strip}<p class="note">${TAG.rule}AI 經營特助（規則版）依「${esc(c.ruleText.split('→')[0].trim())}」等規則提出方案；${TAG.ai}未啟用 AI 模型。</p><div class="list">${c.options.map(o=>`<div class="opt"><div class="row"><b>${esc(o.label)}${o===rec?'<span class="rec">建議</span>':''}</b><span class="num" style="font-size:16px;font-weight:700">每月 ${monthly(o,D)>=0?'+':''}${$(monthly(o,D))}</span></div>
     <span class="note">${esc(o.desc)}</span><span class="note">${TAG.calc}預估${esc(v.label)}：${f(v.before)} → ${f(o.after(1))}（目標 ${v.dir==='ge'?'≥':'≤'} ${f(v.target)}）</span>
@@ -1264,6 +1301,7 @@ function viewFormulas(){const st=selfTest(),ok=st.filter(x=>x.pass).length;
   <section class="sec"><h3>自檢明細</h3><div class="box"><div class="tbl-wrap"><table><tbody>${st.map(x=>`<tr><td class="wrap">${esc(x.name)}</td><td>${x.pass?'<span class="up">通過</span>':'<span class="down">未通過 '+esc(x.detail)+'</span>'}</td></tr>`).join('')}</tbody></table></div></div></section>
   <section class="sec"><h3>四店型門檻與參數</h3><div class="box"><div class="tbl-wrap"><table><thead><tr><th></th>${Object.values(PRESETS).map(p=>`<th>${p.label}</th>`).join('')}</tr></thead><tbody>
   ${[['食材成本率目標',p=>pct(p.targets.food,0)],['人事成本率目標',p=>pct(p.targets.labor,0)],['外送貢獻率目標',p=>pct(p.targets.deliCm,0)],['每工時營收參考',p=>fmt(p.targets.prod)],['外送抽成',p=>pct(p.rates.commission,0)],['外送加價',p=>pct(p.rates.deliMarkup,0)],['包材／單',p=>p.rates.pack+' 元'],['電子支付占比',p=>pct(p.rates.epay,0)],['月營業日',p=>p.openDays+' 天'],['啟用規則',p=>p.rules.length+' 條']].map(([l,fn])=>`<tr><td>${l}</td>${Object.values(PRESETS).map(p=>`<td>${fn(p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div></section>`}
+function consentNotice(){if(S.consent!=null)return '';return `<section class="consent" id="consentCard" aria-label="隱私選擇"><b>隱私選擇</b>${consentText()}<div class="btns"><button class="btn sm pri" data-consent="full">同意記錄操作</button><button class="btn sm" data-consent="view">只看不記錄</button></div><span class="note">還沒選之前，你可以照常看 Demo 和操作，系統不會記錄你點了什麼。</span></section>`}
 function consentText(){return `<p style="font-size:13.5px">這是餐飲 AI 經營特助的體驗頁。為了在後續聯繫時更了解您的需求，我們想記錄您試用了哪些功能。紀錄只用於安排說明、不提供第三方、保存 12 個月。不同意也可以完整試用。</p>`}
 function viewPrivacy(){return `${header('隱私選擇','MIN-003 告知與同意')}<section class="sec"><div class="box" style="display:grid;gap:8px">${consentText()}
   <p>目前選擇：<b>${S.consent==='full'?'同意記錄操作':S.consent==='view'?'只看不記錄':'尚未選擇'}</b></p>
@@ -1304,11 +1342,10 @@ let current='home';
 function render(keep){current=route();const y=window.scrollY;
   app.innerHTML=current.startsWith('case-')?viewCase(current.slice(5)):VIEWS[current]();window.scrollTo(0,keep?y:0);
   if(current==='overview')markScen('S01');if(current==='products')markScen('S02');
-  if(S.consent==null)showConsent()}
+}
 function go(v){const tgt=v==='home'?'':'#'+v,cur=location.hash==='#'?'':location.hash;if(cur===tgt)render();else location.hash=tgt}
 window.addEventListener('hashchange',()=>{const v=route();if(v!=='home')MIN.track('open:'+v);render()});
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200)}
-function showConsent(){const sh=document.getElementById('sheet');if(!sh.hidden)return;sh.innerHTML=`<div class="in"><b>隱私選擇</b>${consentText()}<div class="btns"><button class="btn pri" data-consent="full">同意記錄操作</button><button class="btn" data-consent="view">只看不記錄</button></div></div>`;sh.hidden=false}
 function addTodo(text,from,sid){if(S.todos.some(t=>t.sid===sid&&t.text===text))return;S.todos.push({text,from,sid,ts:new Date().toISOString(),done:false});save()}
 function setCase(id,patch){S.cases[ckey(id)]={...cstate(id),...patch};save()}
 function rebuild(){S.profile=S.showing==='mine'&&S.mine?S.mine:{...DEFAULT_PROFILE};D=build(S.profile)}
@@ -1316,7 +1353,7 @@ function selectText(id){const el=document.getElementById(id);if(!el)return;const
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.consent){MIN.consent(b.dataset.consent);document.getElementById('sheet').hidden=true;toast(b.dataset.consent==='full'?'已同意記錄操作':'已選擇只看不記錄');if(current==='privacy'||current==='devlog')render(true);return}
+  if(b.dataset.consent){MIN.consent(b.dataset.consent);toast(b.dataset.consent==='full'?'已同意記錄操作':'已選擇只看不記錄');render(true);return}
   if(!app.contains(b))return;
   if(b.dataset.metric){const id=b.dataset.metric;go('formulas');setTimeout(()=>{const el=document.getElementById('m-'+id);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--gold-strong)'}},60);return}
   if(b.dataset.cta){MIN.consult('cta_'+b.dataset.cta,{from:current});go(b.dataset.cta);return}
