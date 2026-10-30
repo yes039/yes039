@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 📋 AI 員工「小單」（接案平台接單專員）：[.claude/skills/skill-xiao-dan/](.claude/skills/skill-xiao-dan/SKILL.md)
