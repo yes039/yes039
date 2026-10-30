@@ -209,11 +209,11 @@ function pill(s, x, y, w, text, fill, color) {
   {
     const s = slide("CONTENT", "产品与模式", "03 · 五大产品矩阵", "宽瑜膳元五行系列：5个SKU，均为馒头专用预拌粉");
     const prods = [
-      { n: "五黑馒头", k: "黑", fill: "2F2A27", kc: C.background1, c: "黑色", t: "五黑食材配伍\n传统“五黑”食养理念" },
-      { n: "五红馒头", k: "红", fill: "A0453A", kc: C.background1, c: "红色", t: "五红食材配伍\n传统“五红”食养理念" },
-      { n: "茯苓馒头", k: "苓", fill: "FFFFFF", kc: C.text1, c: "白色", t: "药食同源原料茯苓\n入面制作" },
-      { n: "姜黄馒头", k: "姜", fill: "D39B2E", kc: C.background1, c: "黄色", t: "姜黄入面\n天然金黄色泽" },
-      { n: "海藻馒头", k: "藻", fill: "4F6B4A", kc: C.background1, c: "绿色", t: "海藻入面\n轻食主食定位" },
+      { n: "五黑馒头", k: "黑", fill: "2F2A27", kc: C.background1, c: "黑色", f: "补肾", t: "五黑食材配伍" },
+      { n: "五红馒头", k: "红", fill: "A0453A", kc: C.background1, c: "红色", f: "补血", t: "五红食材配伍" },
+      { n: "茯苓馒头", k: "苓", fill: "FFFFFF", kc: C.text1, c: "白色", f: "祛湿", t: "茯苓入面制作" },
+      { n: "姜黄馒头", k: "姜", fill: "D39B2E", kc: C.background1, c: "黄色", f: "固肝", t: "姜黄入面制作" },
+      { n: "海藻馒头", k: "藻", fill: "4F6B4A", kc: C.background1, c: "绿色", f: "减重 · 减脂", t: "海藻入面制作" },
     ];
     const cw = 2.26, gap = 0.2;
     prods.forEach((p, i) => {
@@ -224,12 +224,13 @@ function pill(s, x, y, w, text, fill, color) {
       txt(s, p.k, { x: x + 0.58, y: 2.05, w: 1.1, h: 1.1, align: "center", valign: "middle", fontSize: 32, bold: true, color: p.kc });
       txt(s, p.n, { x: x + 0.1, y: 3.35, w: cw - 0.2, h: 0.5, fontSize: 20, bold: true, align: "center" });
       txt(s, p.c, { x: x + 0.1, y: 3.85, w: cw - 0.2, h: 0.35, fontSize: 12, bold: true, align: "center", color: C.accent1 });
-      txt(s, p.t, { x: x + 0.15, y: 4.35, w: cw - 0.3, h: 0.8, fontSize: 12, align: "center", color: C.text2 });
+      txt(s, [{ text: "功能方向", options: { fontSize: 11, color: C.text2, breakLine: true } }, { text: p.f, options: { fontSize: 16, bold: true, color: C.accent5, breakLine: true } }, { text: p.t, options: { fontSize: 11, color: C.text2 } }],
+        { x: x + 0.15, y: 4.25, w: cw - 0.3, h: 1.0, align: "center" });
       s.addShape(pres.shapes.LINE, { x: x + 0.3, y: 5.35, w: cw - 0.6, h: 0, line: { color: HEX.accent4, width: 0.75 } });
       txt(s, "馒头专用 · 25kg/包", { x: x + 0.1, y: 5.5, w: cw - 0.2, h: 0.4, fontSize: 12, align: "center", color: C.text1 });
     });
-    note(s, "注：产品为普通食品，对外不作预防、治疗疾病或保健功能声称；各SKU功能方向表述须经食品合规审核后方可使用；配方组成以陈博士最终确认为准。", 6.5);
-    s.addNotes("宽瑜膳元五行系列5个SKU：五黑馒头、五红馒头、茯苓馒头、姜黄馒头、海藻馒头，均为馒头专用预拌粉，25公斤/包。产品属普通食品，卡片文字为合规表述；各SKU的五行功能方向须经食品合规审核后再决定对外说法。茯苓、姜黄是否在适用的药食同源目录及使用范围内，须合规确认。");
+    note(s, "注：功能方向为提案方研发定位；对外宣传、标签及广告用语须经食品合规审核后方可使用（普通食品不得声称疾病预防、治疗或保健功能）；配方以陈博士确认为准。", 6.5);
+    s.addNotes("宽瑜膳元五行系列5个SKU及功能方向：五黑馒头（黑色，补肾）、五红馒头（红色，补血）、茯苓馒头（白色，祛湿）、姜黄馒头（黄色，固肝）、海藻馒头（绿色，减重减脂），均为馒头专用预拌粉，25公斤/包。功能方向为提案方研发定位，对外宣传、标签与广告用语须经食品合规审核。茯苓、姜黄是否在适用的药食同源目录及使用范围内，须合规确认。");
   }
 
   // ===== P05 产品生产流程 =====
