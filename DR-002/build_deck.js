@@ -207,29 +207,29 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P04 五大产品矩阵 =====
   {
-    const s = slide("CONTENT", "产品与模式", "03 · 五大产品矩阵", "宽瑜膳元五行功能配方：五款馒头专用预拌粉");
+    const s = slide("CONTENT", "产品与模式", "03 · 五大产品矩阵", "宽瑜膳元五行系列：5个SKU，均为馒头专用预拌粉");
     const prods = [
-      { n: "五黑", k: "黑", t: "五黑食材配伍" },
-      { n: "五红", k: "红", t: "五红食材配伍" },
-      { n: "茯苓山药", k: "苓", t: "茯苓、山药配伍" },
-      { n: "姜黄", k: "姜", t: "姜黄配伍" },
-      { n: "海藻", k: "藻", t: "海藻配伍" },
+      { n: "五黑馒头", k: "黑", fill: "2F2A27", kc: C.background1, c: "黑色", t: "五黑食材配伍\n传统“五黑”食养理念" },
+      { n: "五红馒头", k: "红", fill: "A0453A", kc: C.background1, c: "红色", t: "五红食材配伍\n传统“五红”食养理念" },
+      { n: "茯苓馒头", k: "苓", fill: "E6DCC6", kc: C.text1, c: "色系待确认", t: "药食同源原料茯苓\n入面制作" },
+      { n: "姜黄馒头", k: "姜", fill: "D39B2E", kc: C.background1, c: "黄色", t: "姜黄入面\n天然金黄色泽" },
+      { n: "海藻馒头", k: "藻", fill: "4F6B4A", kc: C.background1, c: "绿色", t: "海藻入面\n轻食主食定位" },
     ];
     const cw = 2.26, gap = 0.2;
     prods.forEach((p, i) => {
       const x = 0.6 + i * (cw + gap);
       card(s, x, 1.75, cw, 4.55, { name: "product-" + p.n });
-      s.addShape(pres.shapes.OVAL, { x: x + 0.53, y: 2.05, w: 1.2, h: 1.2, fill: { color: C.accent4 }, line: { color: HEX.accent2, width: 1.5 } });
-      txt(s, p.k, { x: x + 0.53, y: 2.05, w: 1.2, h: 1.2, align: "center", valign: "middle", fontSize: 36, bold: true, color: C.accent1 });
-      txt(s, p.n, { x: x + 0.1, y: 3.45, w: cw - 0.2, h: 0.5, fontSize: 20, bold: true, align: "center" });
-      txt(s, p.t, { x: x + 0.1, y: 3.95, w: cw - 0.2, h: 0.35, fontSize: 12, bold: true, align: "center", color: C.accent1 });
-      txt(s, [{ text: "功能定位", options: { bold: true, breakLine: true } }, { text: "［待陈博士确认］", options: { color: C.accent5 } }],
-        { x: x + 0.15, y: 4.45, w: cw - 0.3, h: 0.7, fontSize: 12, align: "center", color: C.text2 });
+      badge(s, x + 0.25, 1.95, 0.42, "0" + (i + 1), C.accent4, C.text1, 11);
+      s.addShape(pres.shapes.OVAL, { x: x + 0.58, y: 2.05, w: 1.1, h: 1.1, fill: { color: p.fill }, line: { color: HEX.accent2, width: 1.5 } });
+      txt(s, p.k, { x: x + 0.58, y: 2.05, w: 1.1, h: 1.1, align: "center", valign: "middle", fontSize: 32, bold: true, color: p.kc });
+      txt(s, p.n, { x: x + 0.1, y: 3.35, w: cw - 0.2, h: 0.5, fontSize: 20, bold: true, align: "center" });
+      txt(s, p.c, { x: x + 0.1, y: 3.85, w: cw - 0.2, h: 0.35, fontSize: 12, bold: true, align: "center", color: C.accent1 });
+      txt(s, p.t, { x: x + 0.15, y: 4.35, w: cw - 0.3, h: 0.8, fontSize: 12, align: "center", color: C.text2 });
       s.addShape(pres.shapes.LINE, { x: x + 0.3, y: 5.35, w: cw - 0.6, h: 0, line: { color: HEX.accent4, width: 0.75 } });
       txt(s, "馒头专用 · 25kg/包", { x: x + 0.1, y: 5.5, w: cw - 0.2, h: 0.4, fontSize: 12, align: "center", color: C.text1 });
     });
-    note(s, "注：五行为配方功能体系，非颜色分类；功能对外表述须符合普通食品法规，不得声称预防、治疗疾病或保健功能；配方组成以陈博士最终确认为准。", 6.5);
-    s.addNotes("宽瑜膳元五行功能配方：五黑、五红、茯苓山药、姜黄、海藻，均为馒头专用预拌粉，25公斤/包。五行指配方功能体系，不是颜色。各款功能定位待陈博士确认，对外表述须符合普通食品法规，不作疾病预防、治疗或保健功能声称。茯苓、山药、姜黄是否在适用的药食同源目录及使用范围内，须合规确认。");
+    note(s, "注：产品为普通食品，对外不作预防、治疗疾病或保健功能声称；各SKU功能方向表述须经食品合规审核后方可使用；配方组成以陈博士最终确认为准。", 6.5);
+    s.addNotes("宽瑜膳元五行系列5个SKU：五黑馒头、五红馒头、茯苓馒头、姜黄馒头、海藻馒头，均为馒头专用预拌粉，25公斤/包。产品属普通食品，卡片文字为合规表述；各SKU的五行功能方向须经食品合规审核后再决定对外说法。茯苓、姜黄是否在适用的药食同源目录及使用范围内，须合规确认。");
   }
 
   // ===== P05 产品生产流程 =====
