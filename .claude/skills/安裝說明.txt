@@ -1,0 +1,64 @@
+AI 數字員工技能包（學員版）2026-10-14
+
+共 46 位員工，每個資料夾就是一位員工。
+
+【安裝】
+把要用的員工資料夾整個放進 ~/.claude/skills/ 底下，重開 Claude 就會出現。叫員工的名字就會上工，例如打「小曆」。
+
+【出廠前已處理】
+1. 原作者的信箱、LINE 帳號、官網、社群帳號、廣告帳號編號、雲端代號、客戶姓名全部清除，改成「你的〇〇」。
+2. 「老闆」指的就是你本人；對外文件掛的是你自己的品牌。
+3. 不含任何金鑰或權杖，各工具要用的金鑰請自己申請、自己設定。
+
+【用之前要知道】
+1. 有些員工要接你自己的帳號才能動：小曆（你的 Google 日曆）、小客（你的 LINE 官方帳號與主機）、小廣與小群（你的臉書粉專權杖）、小搜（你的官網）。
+2. 說明裡看到「某客戶」「某講師」，是原作者的實戰案例，當成參考就好。
+3. 小貨的動畫工具第一次用前，到 skill-xiao-huo/scripts/motion 資料夾執行：npm install
+
+【名單】
+skill-xiao-an　小安
+skill-xiao-bao　小爆
+skill-xiao-bian　小辯
+skill-xiao-bu　小簿
+skill-xiao-cha　小察
+skill-xiao-cun　小村
+skill-xiao-dan　小單
+skill-xiao-ding　小定
+skill-xiao-fang　小房
+skill-xiao-fen　小分
+skill-xiao-gou　小構
+skill-xiao-gu　小顧
+skill-xiao-guang　小廣
+skill-xiao-huo　小貨
+skill-xiao-jian　小健
+skill-xiao-jiang　小講
+skill-xiao-jie　小潔
+skill-xiao-ju　小劇
+skill-xiao-ke　小客
+skill-xiao-kong　小空
+skill-xiao-li　小曆
+skill-xiao-mei　小美
+skill-xiao-mi　小泌
+skill-xiao-ping　小評
+skill-xiao-qiang　小強
+skill-xiao-qu　小曲
+skill-xiao-qun　小群
+skill-xiao-she　小社
+skill-xiao-shu　小書
+skill-xiao-sou　小搜
+skill-xiao-tie　小鐵
+skill-xiao-wa　小挖
+skill-xiao-wang　小網
+skill-xiao-wei　小維
+skill-xiao-wen　小文
+skill-xiao-wu　小屋
+skill-xiao-xi　小析
+skill-xiao-xie　小械
+skill-xiao-yi　小譯
+skill-xiao-yin　小音
+skill-xiao-yun　小運
+skill-xiao-zeng　小增
+skill-xiao-zhang　小帳
+skill-xiao-zhao　小招
+skill-xiao-zhi　小織
+skill-xiao-zi　小紫

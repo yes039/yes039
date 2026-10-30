@@ -1,0 +1,85 @@
+{
+  "_說明": "小曲 模式二（純配樂商品帶貨片）設定檔範例＝2026-10-05 保溫杯示範案。複製一份改成你的案子，路徑相對於這個 json 所在資料夾。提示詞只寫想看到的東西，不寫「不要什麼」。 logo 填圖檔路徑才會在右上角加標誌；客戶片放客戶的標誌，你的公司自家片放 templates/你的公司標誌_白.png。",
+  "product_image": "原圖.png",
+  "product_desc": "five insulated bottles (cream white, sage green, sky blue, pastel pink, matte black) with rounded caps and a small oval push-button on the front of each cap",
+  "upscale_ratio": "16:9",
+  "out_name": "保溫杯_情境帶貨",
+  "tag": "示範影片｜AI 生成",
+  "logo": "",
+  "scenes": [
+    {
+      "name": "1_通勤",
+      "prompt": "A sky blue insulated bottle standing in the side pocket of a beige canvas tote bag carried on a shoulder, warm morning sunlight, background is a smooth creamy bokeh of soft golden lights and blurred commuters, lifestyle product photography, 9:16 vertical, natural warm tones, very shallow depth of field."
+    },
+    {
+      "name": "2_辦公桌",
+      "prompt": "A sage green insulated bottle on a light oak desk next to a laptop and a small potted plant, soft window light from the left, clean minimal workspace, lifestyle product photography, 9:16 vertical, calm muted palette."
+    },
+    {
+      "name": "3_五色平拍",
+      "prompt": "All five bottles (cream white, sage green, sky blue, pastel pink, matte black) lying side by side diagonally on a soft pastel linen backdrop, top-down flat lay, even soft studio light, gentle shadows, 9:16 vertical."
+    },
+    {
+      "name": "4_開蓋特寫",
+      "prompt": "Keeping the exact same cap shape with the small oval button on the front of the cap. Close-up of a hand holding a pastel pink insulated bottle, the thumb resting on the oval button of the closed cap, bright clean soft white background, crisp focus on the cap and button, product macro photography, 9:16 vertical."
+    }
+  ],
+  "shots": [
+    {
+      "name": "1_開場",
+      "image": "情境圖/3_五色平拍.png",
+      "prompt": "Slow overhead camera push-in over five colorful insulated bottles lying on linen, soft light shifting gently, calm and premium mood, the bottles stay perfectly still.",
+      "ss": 0,
+      "dur": 4.0,
+      "big": "五個顏色",
+      "small": "你是哪一色？"
+    },
+    {
+      "name": "2_開蓋",
+      "image": "情境圖/4_開蓋特寫.png",
+      "prompt": "The thumb presses the oval button and the cap flips open upward on its hinge in one smooth motion, steady close-up camera, crisp focus on the cap.",
+      "ss": 0.9,
+      "dur": 5.0,
+      "big": "一按就開",
+      "small": "單手就能喝"
+    },
+    {
+      "name": "3_通勤",
+      "image": "情境圖/1_通勤.png",
+      "prompt": "The person walks forward slowly, the blue bottle stays upright in the tote bag side pocket, gentle handheld tracking camera, warm morning light and soft bokeh drifting in the background.",
+      "ss": 0,
+      "dur": 4.5,
+      "big": "細長杯身",
+      "small": "包包側袋剛剛好"
+    },
+    {
+      "name": "4_辦公",
+      "image": "情境圖/2_辦公桌.png",
+      "prompt": "A hand reaches in from the right and picks up the green bottle from the desk, slow natural motion, soft window light, steady camera.",
+      "ss": 0,
+      "dur": 4.5,
+      "big": "放在桌上",
+      "small": "也是一道風景"
+    },
+    {
+      "name": "5_收尾",
+      "image": "高解析商品圖.png",
+      "prompt": "Gentle slow camera dolly along five bottles standing in a row on a clean white surface, soft studio light, smooth and premium, the bottles stay perfectly still.",
+      "ss": 0,
+      "dur": 4.5,
+      "big": "五色任選",
+      "small": "留言告訴我你選哪一色",
+      "end_line": "奶油白｜霧松綠｜晴空藍｜櫻花粉｜曜石黑"
+    }
+  ],
+  "music": [
+    {
+      "name": "A_清新原聲",
+      "prompt": "Bright, fresh lifestyle product commercial music. Upbeat acoustic guitar strums, light ukulele, soft hand claps, glockenspiel sparkles, gentle bass, 112 BPM, cheerful morning-commute feeling. Short intro sparkle, clear groove from the start, warm resolved ending on the final bar."
+    },
+    {
+      "name": "B_輕電子",
+      "prompt": "Modern minimal lifestyle commercial music, soft pluck synths, airy pads, crisp light percussion, snappy finger snaps, warm sub bass, 110 BPM, clean pastel aesthetic, confident and cheerful. Gentle build in the first two seconds, steady groove, neat ending on the last beat."
+    }
+  ]
+}
