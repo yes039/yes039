@@ -141,7 +141,7 @@ function pill(s, x, y, w, text, fill, color) {
       { text: "提案方：宽瑜膳元　　2026年10月" },
     ], { x: 0.9, y: 5.45, w: 8, h: 0.75, fontSize: 14, color: C.accent4, paraSpaceAfter: 4 });
     txt(s, "合作讨论稿 · 不构成任何一方承诺", { x: 8.9, y: 5.45, w: 3.5, h: 0.35, fontSize: 11, color: C.accent2, align: "right" });
-    s.addNotes("封面。本简报为合作提案讨论稿，所有合作关系、收益模式与价格均待双方议定，不代表任何一方已作出承诺。");
+    s.addNotes("封面。本简报为合作提案讨论稿，合作方式为委托代工，具体条款与价格均待双方议定，不代表任何一方已作出承诺。");
   }
 
   // ===== P02 合作机会 =====
@@ -178,7 +178,7 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P03 双方资源互补 =====
   {
-    const s = slide("CONTENT", "合作基础", "02 · 双方资源互补", "中粮海嘉面粉 × 陈博士配方，合作开发五行预拌粉");
+    const s = slide("CONTENT", "合作基础", "02 · 双方资源互补", "陈博士配方 × 中粮海嘉面粉，委托代工生产五行预拌粉");
     const cols = [
       { x: 0.6, head: "中粮海嘉", sub: "面粉及相关产业资源", ic: I.warehouse,
         items: ["优质面粉原料供应", "生产与品控体系衔接", "仓储物流与供应链网络", "相关产业资源（范围待确认）"] },
@@ -199,10 +199,10 @@ function pill(s, x, y, w, text, fill, color) {
     // center
     iconCircle(s, I.hand, 6.06, 2.95, 1.2, C.background1);
     txt(s, "合作开发\n五行预拌粉", { x: 5.73, y: 4.15, w: 1.87, h: 0.6, fontSize: 13, bold: true, align: "center", color: C.accent3 });
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.73, y: 4.75, w: 1.87, h: 0.75, rectRadius: 0.08, fill: { color: C.accent5 }, line: { type: "none" } });
-    txt(s, "合作关系\n尚待议定", { x: 5.73, y: 4.75, w: 1.87, h: 0.75, fontSize: 12, bold: true, align: "center", valign: "middle", color: C.background1 });
-    note(s, "注：双方尚未签署任何合作协议；中粮海嘉相关资源的具体范围以集团正式确认为准；五行特色粉体由谁生产尚待议定。");
-    s.addNotes("双方资源互补：中粮海嘉提供面粉及相关产业资源，陈博士提供五行特色粉体配方，双方合作开发五行预拌粉。五行特色粉体由谁生产尚待议定。必须强调：合作关系尚待议定，未正式签约。");
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.73, y: 4.75, w: 1.87, h: 0.75, rectRadius: 0.08, fill: { color: C.accent1 }, line: { type: "none" } });
+    txt(s, "合作关系\n委托代工", { x: 5.73, y: 4.75, w: 1.87, h: 0.75, fontSize: 12, bold: true, align: "center", valign: "middle", color: C.background1 });
+    note(s, "注：委托代工协议尚未签署；中粮海嘉相关资源的具体范围以集团正式确认为准；五行特色粉体由谁生产尚待议定。");
+    s.addNotes("双方资源互补：中粮海嘉提供面粉及相关产业资源，陈博士提供五行特色粉体配方，合作关系为陈博士委托中粮海嘉代工生产五行预拌粉。委托代工协议尚未签署；五行特色粉体由谁生产尚待议定。");
   }
 
   // ===== P04 五大产品矩阵 =====
@@ -290,7 +290,7 @@ function pill(s, x, y, w, text, fill, color) {
     card(s, 0.6, 1.55, 4.55, 0.55, { fill: C.accent4, noShadow: true });
     txt(s, [
       { text: "上游：", options: { bold: true, color: C.accent1 } },
-      { text: "中粮海嘉面粉 + 陈博士配方，合作开发" },
+      { text: "陈博士配方，委托中粮海嘉代工" },
     ], { x: 0.8, y: 1.55, w: 4.3, h: 0.55, valign: "middle", fontSize: 14 });
     // B2B bracket over nodes 2-3, downstream over 4-5
     pill(s, 0.6 + (nw + ng), 2.2, 2 * nw + ng, "B2B 直接销售对象", C.accent1, C.background1);
@@ -334,41 +334,9 @@ function pill(s, x, y, w, text, fill, color) {
     s.addNotes("四家候选代工厂试点：打样→试产→试吃→成本确认→首批订单→重复采购。不得宣称已有正式采购合约。");
   }
 
-  // ===== P09 三种合作收益模式 =====
-  {
-    const s = slide("CONTENT", "收益与财务", "07 · 三种合作收益模式", "三种合作收益模式并列，供双方比较议定");
-    const heads = [
-      ["A", "特色粉体供货合作", C.accent1, C.background1],
-      ["B", "委托代工合作", C.accent1, C.background1],
-      ["C", "共同经营利润分配", C.accent1, C.background1],
-    ];
-    const lw = 2.1, cw = 3.33;
-    heads.forEach((h, i) => {
-      const x = 0.6 + lw + i * cw;
-      s.addShape(pres.shapes.RECTANGLE, { x: x + 0.04, y: 1.7, w: cw - 0.08, h: 0.8, fill: { color: h[2] }, line: { type: "none" } });
-      badge(s, x + 0.2, 1.84, 0.52, h[0], C.background1, C.text1, 18);
-      txt(s, h[1], { x: x + 0.85, y: 1.7, w: cw - 0.95, h: 0.8, valign: "middle", fontSize: 16, bold: true, color: h[3] });
-    });
-    const L = (t) => ({ text: t, options: { bold: true, color: C.accent3, fontSize: 13, valign: "middle", fill: { color: C.accent4 } } });
-    const V = (t) => ({ text: t, options: { color: C.text1, fontSize: 13, valign: "middle" } });
-    const rows = [
-      [L("合作方式"), V("按约定供应五行特色粉体，用于预拌粉生产"), V("陈博士委托海嘉代工生产五行预拌粉，无授权费"), V("双方共同经营五行预拌粉，按约定分配利润")],
-      [L("收益来源"), V("粉体供货收入"), V("代工加工费"), V("共同经营利润分成")],
-      [L("双方投入"), V("低 — 中"), V("中"), V("高")],
-      [L("管理复杂度"), V("低：供销关系清晰"), V("中：须质量与配方保密约定"), V("高：须共管机制")],
-      [L("待议定要点"), V("粉体生产方、供货价格与数量"), V("代工费、起订量与交付标准"), V("出资、共管机制与分配比例")],
-    ];
-    s.addTable(rows, {
-      x: 0.6, y: 2.6, w: lw + 3 * cw, colW: [lw, cw, cw, cw], rowH: [0.82, 0.62, 0.62, 0.62, 0.62],
-      fill: { color: C.background1 }, border: { type: "solid", pt: 0.75, color: HEX.accent4 }, margin: [0, 0.15, 0, 0.15],
-    });
-    note(s, "注：三案并列、无先后与推荐顺序，均未获双方同意；五行特色粉体由谁生产尚待议定；具体条款须经双方正式谈判确定。", 6.45);
-    s.addNotes("三种合作收益模式并列：A供货、B委托代工（无授权费）、C共同经营。不预设任何一案已获双方同意，也不作推荐。五行特色粉体生产方尚待议定。");
-  }
-
   // ===== P10 第一年30吨销售计划 =====
   {
-    const s = slide("CONTENT", "收益与财务", "08 · 第一年销售计划", "第一年目标：30吨五行预拌粉成品，合1,200包");
+    const s = slide("CONTENT", "收益与财务", "07 · 第一年销售计划", "第一年目标：30吨五行预拌粉成品，合1,200包");
     s.addChart(pres.charts.BAR, [{ name: "季度销量（吨）", labels: ["Q1", "Q2", "Q3", "Q4（暂定）"], values: [5, 5, 10, 10] }], {
       x: 0.6, y: 1.7, w: 7.6, h: 4.7, barDir: "col", barGapWidthPct: 70,
       chartColors: [HEX.accent1],
@@ -406,7 +374,7 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P11 财务与获利逻辑 =====
   {
-    const s = slide("CONTENT", "收益与财务", "09 · 财务与获利逻辑", "获利结构已明确，价格与利润待正式报价后测算");
+    const s = slide("CONTENT", "收益与财务", "08 · 财务与获利逻辑", "获利结构已明确，价格与利润待正式报价后测算");
     const eq = [
       { k: "营收", f: "销量（吨）× 出厂单价（元 / 吨）", v: "30吨五行预拌粉成品 ×［待报价］" },
       { k: "成本", f: "面粉 + 特色粉体 + 辅料 + 混配加工 + 包装 + 检验 + 物流", v: "各项单价［待报价］" },
@@ -420,29 +388,29 @@ function pill(s, x, y, w, text, fill, color) {
       txt(s, e.v, { x: 1.65, y: y + 0.57, w: 6.2, h: 0.35, fontSize: 12, color: C.accent5 });
     });
     card(s, 8.4, 1.75, 4.3, 3.36, { fill: C.text1 });
-    txt(s, "三种模式的收益计算", { x: 8.65, y: 1.95, w: 3.9, h: 0.4, fontSize: 16, bold: true, color: C.accent2 });
+    txt(s, "委托代工下的双方收益", { x: 8.65, y: 1.95, w: 3.9, h: 0.4, fontSize: 16, bold: true, color: C.accent2 });
     const md = [
-      ["A", "粉体供货量 × 粉体单价"],
-      ["B", "代工量（吨）× 代工加工费"],
-      ["C", "共同经营净利 × 约定分配比例"],
+      ["中粮海嘉", "代工量（吨）× 代工加工费"],
+      ["宽瑜膳元", "预拌粉营收 − 成本（含代工费）"],
     ];
     md.forEach((m, i) => {
-      const y = 2.55 + i * 0.82;
-      badge(s, 8.65, y, 0.5, m[0], C.accent2, C.text1, 14);
-      txt(s, m[1], { x: 9.3, y, w: 3.25, h: 0.5, valign: "middle", fontSize: 13, color: C.background1 });
+      const y = 2.55 + i * 0.95;
+      txt(s, m[0], { x: 8.65, y, w: 3.9, h: 0.35, fontSize: 13, bold: true, color: C.accent2 });
+      txt(s, m[1], { x: 8.65, y: y + 0.35, w: 3.9, h: 0.4, fontSize: 14, color: C.background1 });
     });
+    txt(s, "面粉计价方式与代工费标准待议定", { x: 8.65, y: 4.5, w: 3.9, h: 0.35, fontSize: 11, color: C.accent4 });
     card(s, 0.6, 5.4, 12.1, 1.0, { fill: C.accent4, noShadow: true });
     s.addImage({ data: I.chart, x: 0.85, y: 5.65, w: 0.5, h: 0.5 });
     txt(s, [
       { text: "测算前置条件：", options: { bold: true, color: C.accent5 } },
       { text: "取得面粉、特色粉体、代工加工及物流的正式报价后，方可计算单价、毛利率与投资回报；本简报不预估任何价格或利润。" },
     ], { x: 1.55, y: 5.4, w: 11.0, h: 1.0, valign: "middle", fontSize: 13 });
-    s.addNotes("财务结构：营收=销量×单价；成本=面粉+特色粉体+辅料+加工+包装+检验+物流；毛利=营收−成本。三种模式的收益算法各不相同。未取得正式报价前，不编造价格、ROI或利润。");
+    s.addNotes("财务结构：营收=销量×单价；成本=面粉+特色粉体+辅料+加工+包装+检验+物流；毛利=营收−成本。委托代工下，中粮海嘉收益为代工加工费，宽瑜膳元收益为预拌粉毛利。未取得正式报价前，不编造价格、ROI或利润。");
   }
 
   // ===== P12 90天合作验证计划 =====
   {
-    const s = slide("CONTENT", "行动计划", "10 · 90天合作验证计划", "90天，用五项验证回答“能不能做、值不值得做”");
+    const s = slide("CONTENT", "行动计划", "09 · 90天合作验证计划", "90天，用五项验证回答“能不能做、值不值得做”");
     const gx = 3.4, gw = 9.3, day = gw / 90;
     // phase header
     [["第1–30天", "研发与合规"], ["第31–60天", "试产与试吃"], ["第61–90天", "渠道与订单"]].forEach((p, i) => {
@@ -477,7 +445,7 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P13 未来产业扩张 =====
   {
-    const s = slide("CONTENT", "行动计划", "11 · 未来产业扩张", "福建验证成功后，区域复制与品类延伸双线推进");
+    const s = slide("CONTENT", "行动计划", "10 · 未来产业扩张", "福建验证成功后，区域复制与品类延伸双线推进");
     txt(s, "区域复制", { x: 0.6, y: 1.7, w: 6, h: 0.4, fontSize: 18, bold: true, color: C.accent1 });
     // hub
     s.addShape(pres.shapes.OVAL, { x: 0.7, y: 2.9, w: 2.2, h: 2.2, fill: { color: C.text1 }, line: { type: "none" } });
@@ -511,12 +479,12 @@ function pill(s, x, y, w, text, fill, color) {
 
   // ===== P14 合作邀请与决策 =====
   {
-    const s = slide("CLOSING_DARK", "行动计划", "12 · 合作邀请与决策", "恳请集团作出五项决策，启动90天验证");
+    const s = slide("CLOSING_DARK", "行动计划", "11 · 合作邀请与决策", "恳请集团作出五项决策，启动90天验证");
     const ds = [
       ["评估合作意愿", "确认是否推进合作洽谈"],
       ["指定对接窗口", "明确集团对接部门与负责人"],
       ["确认试产资源", "面粉供应与试产支持范围"],
-      ["选择收益模式", "在 A / B / C 中择定方向"],
+      ["确认委托代工", "确认代工条件与报价"],
       ["启动90天验证", "确认启动日期与里程碑"],
     ];
     const dw = 2.3, dg = 0.15;
@@ -527,12 +495,12 @@ function pill(s, x, y, w, text, fill, color) {
       txt(s, d[0], { x: x + 0.25, y: 2.9, w: dw - 0.4, h: 0.5, fontSize: 18, bold: true, color: C.background1 });
       txt(s, d[1], { x: x + 0.25, y: 3.45, w: dw - 0.4, h: 0.8, fontSize: 13, color: C.accent4 });
     });
-    txt(s, [{ text: "待议定事项：", options: { bold: true, color: C.accent2 } }, { text: "合作关系与协议形式　·　五行特色粉体生产方　·　收益模式及具体条款" }],
+    txt(s, [{ text: "待议定事项：", options: { bold: true, color: C.accent2 } }, { text: "委托代工协议条款　·　五行特色粉体生产方　·　代工报价" }],
       { x: 0.6, y: 4.6, w: 12.1, h: 0.4, fontSize: 14, color: C.background1 });
     s.addImage({ data: I.wheatGold, x: 0.6, y: 5.35, w: 0.7, h: 0.7 });
     txt(s, "以五行配方赋能优质面粉，\n共建特色主食产业新生态。", { x: 1.55, y: 5.15, w: 11, h: 1.15, fontSize: 30, bold: true, color: C.accent2, valign: "middle" });
     txt(s, "本简报为合作提案讨论稿，所有合作条件以双方正式签署之协议为准。", { x: 0.6, y: 6.6, w: 10, h: 0.3, fontSize: 10, color: C.accent4, italic: true });
-    s.addNotes("决策请求：评估合作意愿、指定对接窗口、确认试产资源、选择合作收益模式、启动90天验证。结尾主张：以五行配方赋能优质面粉，共建特色主食产业新生态。");
+    s.addNotes("决策请求：评估合作意愿、指定对接窗口、确认试产资源、确认委托代工条件、启动90天验证。结尾主张：以五行配方赋能优质面粉，共建特色主食产业新生态。");
   }
 
   // ===== 附件 终端渠道资源明细 =====
