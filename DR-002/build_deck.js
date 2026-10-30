@@ -298,7 +298,7 @@ function pill(s, x, y, w, text, fill, color) {
     // value flow
     s.addShape(pres.shapes.LEFT_ARROW, { x: 0.6, y: 5.7, w: 12.1, h: 0.5, fill: { color: C.accent4 }, line: { type: "none" } });
     txt(s, "订单与回款逐级回流 · 终端复购拉动预拌粉持续采购", { x: 1.2, y: 5.7, w: 11, h: 0.5, align: "center", valign: "middle", fontSize: 13, bold: true, color: C.accent3 });
-    s.addNotes("产业链：预拌粉供应→原料经销商→馒头生产厂→终端渠道→消费者。B2B直接销售对象为原料经销商及馒头生产厂；福建3,719个据点属于潜在终端渠道资源，尚未去重及确认进场，不是直接客户。");
+    s.addNotes("产业链：预拌粉供应→原料经销商→馒头生产厂→终端渠道→消费者。B2B直接销售对象为原料经销商及馒头生产厂；附件所列3,592家门店属于潜在终端渠道资源，尚未去重及确认进场，不是直接客户。");
   }
 
   // ===== P08 四家候选代工厂试点 =====
@@ -539,8 +539,8 @@ function pill(s, x, y, w, text, fill, color) {
     const s = slide("CONTENT", "附件", "附件 · 终端渠道资源", "附件：潜在终端渠道资源明细（合作伙伴提供）");
     card(s, 0.6, 1.75, 3.3, 4.5, { fill: C.text1 });
     iconCircle(s, I.pin, 0.9, 2.0, 0.65, C.accent3);
-    txt(s, "3,719", { x: 0.9, y: 2.75, w: 2.9, h: 0.95, fontSize: 60, bold: true, color: C.accent2 });
-    txt(s, "原资料合计\n潜在终端渠道据点", { x: 0.9, y: 3.7, w: 2.9, h: 0.65, fontSize: 14, color: C.background1 });
+    txt(s, "3,592", { x: 0.9, y: 2.75, w: 2.9, h: 0.95, fontSize: 60, bold: true, color: C.accent2 });
+    txt(s, "家潜在终端门店\n七类渠道合计", { x: 0.9, y: 3.7, w: 2.9, h: 0.65, fontSize: 14, color: C.background1 });
     ["合作伙伴提供", "尚未去重", "尚未确认进场"].forEach((t, i) => pill(s, 0.9, 4.5 + i * 0.45, 2.0, t, C.accent5, C.background1));
     txt(s, "数据口径以合作伙伴原始清单为准", { x: 0.9, y: 5.85, w: 2.9, h: 0.3, fontSize: 10, color: C.accent4 });
     const hdr = { bold: true, color: C.background1, fill: { color: C.accent1 }, fontSize: 12, valign: "middle" };
@@ -557,7 +557,7 @@ function pill(s, x, y, w, text, fill, color) {
     ];
     const rows = [[{ text: "渠道类型", options: hdr }, { text: "主要客户（店数）", options: hdr }, { text: "小计（家）", options: Object.assign({}, hdr, { align: "right" }) }]]
       .concat(data.map((r) => [cell(r[0], { bold: true, fontSize: 12 }), cell(r[1]), num(r[2])]))
-      .concat([[cell("合计", { bold: true, fontSize: 12, fill: { color: C.accent4 } }), cell("各类小计合计；原资料合计为 3,719，相差 127，待核对", { color: C.accent5, fill: { color: C.accent4 } }), num("3,592", { fill: { color: C.accent4 } })]]);
+      .concat([[cell("合计", { bold: true, fontSize: 12, fill: { color: C.accent4 } }), cell("七类渠道小计合计", { color: C.text1, fill: { color: C.accent4 } }), num("3,592", { fill: { color: C.accent4 } })]]);
     s.addTable(rows, {
       x: 4.2, y: 1.75, w: 8.5, colW: [1.4, 5.9, 1.2], rowH: [0.38, 0.7, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42],
       fill: { color: C.background1 }, border: { type: "solid", pt: 0.75, color: HEX.accent4 },
@@ -565,8 +565,8 @@ function pill(s, x, y, w, text, fill, color) {
     });
     txt(s, [{ text: "客户定位：", options: { bold: true, color: C.accent5 } }, { text: "以上为馒头产品潜在终端渠道，非预拌粉直接客户；B2B 直接客户为原料经销商及馒头生产厂。" }],
       { x: 4.2, y: 5.9, w: 8.5, h: 0.35, fontSize: 11 });
-    note(s, "注：小计依原表；便利连锁明细合计 3,055（含罗森广东 300，非福建），与小计 2,980 不符；中专大学明细合计 34，与小计 35 不符。以上均待合作伙伴核对，未去重、未确认进场。", 6.4);
-    s.addNotes("附件为合作伙伴提供的潜在终端渠道清单，含便利连锁、卖场、生鲜连锁、精品店、面包连锁、中专大学及二批。原资料合计3,719，各类小计合计3,592，明细与小计有不符之处，须核对。罗森（广东）300家不在福建。这些均为潜在终端渠道，不是预拌粉的B2B直接客户，尚未去重及确认进场。");
+    note(s, "注：数据依合作伙伴提供之渠道表，小计依原表；含罗森（广东）300家；部分品牌明细与小计略有差异，待核对；未去重、未确认进场。", 6.4);
+    s.addNotes("附件依合作伙伴提供的渠道表：便利连锁2,980、卖场20、生鲜连锁102、精品店200、面包连锁230、中专大学35、二批25，合计3,592家。含罗森（广东）300家。均为潜在终端渠道，不是预拌粉的B2B直接客户，尚未去重及确认进场。");
   }
 
   await pres.writeFile({ fileName: OUT });
