@@ -1,0 +1,16 @@
+{
+  "name": "air-001-airport-transfer-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AIR-001 洛杉磯機場接送智慧營運系統 — G1 可操作原型",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --no-warnings server/server.js",
+    "test": "node --no-warnings tests/run-tests.js",
+    "reset": "node --no-warnings server/server.js --reset-only"
+  },
+  "devDependencies": {
+    "sql.js": "1.10.3"
+  }
+}
