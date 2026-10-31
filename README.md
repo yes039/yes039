@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🗂️ 素材整理機（照片／影片 AI 自動分類）：[media-sorter/](media-sorter/)
