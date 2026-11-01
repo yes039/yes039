@@ -1,0 +1,487 @@
+<title>FB 營運指揮台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: phone-first single column, sticky header, fixed bottom tab bar; wider screens get a 2-col overview */
+:root{
+  --bg:#f3ece0; --surface:#fbf7f0; --sunk:#e9dfcf; --line:#d9cbb4;
+  --fg:#3a2a1e; --muted:#7a6552; --coffee:#6b4a33; --gold:#b48a3c; --gold-soft:#efe0bf;
+  --ok:#3f7a4f; --ok-soft:#dcebdc; --warn:#a8641c; --warn-soft:#f5e1c6; --bad:#a63d32; --bad-soft:#f3d6d0;
+  --me:#8a5a3b; --pg:#b48a3c; --gr:#5d7a5a; --ex:#7a6f8f;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1f1812; --surface:#2a2119; --sunk:#352a20; --line:#4a3b2d;
+  --fg:#f1e7d8; --muted:#b7a28a; --coffee:#d8b48f; --gold:#d9b25f; --gold-soft:#4a3a1f;
+  --ok:#86c294; --ok-soft:#24392a; --warn:#e3a35c; --warn-soft:#433019; --bad:#e58a7d; --bad-soft:#47241f;
+  --me:#c9926a; --pg:#d9b25f; --gr:#93b38f; --ex:#ada3c4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1f1812; --surface:#2a2119; --sunk:#352a20; --line:#4a3b2d;
+  --fg:#f1e7d8; --muted:#b7a28a; --coffee:#d8b48f; --gold:#d9b25f; --gold-soft:#4a3a1f;
+  --ok:#86c294; --ok-soft:#24392a; --warn:#e3a35c; --warn-soft:#433019; --bad:#e58a7d; --bad-soft:#47241f;
+  --me:#c9926a; --pg:#d9b25f; --gr:#93b38f; --ex:#ada3c4; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:960px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header .wrap{padding-block:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-size:19px;margin:0;color:var(--coffee);letter-spacing:.02em}
+.sub{font-size:12px;color:var(--muted)}
+.mock{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn);padding:2px 8px;border-radius:99px}
+main .wrap{padding-block:16px 96px;display:flex;flex-direction:column;gap:20px}
+h2{font-family:var(--f-display);font-size:17px;margin:0 0 10px;color:var(--coffee);text-wrap:balance}
+h3{font-size:14px;margin:0 0 8px}
+.lbl{font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.grid2{display:grid;gap:20px}
+@media (min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+section>*{min-width:0}
+.num{font-variant-numeric:tabular-nums}
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.frow{display:grid;grid-template-columns:5.5em 1fr auto;gap:10px;align-items:center}
+.frow .name{font-size:13px}
+.bar{position:relative;height:14px;background:var(--sunk);border-radius:7px;overflow:visible}
+.bar .fill{position:absolute;inset:0 auto 0 0;border-radius:7px;background:var(--gold)}
+.bar .ms{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--coffee)}
+.frow .val{font-size:13px;text-align:right;min-width:7.5em}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);background:var(--sunk);white-space:nowrap}
+.p-ME{color:var(--me);border-color:var(--me)} .p-PG{color:var(--pg);border-color:var(--pg)} .p-GR{color:var(--gr);border-color:var(--gr)} .p-EX{color:var(--ex);border-color:var(--ex)}
+.s-ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.s-warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.s-bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.s-gold{background:var(--gold-soft);color:var(--coffee);border-color:transparent}
+/* lists */
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:3.4em 1fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .t{font-size:12.5px;color:var(--muted)}
+.item .main{min-width:0}
+.item .main b{font-weight:500}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--bad-soft);color:var(--bad);font-size:13.5px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert b{white-space:nowrap}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--coffee);background:var(--surface);color:var(--coffee);padding:5px 10px;font-size:13px}
+button.primary{background:var(--coffee);color:var(--surface)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+select{font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .dow{font-size:11px;color:var(--muted);text-align:center}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px;min-height:62px;display:flex;flex-direction:column;gap:3px;cursor:pointer;text-align:left;color:var(--fg)}
+.day.off{visibility:hidden}
+.day.today{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.day.sel{background:var(--gold-soft)}
+.day .d{font-size:12px;font-weight:700}
+.dots{display:flex;gap:2px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot.ME{background:var(--me)}.dot.PG{background:var(--pg)}.dot.GR{background:var(--gr)}.dot.EX{background:var(--ex)}
+.ev{font-size:10px;line-height:1.2;color:var(--bad);font-weight:700}
+/* kanban */
+.kan{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.col{flex:0 0 min(78vw,260px);scroll-snap-align:start;background:var(--sunk);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px}
+.col h3{display:flex;justify-content:space-between;font-size:13px;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.card .code{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card .hold{font-size:12px;color:var(--warn)}
+/* tables */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:11.5px;color:var(--muted);font-weight:500}
+td.r,th.r{text-align:right}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border-color:var(--line);color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--coffee);color:var(--surface);border-color:var(--coffee)}
+.note{font-size:12.5px;color:var(--muted)}
+ol.reco{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* tab bar */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+nav .tabs{display:grid;grid-template-columns:repeat(5,1fr);max-width:600px;margin:0 auto}
+nav a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 9px;color:var(--muted);text-decoration:none;font-size:12px;position:relative}
+nav a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+nav a[aria-current="page"]{color:var(--coffee);font-weight:700}
+nav a[aria-current="page"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:2px;background:var(--gold)}
+.badge{position:absolute;top:4px;left:calc(50% + 6px);background:var(--bad);color:#fff;font-size:10px;border-radius:99px;padding:0 5px;line-height:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--coffee);color:var(--surface);padding:8px 14px;border-radius:8px;font-size:13px;z-index:9;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.card,.item{transition:background .2s}}
+</style>
+
+<header><div class="wrap">
+  <div>
+    <h1>FB 營運指揮台</h1>
+    <div class="sub">FB-001・2026/11/02–11/30・<span id="todayLbl"></span></div>
+  </div>
+  <span class="mock" title="本頁所有數字為模擬資料，未串接 Facebook">模擬資料・未串接 FB</span>
+</div></header>
+
+<main><div class="wrap" id="view"></div></main>
+
+<nav aria-label="分頁"><div class="tabs">
+  <a href="#overview" data-tab="overview"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 4v4h6V4z"/></svg>總覽<span class="badge" id="apprBadge" hidden></span></a>
+  <a href="#schedule" data-tab="schedule"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>排程</a>
+  <a href="#content" data-tab="content"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="16.5" y="4" width="4" height="13" rx="1"/></svg>內容</a>
+  <a href="#leads" data-tab="leads"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.3 3.3 0 0 1 0 6.4M18 14.8c1.8.7 3 2.4 3.5 5.2"/></svg>名單</a>
+  <a href="#perf" data-tab="perf"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>績效</a>
+</div></nav>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+// ---------- 常數 ----------
+const TODAY = new Date(2026,10,12,9,0); // 模擬「今天」：W2 週四
+const STATES = ["待選題","待製作","待審核","已核准","已排程","已發布","已回收","已優化"];
+const PILLAR = {ME:"個人帳號",PG:"粉絲專頁",GR:"自有社團",EX:"他人社團"};
+const TARGET = {reach:30000,leads:60,signups:20,attended:10,deals:2};
+const MILESTONE = {
+  W1:{reach:5000,leads:8,signups:0,attended:0,deals:0},
+  W2:{reach:12000,leads:22,signups:6,attended:0,deals:0},
+  W3:{reach:21000,leads:40,signups:14,attended:5,deals:0},
+  W4:{reach:30000,leads:60,signups:20,attended:10,deals:1},
+};
+const WEEK_RANGE = {W1:[2,8],W2:[9,15],W3:[16,22],W4:[23,29]};
+const SESSIONS = [{id:"S1",day:19,label:"S1 說明會 19:30【待確認】"},{id:"S2",day:26,label:"S2 說明會 19:30【待確認】"}];
+
+// 選題（與 01-月度作戰排程.md §6 一致）
+const RAW = [
+ ["W1","P1","PG",3,"12:00","教學","拍張照就能問 AI：長輩的第一個 AI 用法",0],
+ ["W1","M1","ME",3,"08:00","故事","我為什麼開始教 60+ 學 AI",0],
+ ["W1","P2","PG",4,"12:00","案例","示範情境：用 AI 寫給孫子的生日祝福",0],
+ ["W1","G1","GR",4,"20:00","討論","自我介紹串：你最想讓 AI 幫你做什麼？",0],
+ ["W1","M2","ME",5,"20:00","觀點","AI 不是年輕人的專利",0],
+ ["W1","P3","PG",6,"19:30","招生","留言「AI」領取《長輩 AI 入門小抄》",0],
+ ["W1","G2","GR",7,"10:00","互動","第一週小作業：用 AI 問今天晚餐煮什麼",0],
+ ["W2","P1","PG",9,"19:30","教學","3 句話讓 AI 幫你寫 LINE 祝福",0],
+ ["W2","M1","ME",10,"08:00","故事","教爸媽用 AI 時我犯過的 3 個錯",0],
+ ["W2","P2","PG",11,"12:00","案例","示範：用 AI 看懂家電說明書",0],
+ ["W2","G1","GR",11,"20:00","討論","本週問答串：你卡在哪一步？",0],
+ ["W2","M2","ME",12,"20:00","觀點","防詐觀點：AI 時代，長輩更要懂 AI",0],
+ ["W2","P3","PG",13,"19:30","招生","說明會報名開放",1],
+ ["W2","G2","GR",14,"10:00","互動","作業分享：曬出你用 AI 寫的祝福",0],
+ ["W3","P1","PG",16,"19:30","教學","用 AI 規劃一日小旅行",0],
+ ["W3","M1","ME",17,"08:00","故事","一位學員的第一堂課（需授權）",0],
+ ["W3","P2","PG",18,"12:00","招生","說明會 60 分鐘你會學到什麼",1],
+ ["W3","G1","GR",18,"20:00","討論","說明會前問題收集串",0],
+ ["W3","M2","ME",19,"08:00","觀點","今晚見：我想在說明會告訴你的一件事",0],
+ ["W3","P3","PG",20,"19:30","招生","第 1 場說明會回顧＋第 2 場報名",1],
+ ["W3","G2","GR",21,"10:00","互動","第 1 場說明會 Q&A 整理",0],
+ ["W4","P1","PG",23,"19:30","教學","用 AI 整理照片、做回憶相簿",0],
+ ["W4","M1","ME",24,"08:00","故事","說明會上被問最多的 5 個問題",0],
+ ["W4","P2","PG",25,"12:00","案例","學員心得（需授權）",0],
+ ["W4","G1","GR",25,"20:00","討論","第 2 場說明會倒數＋報名提醒",1],
+ ["W4","M2","ME",26,"08:00","觀點","今晚第 2 場：給還在猶豫的你",0],
+ ["W4","P3","PG",27,"19:30","招生","12 月課程名額說明",1],
+ ["W4","G2","GR",28,"10:00","互動","月度回顧：這個月你學會了什麼？",0],
+];
+const EXDAYS = {W1:[3,5,7],W2:[10,12,14],W3:[17,19,21],W4:[24,26,28]};
+const EXTIME = ["10:00","14:00","15:00"];
+
+// 模擬 72h 回收數據
+const MOCK_METRIC = {
+ "FB11-PG-W1-01":[1240,96,41,9,2],"FB11-ME-W1-01":[860,132,0,14,3],"FB11-PG-W1-02":[1580,121,63,11,1],
+ "FB11-GR-W1-01":[310,58,0,31,0],"FB11-ME-W1-02":[720,88,0,9,1],"FB11-PG-W1-03":[1910,204,77,46,4],
+ "FB11-GR-W1-02":[280,44,0,22,0],"FB11-PG-W2-01":[1470,112,58,10,2],"FB11-ME-W2-01":[640,71,0,8,1],
+};
+// reach, engagement, clicks, valid_comments, valid_dms
+
+function pad(n){return String(n).padStart(2,"0")}
+function d(day,time){const [h,m]=time.split(":").map(Number);return new Date(2026,10,day,h,m)}
+const posts = RAW.map(([w,slot,p,day,time,type,topic,confirm])=>({
+  code:`FB11-${p}-${w}-${pad({P1:1,P2:2,P3:3,M1:1,M2:2,G1:1,G2:2}[slot])}`,
+  week:w,slot,pillar:p,at:d(day,time),type,topic,needsConfirm:!!confirm,
+}));
+Object.entries(EXDAYS).forEach(([w,days])=>days.forEach((day,i)=>posts.push({
+  code:`FB11-EX-${w}-${pad(i+1)}`,week:w,slot:"X"+(i+1),pillar:"EX",at:d(day,EXTIME[i]),type:"觀察",
+  topic:{W1:"樂齡／子女照顧社團：需求觀察",W2:"回答「AI 怎麼用」類提問",W3:"觀察課程疑慮：價格、時間、學不會",W4:"回答問題、累積信任"}[w],needsConfirm:false,
+})));
+posts.sort((a,b)=>a.at-b.at);
+
+// 依模擬日期給初始狀態
+const H72 = 72*3600e3;
+posts.forEach(p=>{
+  const age = TODAY - p.at;
+  if(p.pillar==="EX"){ p.status = age>0 ? "已回收" : (p.week==="W2"?"已核准":"待選題"); return; }
+  if(age>H72) p.status = p.week==="W1" ? "已優化" : "已回收";
+  else if(age>0) p.status = "已發布";
+  else if(p.week==="W2") p.status = p.at.getDate()<=13 ? "已排程" : "已核准";
+  else if(p.week==="W3") p.status = p.at.getDate()<=18 ? "待審核" : "待製作";
+  else p.status = "待選題";
+  const m = MOCK_METRIC[p.code];
+  if(m && (p.status==="已回收"||p.status==="已優化")) p.metric={reach:m[0],eng:m[1],clicks:m[2],comments:m[3],dms:m[4]};
+});
+// W2-P3 含待確認課程資訊 → 卡在已核准
+const w2p3 = posts.find(p=>p.code==="FB11-PG-W2-03"); w2p3.status="已核准";
+// 已發布但 72h 未到（11/10 M1 已在上方給 metric，11/11 兩篇待回收）
+const lastPub = posts.filter(p=>p.status==="已發布");
+
+// 待核准清單（模擬）
+const approvals = [
+  {id:"A-07",gate:"G2",label:"內容核准",target:"FB11-PG-W3-01",text:"W3-P1 用 AI 規劃一日小旅行（素材包已完成）"},
+  {id:"A-08",gate:"G2",label:"內容核准",target:"FB11-ME-W3-01",text:"W3-M1 學員故事：需確認是否有授權學員"},
+  {id:"A-09",gate:"G3",label:"發布授權",target:"FB11-PG-W2-03",text:"W2-P3 說明會報名開放 11/13 19:30（含待確認課程資訊）"},
+  {id:"A-10",gate:"G4",label:"私訊授權",target:"L-009",text:"回覆 3 位留言「AI」者，傳送《入門小抄》（話術已擬）"},
+];
+posts.find(p=>p.code==="FB11-PG-W3-01").status="待審核";
+posts.find(p=>p.code==="FB11-ME-W3-01").status="待審核";
+
+// 模擬名單
+const leads = [
+ ["L-001","陳阿姨","FB11-PG-W1-03","留言","報名","S1","價格"],
+ ["L-002","林大哥","FB11-PG-W1-03","私訊","報名","S1","學不會怎麼辦"],
+ ["L-003","王小姐（替媽媽問）","FB11-ME-W1-01","私訊","名單","","上課時間"],
+ ["L-004","黃伯伯","FB11-PG-W1-01","留言","名單","","手機型號"],
+ ["L-005","張媽媽","FB11-PG-W1-03","留言","報名","S1","交通"],
+ ["L-006","李老師","FB11-ME-W1-02","私訊","名單","","想帶朋友一起"],
+ ["L-007","吳阿嬤","FB11-PG-W1-02","留言","名單","","孫子推薦"],
+ ["L-008","周先生","FB11-PG-W1-03","表單","報名","S2","退休後想學新東西"],
+ ["L-009","鄭姐","FB11-PG-W1-03","留言","名單","","想要小抄"],
+ ["L-010","劉阿伯","FB11-EX-W1-02","私訊","名單","","在他人社團看到回答"],
+ ["L-011","蔡太太","FB11-PG-W2-01","留言","名單","","LINE 祝福"],
+ ["L-012","許小姐（替爸爸問）","FB11-ME-W2-01","私訊","名單","","是否一對一"],
+ ["L-013","楊阿姨","FB11-PG-W1-03","留言","流失","","時間不合"],
+ ["L-014","謝大哥","FB11-PG-W2-01","私訊","名單","","已有平板"],
+].map(([id,name,code,ch,stage,sess,note])=>({id,name,code,ch,stage,sess,note}));
+const STAGES=["名單","報名","出席","成交"];
+
+// ---------- 計算 ----------
+function curWeek(){for(const [w,[a,b]] of Object.entries(WEEK_RANGE)) if(TODAY.getDate()>=a&&TODAY.getDate()<=b) return w; return "W4"}
+function actuals(){
+  const reach = posts.reduce((s,p)=>s+(p.metric?p.metric.reach:0),0);
+  const live = leads.filter(l=>l.stage!=="流失");
+  const reached = s=>leads.filter(l=>STAGES.indexOf(l.stage)>=STAGES.indexOf(s)).length;
+  return {reach,leads:leads.length,signups:reached("報名"),attended:reached("出席"),deals:reached("成交"),live:live.length};
+}
+const fmt = n=>n.toLocaleString("zh-TW");
+const md = dt=>`${dt.getMonth()+1}/${dt.getDate()}`;
+const hm = dt=>`${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+const DOW="日一二三四五六";
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pchip = p=>`<span class="chip p-${p}">${PILLAR[p]}</span>`;
+function schip(s){
+  const cls = {"待審核":"s-warn","已核准":"s-gold","已排程":"s-gold","已發布":"s-ok","已回收":"s-ok","已優化":"s-ok"}[s]||"";
+  return `<span class="chip ${cls}">${s}</span>`;
+}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2400)}
+
+// 狀態推進規則（含關卡）
+function nextAction(p){
+  const i = STATES.indexOf(p.status);
+  if(i===STATES.length-1) return null;
+  const next = STATES[i+1];
+  const pending = approvals.find(a=>a.target===p.code);
+  if(p.status==="待選題") return {label:"送 G1 選題核准",gate:"G1",next};
+  if(p.status==="待審核") return pending?{label:"等待總指揮 G2",wait:true}:{label:"送 G2 內容核准",gate:"G2",next};
+  if(p.status==="已核准"){
+    if(p.needsConfirm) return {label:"課程資訊待確認",wait:true,hold:"含【待確認】課程資料，確認前不可排程"};
+    return pending?{label:"等待總指揮 G3",wait:true}:{label:"送 G3 發布授權",gate:"G3",next};
+  }
+  if(p.status==="已排程") return {label:"標記已發布",next};
+  if(p.status==="已發布"){
+    const due = TODAY - p.at >= H72;
+    return due?{label:"填 72h 數據",next}:{label:`72h 回收：${md(new Date(p.at.getTime()+H72))}`,wait:true};
+  }
+  return {label:"推進到「"+next+"」",next};
+}
+function advance(code){
+  const p = posts.find(x=>x.code===code); const a = nextAction(p);
+  if(!a||a.wait) return;
+  if(a.gate){
+    approvals.push({id:"A-"+pad(approvals.length+7),gate:a.gate,label:{G1:"選題核准",G2:"內容核准",G3:"發布授權"}[a.gate],target:p.code,text:`${p.week}-${p.slot} ${p.topic}`});
+    toast(`已送出 ${a.gate}，等總指揮在「總覽」核准`);
+  } else { p.status=a.next; toast(`${p.code} → ${a.next}`); }
+  render();
+}
+function decide(id,ok){
+  const i = approvals.findIndex(a=>a.id===id); const a = approvals[i]; approvals.splice(i,1);
+  const p = posts.find(x=>x.code===a.target);
+  if(p){
+    if(ok){
+      if(a.gate==="G1"&&p.status==="待選題") p.status="待製作";
+      else if(a.gate==="G2"&&p.status==="待審核") p.status="已核准";
+      else if(a.gate==="G3"&&p.status==="已核准"&&!p.needsConfirm) p.status="已排程";
+    } else if(a.gate==="G2") p.status="待製作";
+  }
+  let msg = ok?`已核准 ${a.id}（模擬）`:`已退回 ${a.id}（模擬）`;
+  if(ok&&a.gate==="G3"&&p&&p.needsConfirm) msg="已記錄核准，但課程資訊仍待確認，暫不排程";
+  if(ok&&a.gate==="G4") msg="已記錄私訊授權（模擬，本系統不會實際發送）";
+  toast(msg); render();
+}
+
+// ---------- 畫面 ----------
+let selDay = TODAY.getDate();
+let leadFilter = "全部";
+let perfWeek = "W1";
+
+function vOverview(){
+  const A = actuals(), w = curWeek(), M = MILESTONE[w];
+  const rows = [["觸及","reach"],["名單","leads"],["報名","signups"],["出席","attended"],["成交","deals"]];
+  const funnel = rows.map(([n,k])=>{
+    const pct = Math.min(100,A[k]/TARGET[k]*100), ms = M[k]/TARGET[k]*100;
+    return `<div class="frow"><span class="name">${n}</span>
+      <div class="bar" role="img" aria-label="${n} ${A[k]}／月目標 ${TARGET[k]}"><div class="fill" style="width:${pct}%"></div><div class="ms" style="left:calc(${ms}% - 1px)"></div></div>
+      <span class="val num">${fmt(A[k])} / ${fmt(TARGET[k])}</span></div>`}).join("");
+  const alerts = rows.filter(([,k])=>M[k]>0 && A[k]/M[k]<0.8).map(([n,k])=>
+    `<div class="alert"><b>落後</b><span>${n} ${fmt(A[k])}，${w} 里程碑 ${fmt(M[k])}（${Math.round(A[k]/M[k]*100)}%），週報需提補救方案</span></div>`);
+  if(w2p3.status==="已核准") alerts.push(`<div class="alert warn"><b>卡關</b><span>W2-P3 說明會報名 11/13 發布，課程日期與形式仍待確認</span></div>`);
+  const today = posts.filter(p=>p.at.toDateString()===TODAY.toDateString());
+  const due = posts.filter(p=>p.status==="已發布");
+  const items = [
+    ...today.map(p=>({t:hm(p.at),html:`<b>${esc(p.topic)}</b><div class="meta">${pchip(p.pillar)}${schip(p.status)}<span class="chip">${p.code}</span></div>`})),
+    {t:"09:30",html:`<b>送審 W3 內容（P2、G1）</b><div class="meta"><span class="chip">Claude</span></div>`},
+    {t:"21:00",html:`<b>更新名單表、記錄他人社團觀察</b><div class="meta"><span class="chip">Claude</span></div>`},
+    ...due.map(p=>({t:"回收",html:`<b>${esc(p.topic)}</b><div class="meta">${pchip(p.pillar)}<span class="chip s-warn">72h 到期 ${md(new Date(p.at.getTime()+H72))} ${hm(p.at)}</span></div>`})),
+  ].sort((a,b)=>a.t.localeCompare(b.t));
+  return `
+  <div class="grid2">
+    <section class="panel"><h2>招生漏斗</h2><div class="funnel">${funnel}</div>
+      <div class="legend"><span><i style="background:var(--gold)"></i>累積實績（模擬）</span><span><i style="background:var(--coffee);width:3px"></i>${w} 里程碑</span><span>右側數字：實績 / 月目標</span></div></section>
+    <section><h2>需要注意</h2><div class="alerts">${alerts.join("")||'<div class="note">目前沒有落後項目</div>'}</div></section>
+  </div>
+  <div class="grid2">
+    <section class="panel"><h2>待我核准 <span class="chip s-bad">${approvals.length}</span></h2>
+      <div class="list">${approvals.map(a=>`<div class="item"><span class="t">${a.gate}</span>
+        <div class="main"><b>${esc(a.text)}</b><div class="meta"><span class="chip">${a.label}</span><span class="chip">${a.target}</span></div></div>
+        <div class="btns"><button class="primary" data-ok="${a.id}">核准</button><button data-no="${a.id}">退回</button></div></div>`).join("")||'<div class="note">全部處理完畢</div>'}</div>
+      <p class="note">核准只改變原型畫面的狀態，不會發文、私訊或投放廣告。</p></section>
+    <section class="panel"><h2>今日任務・${md(TODAY)}（${DOW[TODAY.getDay()]}）</h2>
+      <div class="list">${items.map(i=>`<div class="item"><span class="t num">${i.t}</span><div class="main">${i.html}</div><span></span></div>`).join("")}</div></section>
+  </div>`;
+}
+
+function vSchedule(){
+  const first = new Date(2026,10,1).getDay(); // 0=日
+  const lead = (first+6)%7; // 週一為首
+  let cells = "一二三四五六日".split("").map(x=>`<div class="dow">${x}</div>`).join("");
+  for(let i=0;i<lead;i++) cells+=`<div class="day off"></div>`;
+  for(let day=1;day<=30;day++){
+    const ps = posts.filter(p=>p.at.getDate()===day);
+    const ev = SESSIONS.find(s=>s.day===day);
+    const inRange = day>=2;
+    cells += `<button class="day${day===TODAY.getDate()?" today":""}${day===selDay?" sel":""}" data-day="${day}" ${inRange?"":"disabled"} aria-label="11/${day}，${ps.length} 項">
+      <span class="d num">${day}</span><span class="dots">${ps.map(p=>`<span class="dot ${p.pillar}"></span>`).join("")}</span>${ev?`<span class="ev">${ev.id}</span>`:""}${[8,15,22,29].includes(day)?'<span class="ev" style="color:var(--muted)">週報</span>':""}${day===30?'<span class="ev" style="color:var(--muted)">復盤</span>':""}</button>`;
+  }
+  const dayPosts = posts.filter(p=>p.at.getDate()===selDay);
+  const dt = new Date(2026,10,selDay);
+  const extras = [];
+  if(dt.getDay()===1) extras.push({t:"09:00",x:"週會：核准本週選題（G1）"});
+  if(dt.getDay()===0) extras.push({t:"20:00",x:"週報＋72h 回收彙整＋下週選題提案"});
+  const ev = SESSIONS.find(s=>s.day===selDay); if(ev) extras.push({t:"19:30",x:ev.label});
+  if(selDay===2) extras.push({t:"全天",x:"指揮台上線、建立追蹤碼、核准 W1 選題"});
+  if(selDay===30) extras.push({t:"全天",x:"月度復盤、績效總結、12 月提案"});
+  const list = [...dayPosts.map(p=>({t:hm(p.at),h:`<b>${esc(p.topic)}</b><div class="meta">${pchip(p.pillar)}<span class="chip">${p.slot}・${p.type}</span>${schip(p.status)}${p.needsConfirm?'<span class="chip s-warn">待確認</span>':""}</div>`})),
+    ...extras.map(e=>({t:e.t,h:`<b>${esc(e.x)}</b>`}))].sort((a,b)=>a.t.localeCompare(b.t));
+  const wk = Object.entries(WEEK_RANGE).find(([,[a,b]])=>selDay>=a&&selDay<=b);
+  const theme = {W1:"信任建立",W2:"價值示範",W3:"招募轉換 I",W4:"招募轉換 II＋成交"};
+  return `
+  <section class="panel"><h2>11 月作戰月曆</h2><div class="cal">${cells}</div>
+    <div class="legend"><span><i style="background:var(--me)"></i>個人</span><span><i style="background:var(--pg)"></i>粉專</span><span><i style="background:var(--gr)"></i>自有社團</span><span><i style="background:var(--ex)"></i>他人社團</span></div></section>
+  <section class="panel"><h2>11/${selDay}（${DOW[dt.getDay()]}）${wk?`・${wk[0]} ${theme[wk[0]]}`:""}</h2>
+    <div class="list">${list.map(i=>`<div class="item"><span class="t num">${i.t}</span><div class="main">${i.h}</div><span></span></div>`).join("")||'<div class="note">當日無排程</div>'}</div></section>
+  <section class="panel"><h2>四柱每週配額</h2><div class="tbl"><table>
+    <thead><tr><th>陣地</th><th class="r">每週</th><th>定位</th><th>本月進度</th></tr></thead><tbody>
+    ${Object.entries({ME:[2,"故事・觀點・專業信任"],PG:[3,"案例・教學・招生"],GR:[2,"教學・討論・互動"],EX:[3,"需求觀察・合規互動"]}).map(([k,[n,t]])=>{
+      const all = posts.filter(p=>p.pillar===k), done = all.filter(p=>["已發布","已回收","已優化"].includes(p.status)).length;
+      return `<tr><td>${pchip(k)}</td><td class="r">${n}</td><td>${t}</td><td class="num">${done} / ${all.length}</td></tr>`}).join("")}
+    </tbody></table></div></section>`;
+}
+
+function vContent(){
+  const cols = STATES.map(s=>{
+    const cards = posts.filter(p=>p.status===s && p.pillar!=="EX");
+    return `<div class="col"><h3><span>${s}</span><span class="num">${cards.length}</span></h3>
+      ${cards.map(p=>{const a=nextAction(p);return `<div class="card">
+        <span class="code">${p.code}・${md(p.at)} ${hm(p.at)}</span>
+        <span>${esc(p.topic)}</span>
+        <div class="meta">${pchip(p.pillar)}<span class="chip">${p.type}</span>${p.needsConfirm?'<span class="chip s-warn">待確認</span>':""}</div>
+        ${a&&a.hold?`<span class="hold">${a.hold}</span>`:""}
+        ${a?`<button ${a.wait?"disabled":""} data-adv="${p.code}">${a.label}</button>`:""}
+      </div>`}).join("")}</div>`}).join("");
+  const kit = ["標題候選 ×3","完整 FB 文案（依陣地改寫）","圖卡提示詞（米色／咖啡色／金色）","短影音腳本（適用時）","CTA＋追蹤碼","發布陣地與建議時間"];
+  return `
+  <section><h2>內容狀態看板</h2><p class="note">左右滑動查看 8 個狀態。送審後到「總覽」核准，才可往下走。他人社團互動不在看板內，記錄在排程。</p>
+    <div class="kan">${cols}</div></section>
+  <section class="panel"><h2>每篇素材包必備欄位</h2>
+    <div class="meta">${kit.map(k=>`<span class="chip">${k}</span>`).join("")}</div>
+    <p class="note">同一選題跨陣地時要改寫：個人帳號用第一人稱故事，粉專用步驟教學，社團用提問帶互動。</p></section>`;
+}
+
+function vLeads(){
+  const A = actuals();
+  const counts = ["全部",...STAGES,"流失"].map(s=>[s, s==="全部"?leads.length:leads.filter(l=>l.stage===s).length]);
+  const shown = leads.filter(l=>leadFilter==="全部"||l.stage===leadFilter);
+  const bySrc = {};
+  leads.forEach(l=>bySrc[l.code]=(bySrc[l.code]||0)+1);
+  const rank = Object.entries(bySrc).sort((a,b)=>b[1]-a[1]);
+  const max = rank[0][1];
+  return `
+  <section class="panel"><h2>招生名單 <span class="note">（模擬，${A.leads} 筆）</span></h2>
+    <div class="seg" role="group" aria-label="依階段篩選">${counts.map(([s,n])=>`<button data-lf="${s}" aria-pressed="${s===leadFilter}">${s} ${n}</button>`).join("")}</div>
+    <div class="tbl" style="margin-top:10px"><table><thead><tr><th>ID</th><th>暱稱</th><th>階段</th><th>來源追蹤碼</th><th>管道</th><th>場次</th><th>關心</th></tr></thead><tbody>
+    ${shown.map(l=>`<tr><td class="num">${l.id}</td><td>${esc(l.name)}</td><td>${schip(l.stage==="流失"?"流失":l.stage).replace('class="chip "',l.stage==="流失"?'class="chip s-bad"':'class="chip s-gold"')}</td><td class="num">${l.code}</td><td>${l.ch}</td><td>${l.sess||"—"}</td><td>${esc(l.note)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="note">只記暱稱與需求，不記身分證、地址等敏感資料。私訊名單前需 G4 授權。</p></section>
+  <section class="panel"><h2>來源追蹤碼排行</h2>
+    <div class="funnel">${rank.map(([c,n])=>`<div class="frow" style="grid-template-columns:9.5em 1fr auto"><span class="name num">${c}</span><div class="bar"><div class="fill" style="width:${n/max*100}%"></div></div><span class="val num" style="min-width:3em">${n}</span></div>`).join("")}</div>
+    <p class="note">W1-P3「留言 AI 領小抄」帶來最多名單，建議 W2 起每週保留一篇名單誘餌型貼文。</p></section>`;
+}
+
+function vPerf(){
+  const rows = posts.filter(p=>p.week===perfWeek && p.metric);
+  const tot = rows.reduce((s,p)=>{for(const k in p.metric) s[k]=(s[k]||0)+p.metric[k]; return s},{});
+  const byP = {};
+  rows.forEach(p=>{const o=byP[p.pillar]||(byP[p.pillar]={reach:0,eng:0,dms:0,n:0}); o.reach+=p.metric.reach;o.eng+=p.metric.eng;o.dms+=p.metric.dms;o.n++});
+  const pending = posts.filter(p=>p.week===perfWeek && p.status==="已發布").length;
+  return `
+  <section class="panel"><h2>72 小時回收表</h2>
+    <div class="seg" role="group" aria-label="選擇週次">${["W1","W2","W3","W4"].map(w=>`<button data-pw="${w}" aria-pressed="${w===perfWeek}">${w}</button>`).join("")}</div>
+    ${rows.length?`<div class="tbl" style="margin-top:10px"><table><thead><tr><th>追蹤碼</th><th>陣地</th><th>發布</th><th class="r">觸及</th><th class="r">互動</th><th class="r">點擊</th><th class="r">有效留言</th><th class="r">有效私訊</th><th class="r">互動率</th></tr></thead><tbody>
+      ${rows.map(p=>`<tr><td>${p.code}</td><td>${pchip(p.pillar)}</td><td>${md(p.at)}</td><td class="r">${fmt(p.metric.reach)}</td><td class="r">${p.metric.eng}</td><td class="r">${p.metric.clicks}</td><td class="r">${p.metric.comments}</td><td class="r">${p.metric.dms}</td><td class="r">${(p.metric.eng/p.metric.reach*100).toFixed(1)}%</td></tr>`).join("")}
+      <tr><th>合計</th><th></th><th></th><th class="r">${fmt(tot.reach)}</th><th class="r">${tot.eng}</th><th class="r">${tot.clicks}</th><th class="r">${tot.comments}</th><th class="r">${tot.dms}</th><th class="r">${(tot.eng/tot.reach*100).toFixed(1)}%</th></tr>
+      </tbody></table></div>`:`<p class="note">${perfWeek} 尚無回收數據。</p>`}
+    ${pending?`<p class="note">另有 ${pending} 篇已發布、未滿 72 小時。</p>`:""}
+    <p class="note">數據來源（v1）：粉專專業主控板、社團洞察報告，人工抄錄。目前全部為模擬數字。</p></section>
+  ${rows.length?`<section class="panel"><h2>四柱比較・${perfWeek}</h2><div class="tbl"><table><thead><tr><th>陣地</th><th class="r">篇數</th><th class="r">觸及</th><th class="r">平均觸及</th><th class="r">互動率</th><th class="r">私訊</th></tr></thead><tbody>
+    ${Object.entries(byP).map(([k,o])=>`<tr><td>${pchip(k)}</td><td class="r">${o.n}</td><td class="r">${fmt(o.reach)}</td><td class="r">${fmt(Math.round(o.reach/o.n))}</td><td class="r">${(o.eng/o.reach*100).toFixed(1)}%</td><td class="r">${o.dms}</td></tr>`).join("")}
+    </tbody></table></div></section>`:""}
+  <section class="panel"><h2>W1 週報摘要與 W2 優化建議（模擬）</h2>
+    <ol class="reco">
+      <li>觸及 6,900，達 W1 里程碑 5,000 的 138%；W1 來源名單 11 筆，達 8 筆的 138%。</li>
+      <li>最佳：W1-P3 名單誘餌（有效留言 46）。建議 W2-P1 加入「留言『祝福』領範本」CTA。</li>
+      <li>個人帳號互動率最高（約 14%），但觸及低。建議 W2-M1 改到 20:00 發布測試時段。</li>
+      <li>自有社團參與人數少（觸及約 300）。建議 G2 作業改成「拍照上傳」更容易參與。</li>
+    </ol></section>`;
+}
+
+const VIEWS = {overview:vOverview,schedule:vSchedule,content:vContent,leads:vLeads,perf:vPerf};
+function tab(){const h=location.hash.slice(1);return VIEWS[h]?h:"overview"}
+function render(){
+  const t = tab();
+  document.getElementById("view").innerHTML = VIEWS[t]();
+  document.querySelectorAll("nav a").forEach(a=>a.setAttribute("aria-current",a.dataset.tab===t?"page":"false"));
+  const b = document.getElementById("apprBadge"); b.textContent=approvals.length; b.hidden=!approvals.length;
+  document.getElementById("todayLbl").textContent = `模擬今天 ${md(TODAY)}（${DOW[TODAY.getDay()]}）・${curWeek()}`;
+}
+document.getElementById("view").addEventListener("click",e=>{
+  const el = e.target.closest("button"); if(!el) return;
+  if(el.dataset.ok) decide(el.dataset.ok,true);
+  else if(el.dataset.no) decide(el.dataset.no,false);
+  else if(el.dataset.adv) advance(el.dataset.adv);
+  else if(el.dataset.day){selDay=+el.dataset.day;render()}
+  else if(el.dataset.lf){leadFilter=el.dataset.lf;render()}
+  else if(el.dataset.pw){perfWeek=el.dataset.pw;render()}
+});
+window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
+render();
+})();
+</script>

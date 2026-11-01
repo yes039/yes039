@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 📣 FB 月度經營與招生（FB-001，2026/11）：[fb-ops/](fb-ops/)
