@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POS 操作測試表</title>
+<style>
+  @page { size: A4 landscape; margin: 8mm; }
+  :root { --ink:#111; --line:#555; --soft:#e9eef5; --warn:#fde8e8; --warnline:#b42318; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font: 11.5px/1.35 "Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  .page { width: 281mm; margin: 0 auto; padding: 0; }
+  h1 { font-size: 18px; margin: 0 0 3px; }
+  .meta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:4px; }
+  .warn { background:var(--warn); border:1px solid var(--warnline); padding:4px 6px; margin:4px 0; font-weight:600; }
+  h2 { font-size: 14px; margin: 6px 0 3px; background:var(--soft); padding:2px 6px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { border:1px solid var(--line); padding:3px 5px; vertical-align:middle; }
+  th { background:var(--soft); font-weight:700; }
+  td.c { text-align:center; width:34px; }
+  .box { display:inline-block; width:10px; height:10px; border:1px solid var(--ink); vertical-align:-1px; margin-right:2px; }
+  .blank { display:inline-block; min-width:60px; border-bottom:1px solid var(--ink); }
+  .steps { margin:2px 0 4px; }
+  .grid { display:grid; grid-template-columns: 1fr; gap:4px; }
+  .sign { margin-top:6px; display:flex; gap:30px; }
+  @media screen { body { padding:16px; background:#f4f4f4; } .page { background:#fff; padding:12px; max-width:100%; } table { font-size:11px; } }
+  @media screen and (max-width: 700px) { .page { overflow-x:auto; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>玉欣珍 POS 操作人員測試表（G1 第一輪）｜C-001-ORDER-YXZ-POS-002</h1>
+  <div class="meta">
+    <span><b>測試期間</b> 2026/10/26（一）～ 2026/11/01（日）</span>
+    <span><b>帳號</b> 總部「報表查詢」權限</span>
+    <span><b>測試日</b> <span class="blank"></span></span>
+    <span><b>操作人</b> <span class="blank"></span></span>
+    <span><b>見證人</b> <span class="blank"></span></span>
+  </div>
+  <div class="warn">⛔ 只按「查詢、預覽、列印、匯出」。不按新增、刪除、存檔、作廢、結案。不進入「系統相關 → 資料傳輸」。匯出檔先不要上傳給 AI。</div>
+
+  <h2>A｜八張報表（後台管理 → 報表資料 → 銷售報表）</h2>
+  <div class="steps">每張都做：① 截圖查詢條件 → ② 輸入測試期間後預覽 → ③ 截圖結果（含欄位標題）→ ④ 在預覽畫面找「匯出、Excel、存檔」→ ⑤ 找不到就列印到「Microsoft Print to PDF」</div>
+  <table>
+    <tr><th style="width:24px">序</th><th style="width:120px">報表</th><th>特別確認</th><th>Excel</th><th>CSV</th><th>PDF</th><th>只能列印</th><th style="width:90px">合計金額</th></tr>
+    <tr><td>1</td><td>日銷售統計表</td><td>有沒有每日「筆數」</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>2</td><td>營業總表</td><td>有沒有作廢筆數</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>3</td><td>收銀時段分析表</td><td>時段寬度 ____ 分鐘；能否自訂 <span class="box"></span>是 <span class="box"></span>否</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>4</td><td>銷售方式分析表</td><td>外送平台是否分開列 <span class="box"></span>是 <span class="box"></span>否</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>5</td><td>班別銷售統計表</td><td>班別名稱 ________________</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>6</td><td>商品銷售明細表</td><td>是否含單號或時間（逐筆） <span class="box"></span>是 <span class="box"></span>否</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>7</td><td>商品銷售毛利分析表</td><td>成本欄 <span class="box"></span>有數字 <span class="box"></span>全 0 <span class="box"></span>部分 0</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+    <tr><td>8</td><td>付款方式統計表</td><td>付款方式種類 ________________</td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td></tr>
+  </table>
+  <div class="steps"><b>對帳：</b>第 1、2、3、4、5、8 張合計金額應完全相同 <span class="box"></span>相同 <span class="box"></span>不同 → 差異 ______________________</div>
+
+  <h2>B｜補充畫面（只截圖）</h2>
+  <table>
+    <tr><th style="width:24px">序</th><th>畫面位置</th><th>要回答的問題</th><th style="width:200px">結果</th></tr>
+    <tr><td>B1</td><td>左側四大選單（基本資料、日常操作、報表資料、系統相關），每一頁都截圖</td><td>有沒有請購、採購、進貨、庫存、盤點、配方、出勤？</td><td>有：</td></tr>
+    <tr><td>B2</td><td>日常操作 → 作業管理 → 收銀銷貨查詢（查 11/01，打開 1 筆）</td><td>有沒有清單模式或匯出鈕？當天幾筆？</td><td><span class="box"></span>有 <span class="box"></span>無／____ 筆</td></tr>
+    <tr><td>B3</td><td>系統相關 → 系統設定 → 報表設定、餐期設定</td><td>有沒有匯出格式選項？餐期如何切分？</td><td></td></tr>
+    <tr><td>B4</td><td>店長口頭確認</td><td>員工用什麼打卡？</td><td><span class="box"></span>POS <span class="box"></span>打卡鐘 <span class="box"></span>App <span class="box"></span>紙本</td></tr>
+    <tr><td>B5</td><td>手機報表網頁</td><td>有哪些指標？能不能下載？</td><td><span class="box"></span>能 <span class="box"></span>不能</td></tr>
+  </table>
+
+  <h2>C｜繳交</h2>
+  <div>截圖與匯出檔放進 <b>G1_原始檔/2026W44/</b>，檔名用「序號_報表名」（例：3_收銀時段分析表.xlsx）。本表拍照後一起交給 C-001。</div>
+  <div class="sign"><span>操作人簽名 <span class="blank" style="min-width:120px"></span></span><span>見證人簽名 <span class="blank" style="min-width:120px"></span></span></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,205 @@
+{
+  "_說明": "模擬資料的標準答案（golden）。Claude 的分析數字必須與此相符（誤差 ≤ 1 元或 0.1 個百分點）",
+  "period_days": 7,
+  "net_sales": 429307,
+  "order_cnt": 813,
+  "aov": 528,
+  "discount_amt": 4478,
+  "discount_rate": 0.0103,
+  "void_cnt": 16,
+  "daily": {
+    "2026-10-26": {
+      "net_sales": 60591,
+      "order_cnt": 112,
+      "aov": 541
+    },
+    "2026-10-27": {
+      "net_sales": 56173,
+      "order_cnt": 117,
+      "aov": 480
+    },
+    "2026-10-28": {
+      "net_sales": 55296,
+      "order_cnt": 109,
+      "aov": 507
+    },
+    "2026-10-29": {
+      "net_sales": 51102,
+      "order_cnt": 102,
+      "aov": 501
+    },
+    "2026-10-30": {
+      "net_sales": 56781,
+      "order_cnt": 106,
+      "aov": 536
+    },
+    "2026-10-31": {
+      "net_sales": 82049,
+      "order_cnt": 132,
+      "aov": 622
+    },
+    "2026-11-01": {
+      "net_sales": 67315,
+      "order_cnt": 135,
+      "aov": 499
+    }
+  },
+  "peak_hour": "12",
+  "windows_三增時段": {
+    "午餐 11–13 時": {
+      "net_sales": 166962,
+      "order_cnt": 277,
+      "daily_avg_sales": 23852,
+      "aov": 603,
+      "share": 0.3889
+    },
+    "晚餐 17–19 時": {
+      "net_sales": 161682,
+      "order_cnt": 313,
+      "daily_avg_sales": 23097,
+      "aov": 517,
+      "share": 0.3766
+    },
+    "深夜 21–00 時": {
+      "net_sales": 49601,
+      "order_cnt": 119,
+      "daily_avg_sales": 7086,
+      "aov": 417,
+      "share": 0.1155
+    }
+  },
+  "shift": {
+    "早班": {
+      "net_sales": 190060,
+      "order_cnt": 326,
+      "share": 0.4427,
+      "aov": 583
+    },
+    "晚班": {
+      "net_sales": 239247,
+      "order_cnt": 487,
+      "share": 0.5573,
+      "aov": 491
+    }
+  },
+  "channel": {
+    "內用": {
+      "net_sales": 235151,
+      "order_cnt": 451,
+      "share": 0.5477,
+      "aov": 521
+    },
+    "外帶": {
+      "net_sales": 131329,
+      "order_cnt": 238,
+      "share": 0.3059,
+      "aov": 552
+    },
+    "外送": {
+      "net_sales": 62827,
+      "order_cnt": 124,
+      "share": 0.1463,
+      "aov": 507
+    }
+  },
+  "payment": {
+    "LINE Pay": {
+      "net_sales": 97236,
+      "order_cnt": 193,
+      "share": 0.2265,
+      "aov": 504
+    },
+    "信用卡": {
+      "net_sales": 73079,
+      "order_cnt": 141,
+      "share": 0.1702,
+      "aov": 518
+    },
+    "外送平台": {
+      "net_sales": 62827,
+      "order_cnt": 124,
+      "share": 0.1463,
+      "aov": 507
+    },
+    "現金": {
+      "net_sales": 196165,
+      "order_cnt": 355,
+      "share": 0.4569,
+      "aov": 553
+    }
+  },
+  "category_share": {
+    "熱炒": 0.355,
+    "粥品": 0.1953,
+    "湯品": 0.1231,
+    "飯麵": 0.1154,
+    "合菜套餐": 0.1049,
+    "小菜": 0.0542,
+    "飲料": 0.048,
+    "其他": 0.0041
+  },
+  "top10_items": [
+    {
+      "item_id": "C005",
+      "item_name": "清蒸鱸魚",
+      "net_amt": 46578,
+      "qty": 112
+    },
+    {
+      "item_id": "C001",
+      "item_name": "三杯雞",
+      "net_amt": 36344,
+      "qty": 132
+    },
+    {
+      "item_id": "A001",
+      "item_name": "招牌海鮮粥",
+      "net_amt": 33408,
+      "qty": 187
+    },
+    {
+      "item_id": "C004",
+      "item_name": "糖醋排骨",
+      "net_amt": 30914,
+      "qty": 120
+    },
+    {
+      "item_id": "E001",
+      "item_name": "辦公室合菜（4人）",
+      "net_amt": 28126,
+      "qty": 29
+    },
+    {
+      "item_id": "D001",
+      "item_name": "蛤蜊湯",
+      "net_amt": 27810,
+      "qty": 187
+    },
+    {
+      "item_id": "A003",
+      "item_name": "干貝雞粥",
+      "net_amt": 27008,
+      "qty": 170
+    },
+    {
+      "item_id": "D002",
+      "item_name": "酸菜肚片湯",
+      "net_amt": 25056,
+      "qty": 141
+    },
+    {
+      "item_id": "A002",
+      "item_name": "皮蛋瘦肉粥",
+      "net_amt": 23412,
+      "qty": 197
+    },
+    {
+      "item_id": "C002",
+      "item_name": "蒜泥白肉",
+      "net_amt": 22440,
+      "qty": 103
+    }
+  ],
+  "food_cost_rate_R12": 0.3651,
+  "gross_margin_rate_R12": 0.6349
+}
