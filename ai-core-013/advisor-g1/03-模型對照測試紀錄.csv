@@ -1,0 +1,27 @@
+﻿test_id,類別,員工,店家,模型路線,執行者模型,顧問模型,輸入資料,輸出Schema,工具權限,執行狀態,Advisor實際呼叫次數,Schema是否通過,業務結果是否正確,證據路徑,備註
+ENV-P01,環境探測(不計入G1),—,—,—,claude-haiku-5-5,,固定提示: Reply with exactly: OK,—,預設,EXECUTED,0,N/A,N/A,01-環境與支援鑑定.md §4,僅驗證巢狀CLI授權
+ENV-P02,環境探測(不計入G1),—,—,B,claude-sonnet-5-5,claude-opus-5-5,固定提示: 17*23=391?,—,預設,EXECUTED,1,N/A,N/A,evidence/ENV-P02-advisor-probe.sanitized.json,真實Advisor呼叫成功；非業務測試，不得計入顧問效果
+G1-E01-01-A,基礎測試,E01(正式名稱待SKILL.md),待原始資料,A,claude-sonnet-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E01-01-B,基礎測試,E01(正式名稱待SKILL.md),待原始資料,B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E01-01-C,基礎測試,E01(正式名稱待SKILL.md),待原始資料,C,claude-opus-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E02-01-A,基礎測試,E02(正式名稱待SKILL.md),待原始資料,A,claude-sonnet-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E02-01-B,基礎測試,E02(正式名稱待SKILL.md),待原始資料,B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E02-01-C,基礎測試,E02(正式名稱待SKILL.md),待原始資料,C,claude-opus-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E03-01-A,基礎測試,E03(正式名稱待SKILL.md),待原始資料,A,claude-sonnet-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E03-01-B,基礎測試,E03(正式名稱待SKILL.md),待原始資料,B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E03-01-C,基礎測試,E03(正式名稱待SKILL.md),待原始資料,C,claude-opus-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E04-01-A,基礎測試,E04(正式名稱待SKILL.md),待原始資料,A,claude-sonnet-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E04-01-B,基礎測試,E04(正式名稱待SKILL.md),待原始資料,B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E04-01-C,基礎測試,E04(正式名稱待SKILL.md),待原始資料,C,claude-opus-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E05-01-A,基礎測試,E05(正式名稱待SKILL.md),待原始資料,A,claude-sonnet-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E05-01-B,基礎測試,E05(正式名稱待SKILL.md),待原始資料,B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-E05-01-C,基礎測試,E05(正式名稱待SKILL.md),待原始資料,C,claude-opus-5-5,,BLOCKED: 原始測試資料未找到,BLOCKED: 統一JSON Schema未找到,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見02-五名員工資產索引.md；另需總指揮核准費用
+G1-S1-A,異常與隔離:缺少必要欄位,待指定,A店/B店(待原始資料),A,claude-sonnet-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S1-B,異常與隔離:缺少必要欄位,待指定,A店/B店(待原始資料),B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S1-C,異常與隔離:缺少必要欄位,待指定,A店/B店(待原始資料),C,claude-opus-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S2-A,異常與隔離:成本或營收異常,待指定,A店/B店(待原始資料),A,claude-sonnet-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S2-B,異常與隔離:成本或營收異常,待指定,A店/B店(待原始資料),B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S2-C,異常與隔離:成本或營收異常,待指定,A店/B店(待原始資料),C,claude-opus-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S3-A,異常與隔離:A/B兩店資料隔離,待指定,A店/B店(待原始資料),A,claude-sonnet-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S3-B,異常與隔離:A/B兩店資料隔離,待指定,A店/B店(待原始資料),B,claude-sonnet-5-5,claude-opus-5-5,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md
+G1-S3-C,異常與隔離:A/B兩店資料隔離,待指定,A店/B店(待原始資料),C,claude-opus-5-5,,BLOCKED,BLOCKED,Read/Glob/Grep(三路線相同),NOT_RUN(BLOCKED_NO_ASSET),N/A,N/A,N/A,—,見04-異常與隔離驗證.md

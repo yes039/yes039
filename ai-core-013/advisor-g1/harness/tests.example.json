@@ -1,0 +1,12 @@
+[
+  {
+    "_comment": "格式範例，路徑與內容需換成 SEAL-02 原始資產；不得放入自行捏造的資料",
+    "test_id": "G1-E01-A店-01",
+    "employee": "E01（以 SKILL.md 正式名稱為準）",
+    "skill_md": "assets/<E01>/SKILL.md",
+    "input_files": ["assets/data/<A店>/<原始測試輸入>.json"],
+    "schema": "assets/schema/<統一 JSON Schema>.json",
+    "prompt": "依 SKILL.md 處理目前目錄中的輸入資料，只輸出符合 Schema 的 JSON。",
+    "expected": "assets/tests/<原有驗收結果>.json"
+  }
+]

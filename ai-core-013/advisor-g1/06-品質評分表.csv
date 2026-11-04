@@ -1,0 +1,26 @@
+﻿test_id,評分者,是否盲評,匿名代號,數據與計算正確性(30),Schema與輸出完整性(20),問題判斷與分析品質(20),建議可執行性(15),證據與可追溯性(15),總分(100),硬門檻_資料隔離,硬門檻_敏感資訊洩漏,硬門檻_重大數據錯誤,最終判定,備註
+BLIND-REVIEW-01,待指派(不得知悉路線),是,harness自動產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,盲評紀錄保留位；對照鍵存於 runs/BLIND_KEY.json，評分完成前不得開啟
+G1-E01-01-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E01-01-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E01-01-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E02-01-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E02-01-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E02-01-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E03-01-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E03-01-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E03-01-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E04-01-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E04-01-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E04-01-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E05-01-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E05-01-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-E05-01-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S1-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S1-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S1-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S2-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S2-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S2-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S3-A,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S3-B,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
+G1-S3-C,未指派,是(規劃),待產生,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,NOT_SCORED,無輸出可評；未執行測試，不得給分
