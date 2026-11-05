@@ -25,7 +25,7 @@
 | --- | --- | --- | --- | --- |
 | No.001 | 人參走進現代生活 | 陳辭修博士 | https://claude.ai/artifact/S153T8ZpDP1d1aj3xkGfpP | 已發佈 |
 | No.002 | 五行五色・一粉三用・創造商機 | 陳辭修博士 | https://claude.ai/artifact/XDs4wsyfyF3Y5dnqEuaUYp | 已發佈 |
-| No.003 | 30 年老店 玉欣珍 | 王素銜（王姐） | — | 前置調查中 |
+| No.003 | 30 年老店 玉欣珍 | 王素銜（王姐） | https://claude.ai/artifact/Wi3HNRco9WUMZ4XBmA8sHR | 待核可 |
 
 ## 資料夾
 
