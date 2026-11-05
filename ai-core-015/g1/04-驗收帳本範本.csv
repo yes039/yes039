@@ -1,0 +1,2 @@
+ledger_seq,ts_utc,run_type,task_id,task_type,store_id,employee,skill_sha256,schema_version,model,input_sha256,output_sha256,output_path,chk_schema,chk_isolation,chk_golden,quality_score,tokens_in,tokens_out,cost_usd_est,reviewer,verdict,reject_code,retrain_ticket,evidence_ref,supersedes,prev_hash,row_hash
+EXAMPLE-ONLY,—,demo,EXAMPLE-格式示意-非實測,T1,STORE_DEMO,E01,待原件,待原件,—,—,—,—,NOT_RUN,NOT_RUN,NOT_RUN,—,—,—,—,—,PENDING,—,—,—,—,GENESIS,—
