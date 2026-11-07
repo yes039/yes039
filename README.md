@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🌿 觀息谷・療癒度假酒店設計方案：[healing-hotel/](healing-hotel/)
