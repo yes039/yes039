@@ -1,0 +1,91 @@
+{
+  "fonts": {
+    "black": "../fonts/package/900Black/NotoSansTC_900Black.ttf",
+    "bold": "../fonts/package/700Bold/NotoSansTC_700Bold.ttf"
+  },
+  "title": [
+    "11/30 免費實體課",
+    "讓AI員工幫您做事"
+  ],
+  "brand": [
+    "Shen",
+    "AI 商業實戰推動者"
+  ],
+  "voice_tempo": 1.1,
+  "gap": 0.22,
+  "tail": 0.7,
+  "icon_size": 330,
+  "hand": {
+    "image": "assets/hand.png",
+    "tip": [
+      124,
+      1258
+    ],
+    "height": 760
+  },
+  "live_placeholder": {
+    "video": "assets/shen_open.mp4",
+    "text": "Shen 真人開場",
+    "note": "（樣片預留位置，拍攝後替換）",
+    "chip": "不用會寫程式，聽懂 AI 怎麼幫你做事"
+  },
+  "segments": [
+    {
+      "id": "open",
+      "type": "live",
+      "voice": "assets/vo0.mp3",
+      "subtitle": [
+        "老闆，你每天忙到半夜",
+        "有多少時間，是真的在做生意？"
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "draw",
+      "voice": "assets/vo1.mp3",
+      "icon": "assets/icon1.png",
+      "pos": [
+        285,
+        235
+      ],
+      "label": "訊息回不完",
+      "subtitle": "客人訊息，一則一則回"
+    },
+    {
+      "id": "p2",
+      "type": "draw",
+      "voice": "assets/vo2.mp3",
+      "icon": "assets/icon2.png",
+      "pos": [
+        795,
+        235
+      ],
+      "label": "文案寫不出",
+      "subtitle": "想發貼文，半天寫不出一句"
+    },
+    {
+      "id": "p3",
+      "type": "draw",
+      "voice": "assets/vo3.mp3",
+      "icon": "assets/icon3.png",
+      "pos": [
+        285,
+        650
+      ],
+      "label": "全部自己來",
+      "subtitle": "報價、對帳、排班，全部自己來"
+    },
+    {
+      "id": "p4",
+      "type": "draw",
+      "voice": "assets/vo4.mp3",
+      "icon": "assets/icon4.png",
+      "pos": [
+        795,
+        650
+      ],
+      "label": "請人怕成本",
+      "subtitle": "想請人，又怕成本扛不住"
+    }
+  ]
+}
