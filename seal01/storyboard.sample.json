@@ -12,9 +12,6 @@
     "AI 商業實戰推動者"
   ],
   "voice_tempo": 1.1,
-  "gap": 0.22,
-  "tail": 0.7,
-  "icon_size": 225,
   "hand": {
     "image": "assets/hand.png",
     "tip": [
@@ -23,11 +20,13 @@
     ],
     "height": 620
   },
-  "live_placeholder": {
-    "video": "assets/shen_open.mp4",
-    "text": "Shen 真人開場",
-    "note": "（樣片預留位置，拍攝後替換）",
-    "chip": "不用會寫程式，聽懂 AI 怎麼幫你做事"
+  "gap": 0.2,
+  "tail": 0.5,
+  "icon_size": 225,
+  "subtitle_offset": 110,
+  "bgm": {
+    "file": "test_assets/bgm_test.wav",
+    "volume": 0.35
   },
   "segments": [
     {
@@ -35,10 +34,14 @@
       "type": "live",
       "video": "assets/shen_clip1.mp4",
       "clip": [
-        0.95,
+        0.45,
         10.05
       ],
-      "focus_y": 0.33
+      "visual_start": 0.95,
+      "focus_y": 0.33,
+      "srt": "srt/shen_clip1.srt",
+      "ai_label": "AI 生成",
+      "fit": "contain"
     },
     {
       "id": "p1",
@@ -50,7 +53,8 @@
         140
       ],
       "label": "訊息回不完",
-      "subtitle": "客人訊息，一則一則回"
+      "subtitle": "客人訊息，一則一則回",
+      "board": 1
     },
     {
       "id": "p2",
@@ -62,7 +66,8 @@
         140
       ],
       "label": "文案寫不出",
-      "subtitle": "想發貼文，半天寫不出一句"
+      "subtitle": "想發貼文，半天寫不出一句",
+      "board": 1
     },
     {
       "id": "p3",
@@ -74,7 +79,8 @@
         445
       ],
       "label": "全部自己來",
-      "subtitle": "報價、對帳、排班，全部自己來"
+      "subtitle": "報價、對帳、排班，全部自己來",
+      "board": 1
     },
     {
       "id": "p4",
@@ -86,8 +92,183 @@
         445
       ],
       "label": "請人怕成本",
-      "subtitle": "想請人，又怕成本扛不住"
+      "subtitle": "想請人，又怕成本扛不住",
+      "board": 1
+    },
+    {
+      "id": "handoff",
+      "type": "draw",
+      "board": 2,
+      "icon": "test_assets/icon_handoff.png",
+      "pos": [
+        540,
+        300
+      ],
+      "size": 420,
+      "label": "交給 AI 員工",
+      "dur": 3.4,
+      "subtitle": "其實這些事，已經可以交給 AI 員工"
+    },
+    {
+      "id": "demo",
+      "type": "pip",
+      "screen": "test_assets/demo_mock.webm",
+      "screen_clip": [
+        0.6,
+        12.6
+      ],
+      "dur": 12.0,
+      "pip": "assets/shen_clip1.mp4",
+      "pip_clip": [
+        1.0,
+        10.0
+      ],
+      "pip_size": [
+        200,
+        250
+      ],
+      "pip_label": "Shen",
+      "subtitle": [
+        "我直接示範",
+        "把客人的私訊貼給 AI",
+        "幾秒鐘，回覆就寫好了",
+        "我只要看一眼、確認、送出"
+      ],
+      "screen_crop": [
+        640,
+        60,
+        640,
+        300
+      ],
+      "pip_pos": "br",
+      "screen_label": "測試用模擬畫面（非真實操作）"
+    },
+    {
+      "id": "chat_x",
+      "type": "draw",
+      "board": 3,
+      "icon": "test_assets/icon_chat_x.png",
+      "pos": [
+        285,
+        280
+      ],
+      "size": 300,
+      "label": "只會聊天",
+      "dur": 2.5,
+      "subtitle": "但多數人只會跟 AI 聊天"
+    },
+    {
+      "id": "clock",
+      "type": "draw",
+      "board": 3,
+      "icon": "test_assets/icon_clock_check.png",
+      "pos": [
+        795,
+        280
+      ],
+      "size": 300,
+      "label": "真正上班",
+      "dur": 2.5,
+      "subtitle": "不知道怎麼讓它真正上班"
+    },
+    {
+      "id": "cal",
+      "type": "draw",
+      "board": 4,
+      "icon": "test_assets/icon_calendar.png",
+      "pos": [
+        190,
+        250
+      ],
+      "size": 260,
+      "label": "11/30（一）",
+      "label_size": 36,
+      "dur": 3.2,
+      "subtitle": "11 月 30 號星期一，下午一點到四點半"
+    },
+    {
+      "id": "teacher",
+      "type": "draw",
+      "board": 4,
+      "icon": "test_assets/icon_teacher.png",
+      "pos": [
+        540,
+        250
+      ],
+      "size": 260,
+      "label": "特邀講師",
+      "label_size": 36,
+      "dur": 3.0,
+      "subtitle": "我們邀請傑森老師"
+    },
+    {
+      "id": "room",
+      "type": "draw",
+      "board": 4,
+      "icon": "test_assets/icon_classroom.png",
+      "pos": [
+        890,
+        250
+      ],
+      "size": 260,
+      "label": "免費實體課",
+      "label_size": 36,
+      "dur": 3.2,
+      "subtitle": "在玉欣珍 B2 教室，開一堂免費實體課"
+    },
+    {
+      "id": "info",
+      "type": "card",
+      "kind": "info",
+      "dur": 3.0,
+      "heading": "免費實體課｜讓AI員工幫您做事",
+      "rows": [
+        [
+          "日期",
+          "11/30（一）"
+        ],
+        [
+          "時間",
+          "13:00–16:30"
+        ],
+        [
+          "地點",
+          "玉欣珍 B2 教室"
+        ],
+        [
+          "講師",
+          "特邀講師 傑森老師"
+        ],
+        [
+          "費用",
+          "免費"
+        ]
+      ]
+    },
+    {
+      "id": "close",
+      "type": "live",
+      "video": "assets/shen_clip2.mp4",
+      "clip": [
+        0,
+        3.95
+      ],
+      "focus_y": 0.3,
+      "srt": "srt/shen_clip2.srt",
+      "ai_label": "AI 生成",
+      "fit": "contain"
+    },
+    {
+      "id": "cta",
+      "type": "card",
+      "kind": "cta",
+      "dur": 3.2,
+      "heading": "11/30，我們現場見",
+      "lines": [
+        "主題：怎麼樣讓 AI 員工幫您做事"
+      ],
+      "button": "了解詳情",
+      "subtitle": "點下方「了解詳情」報名"
     }
-  ],
-  "subtitle_offset": 110
+  ]
 }
