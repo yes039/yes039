@@ -61,11 +61,17 @@ class Renderer:
         gap = self.sb.get("gap", 0.25)
         self.segments = []
         for seg in self.sb["segments"]:
-            vo = os.path.join(self.base, seg["voice"])
-            d = audio_dur(vo) / self.tempo
-            seg = dict(seg, start=t, dur=d, voice_path=vo)
+            if seg.get("video"):
+                # 真人片段：用影片本身的聲音與長度，clip=[起, 迄] 秒
+                vp = os.path.join(self.base, seg["video"])
+                a, b = seg.get("clip", [0, audio_dur(vp)])
+                seg = dict(seg, start=t, dur=b - a, video_path=vp, clip=[a, b], voice_path=None)
+            else:
+                vo = os.path.join(self.base, seg["voice"])
+                d = audio_dur(vo) / self.tempo
+                seg = dict(seg, start=t, dur=d, voice_path=vo)
             self.segments.append(seg)
-            t += d + gap
+            t += seg["dur"] + gap
         self.total = t + self.sb.get("tail", 0.6)
         self.board_start = next(s["start"] for s in self.segments if s["type"] == "draw") - gap / 2
 
@@ -227,23 +233,29 @@ class Renderer:
                 d.rounded_rectangle([W / 2 - cw / 2 - 30, 60, W / 2 + cw / 2 + 30, 140], 40, fill=GOLD)
                 draw_text_center(d, W / 2, 72, live["chip"], cf, DARK)
             self._ph = ph
+        for seg in self.segments:
+            if seg.get("video_path") and seg["start"] <= t < seg["start"] + seg["dur"] + 0.6:
+                return self.video_frame(seg, min(t - seg["start"], seg["dur"] - 0.01), (W, ch))
         if self._live:
-            return self.video_frame(self._live, t, (W, ch))
+            return self.video_frame({"video_path": self._live, "clip": [0, 9999]}, t, (W, ch))
         z = 1 + 0.04 * min(t / 5, 1)
         im = self._ph.resize((int(W * z), int(ch * z)), Image.BILINEAR)
         return im.crop(((im.width - W) // 2, (im.height - ch) // 2,
                         (im.width - W) // 2 + W, (im.height - ch) // 2 + ch))
 
-    def video_frame(self, path, t, size):
-        if not hasattr(self, "_vf"):
+    def video_frame(self, seg, t, size):
+        cache = self.__dict__.setdefault("_vcache", {})
+        path, (a, b) = seg["video_path"], seg["clip"]
+        key = (path, a)
+        if key not in cache:
             raw = subprocess.check_output([
-                "ffmpeg", "-v", "error", "-i", path, "-vf",
+                "ffmpeg", "-v", "error", "-ss", str(a), "-t", str(b - a), "-i", path, "-vf",
                 f"fps={FPS},scale={size[0]}:{size[1]}:force_original_aspect_ratio=increase,crop={size[0]}:{size[1]}",
                 "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
             n = len(raw) // (size[0] * size[1] * 3)
-            self._vf = np.frombuffer(raw, np.uint8).reshape(n, size[1], size[0], 3)
-        i = min(int(t * FPS), len(self._vf) - 1)
-        return Image.fromarray(self._vf[i])
+            cache[key] = np.frombuffer(raw, np.uint8).reshape(n, size[1], size[0], 3)
+        vf = cache[key]
+        return Image.fromarray(vf[min(int(t * FPS), len(vf) - 1)])
 
     def board_frame(self, t):
         canvas = self.board_bg.convert("RGBA")
@@ -270,7 +282,7 @@ class Renderer:
 
     def draw_subtitle(self, out, t):
         for seg in self.segments:
-            if seg["start"] - 0.05 <= t < seg["start"] + seg["dur"] + 0.15:
+            if seg.get("subtitle") and seg["start"] - 0.05 <= t < seg["start"] + seg["dur"] + 0.15:
                 # 字幕可為字串或多句清單；多句依字數比例分配時間
                 lines = seg["subtitle"] if isinstance(seg["subtitle"], list) else [seg["subtitle"]]
                 total = sum(len(s) for s in lines)
@@ -290,9 +302,15 @@ class Renderer:
     def build_audio(self, path):
         inputs, filt = [], []
         for i, s in enumerate(self.segments):
-            inputs += ["-i", s["voice_path"]]
             ms = int(s["start"] * 1000)
-            filt.append(f"[{i}:a]atempo={self.tempo},adelay={ms}|{ms},apad[a{i}]")
+            if s.get("video_path"):
+                a, b = s["clip"]
+                inputs += ["-i", s["video_path"]]
+                filt.append(f"[{i}:a]atrim={a}:{b},asetpts=PTS-STARTPTS,afade=t=out:st={b - a - 0.08:.3f}:d=0.08,"
+                            f"aresample=48000,adelay={ms}|{ms},apad[a{i}]")
+            else:
+                inputs += ["-i", s["voice_path"]]
+                filt.append(f"[{i}:a]atempo={self.tempo},aresample=48000,adelay={ms}|{ms},apad[a{i}]")
         n = len(self.segments)
         filt.append("".join(f"[a{i}]" for i in range(n)) +
                     f"amix=inputs={n}:normalize=0,atrim=0:{self.total:.3f},loudnorm=I=-16:TP=-1.5[out]")
@@ -315,7 +333,7 @@ class Renderer:
         os.remove(wav)
         print(f"done: {out_path}  {self.total:.2f}s  {n} frames")
         for s in self.segments:
-            print(f"  {s['start']:5.2f}-{s['start'] + s['dur']:5.2f}  {s['subtitle']}")
+            print(f"  {s['start']:5.2f}-{s['start'] + s['dur']:5.2f}  {s.get('subtitle', '（真人原音）')}")
 
 
 if __name__ == "__main__":

@@ -33,10 +33,10 @@
     {
       "id": "open",
       "type": "live",
-      "voice": "assets/vo0.mp3",
-      "subtitle": [
-        "老闆，你每天忙到半夜",
-        "有多少時間，是真的在做生意？"
+      "video": "assets/shen_clip1.mp4",
+      "clip": [
+        0.95,
+        10.05
       ]
     },
     {
