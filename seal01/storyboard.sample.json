@@ -14,14 +14,14 @@
   "voice_tempo": 1.1,
   "gap": 0.22,
   "tail": 0.7,
-  "icon_size": 330,
+  "icon_size": 225,
   "hand": {
     "image": "assets/hand.png",
     "tip": [
       124,
       1258
     ],
-    "height": 760
+    "height": 620
   },
   "live_placeholder": {
     "video": "assets/shen_open.mp4",
@@ -37,7 +37,8 @@
       "clip": [
         0.95,
         10.05
-      ]
+      ],
+      "focus_y": 0.33
     },
     {
       "id": "p1",
@@ -46,7 +47,7 @@
       "icon": "assets/icon1.png",
       "pos": [
         285,
-        235
+        140
       ],
       "label": "訊息回不完",
       "subtitle": "客人訊息，一則一則回"
@@ -58,7 +59,7 @@
       "icon": "assets/icon2.png",
       "pos": [
         795,
-        235
+        140
       ],
       "label": "文案寫不出",
       "subtitle": "想發貼文，半天寫不出一句"
@@ -70,7 +71,7 @@
       "icon": "assets/icon3.png",
       "pos": [
         285,
-        650
+        445
       ],
       "label": "全部自己來",
       "subtitle": "報價、對帳、排班，全部自己來"
@@ -82,10 +83,11 @@
       "icon": "assets/icon4.png",
       "pos": [
         795,
-        650
+        445
       ],
       "label": "請人怕成本",
       "subtitle": "想請人，又怕成本扛不住"
     }
-  ]
+  ],
+  "subtitle_offset": 110
 }

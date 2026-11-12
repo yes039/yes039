@@ -9,10 +9,12 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H, FPS = 1080, 1920, 30
-# 版型區塊（px）
-TITLE = (0, 360)
-CONTENT = (360, 1480)
-BRAND = (1480, 1680)
+# 版型區塊（px）。預設依 FB 安全區：Reels 上 14%／下 35% 會被介面蓋住，
+# 動態消息裁成 4:5 只剩 y 285–1635；標題與字幕須落在兩者交集 285–1250。
+# 分鏡檔可用 "layout" 覆寫。
+TITLE = (285, 470)
+CONTENT = (470, 1250)
+BRAND = (1250, 1390)
 # 色票
 CREAM = (245, 237, 224)
 MILKTEA = (230, 213, 190)
@@ -46,6 +48,11 @@ def draw_text_center(d, cx, y, text, f, fill, stroke=0, stroke_fill=None):
 class Renderer:
     def __init__(self, sb, base):
         self.sb, self.base = sb, base
+        global TITLE, CONTENT, BRAND
+        lay = sb.get("layout", {})
+        TITLE = tuple(lay.get("title", TITLE))
+        CONTENT = tuple(lay.get("content", CONTENT))
+        BRAND = tuple(lay.get("brand", BRAND))
         fd = sb["fonts"]
         self.f_black = lambda s: font(os.path.join(base, fd["black"]), s)
         self.f_bold = lambda s: font(os.path.join(base, fd["bold"]), s)
@@ -78,21 +85,25 @@ class Renderer:
     # ---------- 固定版型 ----------
     def build_static(self):
         sb = self.sb
-        frame = Image.new("RGB", (W, H), DARKER)
+        frame = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         d = ImageDraw.Draw(frame)
+        th = TITLE[1] - TITLE[0]
         d.rectangle([0, TITLE[0], W, TITLE[1]], fill=DARK)
+        d.rectangle([0, TITLE[0], W, TITLE[0] + 3], fill=GOLD)
         d.rectangle([0, TITLE[1] - 6, W, TITLE[1]], fill=GOLD)
-        draw_text_center(d, W / 2, 70, sb["title"][0], self.f_black(92), BRIGHT_GOLD)
-        draw_text_center(d, W / 2, 190, sb["title"][1], self.f_black(104), CREAM)
+        f1, f2 = self.f_black(int(th * 0.40)), self.f_black(int(th * 0.46))
+        d.text((W / 2, TITLE[0] + th * 0.29), sb["title"][0], font=f1, fill=BRIGHT_GOLD, anchor="mm")
+        d.text((W / 2, TITLE[0] + th * 0.71), sb["title"][1], font=f2, fill=CREAM, anchor="mm")
+        bh, cy = BRAND[1] - BRAND[0], (BRAND[0] + BRAND[1]) / 2
         d.rectangle([0, BRAND[0], W, BRAND[1]], fill=DARK)
         d.rectangle([0, BRAND[0], W, BRAND[0] + 4], fill=GOLD)
         name, role = sb["brand"]
-        fn, fr = self.f_black(78), self.f_bold(46)
+        fn, fr = self.f_black(int(bh * 0.46)), self.f_bold(int(bh * 0.29))
         wn, wr = d.textlength(name, font=fn), d.textlength(role, font=fr)
         x = (W - (wn + 36 + wr)) / 2
-        d.text((x, BRAND[0] + 50), name, font=fn, fill=BRIGHT_GOLD)
-        d.line([x + wn + 18, BRAND[0] + 62, x + wn + 18, BRAND[0] + 140], fill=GOLD, width=3)
-        d.text((x + wn + 36, BRAND[0] + 70), role, font=fr, fill=CREAM)
+        d.text((x, cy), name, font=fn, fill=BRIGHT_GOLD, anchor="lm")
+        d.line([x + wn + 18, cy - bh * 0.25, x + wn + 18, cy + bh * 0.25], fill=GOLD, width=3)
+        d.text((x + wn + 36, cy), role, font=fr, fill=CREAM, anchor="lm")
         if sb.get("brand_tagline"):
             draw_text_center(d, W / 2, BRAND[1] + 40, sb["brand_tagline"], self.f_bold(34), GOLD)
         self.chrome = frame
@@ -194,7 +205,6 @@ class Renderer:
 
     # ---------- 單格畫面 ----------
     def frame(self, t):
-        out = self.chrome.copy()
         ch = CONTENT[1] - CONTENT[0]
         # 真人段
         live = self.live_frame(t)
@@ -205,7 +215,12 @@ class Renderer:
             k = ease((t - self.board_start) / 0.4)
             content = live.copy()
             content.paste(board, (int(W * (1 - k)), 0))
+        # 背景：目前畫面放大、模糊、壓暗，填滿安全區以外的上下區塊
+        small = content.resize((W // 6, H // 6), Image.BILINEAR).filter(ImageFilter.GaussianBlur(4))
+        out = small.resize((W, H), Image.BILINEAR)
+        out = Image.blend(out, Image.new("RGB", (W, H), DARKER), self.sb.get("bg_darken", 0.55))
         out.paste(content, (0, CONTENT[0]))
+        out.paste(self.chrome, (0, 0), self.chrome)
         self.draw_subtitle(out, t)
         return out
 
@@ -250,7 +265,8 @@ class Renderer:
         if key not in cache:
             raw = subprocess.check_output([
                 "ffmpeg", "-v", "error", "-ss", str(a), "-t", str(b - a), "-i", path, "-vf",
-                f"fps={FPS},scale={size[0]}:{size[1]}:force_original_aspect_ratio=increase,crop={size[0]}:{size[1]}",
+                f"fps={FPS},scale={size[0]}:{size[1]}:force_original_aspect_ratio=increase,"
+                f"crop={size[0]}:{size[1]}:(iw-{size[0]})/2:(ih-{size[1]})*{seg.get('focus_y', 0.5)}",
                 "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
             n = len(raw) // (size[0] * size[1] * 3)
             cache[key] = np.frombuffer(raw, np.uint8).reshape(n, size[1], size[0], 3)
@@ -294,7 +310,7 @@ class Renderer:
                         break
                 d = ImageDraw.Draw(out)
                 f = self.f_black(66)
-                y = CONTENT[1] - 150
+                y = CONTENT[1] - self.sb.get("subtitle_offset", 130)
                 draw_text_center(d, W / 2, y, text, f, DARK, stroke=9, stroke_fill=CREAM)
                 return
 
