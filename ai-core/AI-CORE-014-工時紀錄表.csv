@@ -1,0 +1,2 @@
+日期,開始時間,結束時間,分鐘數,執行者(CC/人),類別(AI產碼/人工設定/測試/修正/審查/等待),主線(A必要/B選配),WBS項目,工作說明,對應門檻(T1-T6),結果(完成/未完成/待驗),問題編號,備註
+2026-MM-DD,09:00,09:45,45,CC,AI產碼,A,資料表與migration,範例列：建立 services/staff/business_hours/customers/bookings 與 RLS,T2,完成,,範例，正式開工時刪除
