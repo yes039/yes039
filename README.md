@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 🏪 AI-CORE-014 小店 AI 系統技術驗證報告：[ai-core/](ai-core/AI-CORE-014-小店AI系統技術驗證報告.md)
