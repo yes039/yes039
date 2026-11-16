@@ -18,3 +18,4 @@ Here are some ideas to get you started:
 ---
 
 - 📦 短影音海豹任務小隊 MVP：[seal-team/](seal-team/)
+- 📐 CAD-001 Claude Code × AutoCAD 技術驗證：[cad-001/](cad-001/)

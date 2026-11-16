@@ -1,0 +1,643 @@
+[
+ {
+  "Coordinates": [
+   1200.0,
+   -150.0,
+   4150.0,
+   -150.0,
+   4150.0,
+   2250.0,
+   4000.0,
+   2250.0,
+   4000.0,
+   0.0,
+   1200.0,
+   0.0
+  ],
+  "Closed": ":VLAX-TRUE",
+  "Layer": "A-WALL",
+  "ObjectName": "AcDbPolyline",
+  "Handle": "205"
+ },
+ {
+  "Coordinates": [
+   4150.0,
+   3750.0,
+   4150.0,
+   6150.0,
+   -150.0,
+   6150.0,
+   -150.0,
+   -150.0,
+   300.0,
+   -150.0,
+   300.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   6000.0,
+   4000.0,
+   6000.0,
+   4000.0,
+   3750.0
+  ],
+  "Closed": ":VLAX-TRUE",
+  "Layer": "A-WALL",
+  "ObjectName": "AcDbPolyline",
+  "Handle": "206"
+ },
+ {
+  "Coordinates": [
+   300.0,
+   0.0,
+   340.0,
+   0.0,
+   340.0,
+   900.0,
+   300.0,
+   900.0
+  ],
+  "Closed": ":VLAX-TRUE",
+  "Layer": "A-DOOR",
+  "ObjectName": "AcDbPolyline",
+  "Handle": "207"
+ },
+ {
+  "Center": [
+   300.0,
+   0.0,
+   0.0
+  ],
+  "Radius": 900.0,
+  "StartAngle": 0.0,
+  "EndAngle": 1.5707963267948966,
+  "Layer": "A-DOOR",
+  "ObjectName": "AcDbArc",
+  "Handle": "208"
+ },
+ {
+  "TextString": "D1 900",
+  "InsertionPoint": [
+   550.0,
+   1050.0,
+   0.0
+  ],
+  "Height": 125.0,
+  "Layer": "A-DOOR",
+  "ObjectName": "AcDbText",
+  "Handle": "209"
+ },
+ {
+  "StartPoint": [
+   4000.0,
+   2250.0,
+   0.0
+  ],
+  "EndPoint": [
+   4000.0,
+   3750.0,
+   0.0
+  ],
+  "Layer": "A-GLAZ",
+  "ObjectName": "AcDbLine",
+  "Handle": "20A"
+ },
+ {
+  "StartPoint": [
+   4150.0,
+   2250.0,
+   0.0
+  ],
+  "EndPoint": [
+   4150.0,
+   3750.0,
+   0.0
+  ],
+  "Layer": "A-GLAZ",
+  "ObjectName": "AcDbLine",
+  "Handle": "20B"
+ },
+ {
+  "StartPoint": [
+   4065.0,
+   2250.0,
+   0.0
+  ],
+  "EndPoint": [
+   4065.0,
+   3750.0,
+   0.0
+  ],
+  "Layer": "A-GLAZ",
+  "ObjectName": "AcDbLine",
+  "Handle": "20C"
+ },
+ {
+  "StartPoint": [
+   4085.0,
+   2250.0,
+   0.0
+  ],
+  "EndPoint": [
+   4085.0,
+   3750.0,
+   0.0
+  ],
+  "Layer": "A-GLAZ",
+  "ObjectName": "AcDbLine",
+  "Handle": "20D"
+ },
+ {
+  "TextString": "W1 1500",
+  "InsertionPoint": [
+   3100.0,
+   3000.0,
+   0.0
+  ],
+  "Height": 125.0,
+  "Layer": "A-GLAZ",
+  "ObjectName": "AcDbText",
+  "Handle": "20E"
+ },
+ {
+  "ExtLine1Point": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   300.0,
+   0.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   150.0,
+   -750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 300.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "20F"
+ },
+ {
+  "ExtLine1Point": [
+   300.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   1200.0,
+   0.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   750.0,
+   -750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 900.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "210"
+ },
+ {
+  "ExtLine1Point": [
+   1200.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   0.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   2600.0,
+   -750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 2800.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "211"
+ },
+ {
+  "ExtLine1Point": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   0.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   2000.0,
+   -1350.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 4000.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "212"
+ },
+ {
+  "ExtLine1Point": [
+   4000.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   2250.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   4750.0,
+   1125.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 2250.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "213"
+ },
+ {
+  "ExtLine1Point": [
+   4000.0,
+   2250.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   3750.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   4750.0,
+   3000.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 1500.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "214"
+ },
+ {
+  "ExtLine1Point": [
+   4000.0,
+   3750.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   6000.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   4750.0,
+   4875.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 2250.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "215"
+ },
+ {
+  "ExtLine1Point": [
+   4000.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   6000.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   5350.0,
+   3000.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 6000.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "216"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   6150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   0.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   -75.0,
+   6750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 150.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "217"
+ },
+ {
+  "ExtLine1Point": [
+   0.0,
+   6150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4000.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   2000.0,
+   6750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 4000.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "218"
+ },
+ {
+  "ExtLine1Point": [
+   4000.0,
+   6150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4150.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   4075.0,
+   6750.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 150.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "219"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   6150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   4150.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   2000.0,
+   7350.0,
+   0.0
+  ],
+  "Rotation": 0.0,
+  "Measurement": 4300.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "21A"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   -150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   -150.0,
+   0.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   -750.0,
+   -75.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 150.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "21B"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   0.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   -150.0,
+   6000.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   -750.0,
+   3000.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 6000.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "21C"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   6000.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   -150.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   -750.0,
+   6075.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 150.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "21D"
+ },
+ {
+  "ExtLine1Point": [
+   -150.0,
+   -150.0,
+   0.0
+  ],
+  "ExtLine2Point": [
+   -150.0,
+   6150.0,
+   0.0
+  ],
+  "DimLinePoint": [
+   -1350.0,
+   3000.0,
+   0.0
+  ],
+  "Rotation": 1.5707963267948966,
+  "Measurement": 6300.0,
+  "Layer": "A-ANNO-DIMS",
+  "TextHeight": 125.0,
+  "ArrowheadSize": 75.0,
+  "Arrowhead1Type": 4,
+  "Arrowhead2Type": 4,
+  "ExtensionLineOffset": 75.0,
+  "ExtensionLineExtend": 75.0,
+  "TextGap": 40.0,
+  "PrimaryUnitsPrecision": 0,
+  "ObjectName": "AcDbRotatedDimension",
+  "Handle": "21E"
+ }
+]

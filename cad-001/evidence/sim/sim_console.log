@@ -1,0 +1,87 @@
+====================================================================== 
+ S1_blank_dwg
+Command: (load "CAD001_ROOM.lsp")
+[CAD001] CAD001_ROOM.lsp v1.0 loaded. Commands: CAD001_ROOM, CAD001_CHECK, CAD001_ENV
+Command: CAD001_ROOM
+[CAD001] CAD001_ROOM v1.0
+[CAD001] Base point = inside SW corner <0,0>: 
+[CAD001] layer A-WALL: created
+[CAD001] layer A-DOOR: created
+[CAD001] layer A-GLAZ: created
+[CAD001] layer A-ANNO-DIMS: created
+[CAD001] done: 26 objects added (2 wall plines, 1 door leaf, 1 arc, 4 window lines, 2 texts, 16 dims).
+[CAD001] Run CAD001_CHECK to list them, U to undo the whole run.
+Command: CAD001_CHECK
+[CAD001] ===== CAD001_CHECK =====
+  A-WALL / AcDbPolyline : 2
+  A-DOOR / AcDbPolyline : 1
+  A-DOOR / AcDbArc : 1
+  A-DOOR / AcDbText : 1
+  A-GLAZ / AcDbLine : 4
+  A-GLAZ / AcDbText : 1
+  A-ANNO-DIMS / AcDbRotatedDimension : 16
+  dimensions found: 16
+  values: 300 900 2800 4000 2250 1500 2250 6000 150 4000 150 4300 150 6000 150 6300
+[CAD001] expected per room: A-WALL 2 plines, A-DOOR 1 pline + 1 arc + 1 text,
+          A-GLAZ 4 lines + 1 text, A-ANNO-DIMS 16 rotated dims.
+{'entity_count': 26, 'undo_marks': ['start', 'end']}
+====================================================================== 
+ S2_existing_objects
+
+Command: CAD001_ROOM
+[CAD001] CAD001_ROOM v1.0
+[CAD001] Base point = inside SW corner <0,0>: 
+[CAD001] layer A-WALL: existing - reused, not modified
+[CAD001] layer A-DOOR: created
+[CAD001] layer A-GLAZ: created
+[CAD001] layer A-ANNO-DIMS: created
+[CAD001] done: 26 objects added (2 wall plines, 1 door leaf, 1 arc, 4 window lines, 2 texts, 16 dims).
+[CAD001] Run CAD001_CHECK to list them, U to undo the whole run.
+{'preexisting_unchanged': True, 'awall_color_after': 1, 'new_entities': 26}
+====================================================================== 
+ S3_locked_layer
+
+Command: CAD001_ROOM
+[CAD001] CAD001_ROOM v1.0
+[CAD001] STOP: existing layer(s) not usable, nothing drawn:
+           - A-DOOR is LOCKED
+{'new_entities': 0}
+====================================================================== 
+ S4_ucs_not_world
+
+Command: CAD001_ROOM
+[CAD001] CAD001_ROOM v1.0
+[CAD001] STOP: current UCS is not World. Run UCS > W and retry.
+{'new_entities': 0}
+====================================================================== 
+ S5_error_rollback
+
+Command: CAD001_ROOM
+[CAD001] CAD001_ROOM v1.0
+[CAD001] Base point = inside SW corner <0,0>: 
+[CAD001] layer A-WALL: created
+[CAD001] layer A-DOOR: created
+[CAD001] layer A-GLAZ: created
+[CAD001] layer A-ANNO-DIMS: created
+<error raised: injected failure (test)>
+[CAD001] ERROR: injected failure (test)
+[CAD001] rollback: 7 new object(s) removed.
+{'new_entities_left': 0, 'preexisting_left': 3, 'undo_marks': ['start', 'end']}
+====================================================================== 
+ S6_env_readonly
+
+Command: CAD001_ENV
+[CAD001] ===== CAD001_ENV (read-only) =====
+  ACADVER = <mock>
+  _VERNUM = <not available>
+  PRODUCT = <mock>
+  PLATFORM = <not available>
+  LISPSYS = 1
+  SECURELOAD = <not available>
+  TRUSTEDPATHS = <not available>
+  INSUNITS = 4
+  MEASUREMENT = <not available>
+  DWGNAME = <not available>
+  DWGPREFIX = <not available>
+  ActiveX (vla) available = YES
+{'new_entities': 0}

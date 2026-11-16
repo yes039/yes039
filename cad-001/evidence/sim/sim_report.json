@@ -1,0 +1,89 @@
+{
+ "S1_blank_dwg": {
+  "log": "Command: (load \"CAD001_ROOM.lsp\")\n[CAD001] CAD001_ROOM.lsp v1.0 loaded. Commands: CAD001_ROOM, CAD001_CHECK, CAD001_ENV\nCommand: CAD001_ROOM\n[CAD001] CAD001_ROOM v1.0\n[CAD001] Base point = inside SW corner <0,0>: \n[CAD001] layer A-WALL: created\n[CAD001] layer A-DOOR: created\n[CAD001] layer A-GLAZ: created\n[CAD001] layer A-ANNO-DIMS: created\n[CAD001] done: 26 objects added (2 wall plines, 1 door leaf, 1 arc, 4 window lines, 2 texts, 16 dims).\n[CAD001] Run CAD001_CHECK to list them, U to undo the whole run.\nCommand: CAD001_CHECK\n[CAD001] ===== CAD001_CHECK =====\n  A-WALL / AcDbPolyline : 2\n  A-DOOR / AcDbPolyline : 1\n  A-DOOR / AcDbArc : 1\n  A-DOOR / AcDbText : 1\n  A-GLAZ / AcDbLine : 4\n  A-GLAZ / AcDbText : 1\n  A-ANNO-DIMS / AcDbRotatedDimension : 16\n  dimensions found: 16\n  values: 300 900 2800 4000 2250 1500 2250 6000 150 4000 150 4300 150 6000 150 6300\n[CAD001] expected per room: A-WALL 2 plines, A-DOOR 1 pline + 1 arc + 1 text,\n          A-GLAZ 4 lines + 1 text, A-ANNO-DIMS 16 rotated dims.",
+  "entity_count": 26,
+  "undo_marks": [
+   "start",
+   "end"
+  ],
+  "layers": {
+   "0": {
+    "Name": "0",
+    "LayerOn": ":VLAX-TRUE",
+    "Freeze": ":VLAX-FALSE",
+    "Lock": ":VLAX-FALSE",
+    "Color": 7
+   },
+   "A-WALL": {
+    "Name": "A-WALL",
+    "LayerOn": ":VLAX-TRUE",
+    "Freeze": ":VLAX-FALSE",
+    "Lock": ":VLAX-FALSE",
+    "Color": 7,
+    "Lineweight": 50,
+    "Description": "CAD001 walls"
+   },
+   "A-DOOR": {
+    "Name": "A-DOOR",
+    "LayerOn": ":VLAX-TRUE",
+    "Freeze": ":VLAX-FALSE",
+    "Lock": ":VLAX-FALSE",
+    "Color": 3,
+    "Lineweight": 25,
+    "Description": "CAD001 doors"
+   },
+   "A-GLAZ": {
+    "Name": "A-GLAZ",
+    "LayerOn": ":VLAX-TRUE",
+    "Freeze": ":VLAX-FALSE",
+    "Lock": ":VLAX-FALSE",
+    "Color": 4,
+    "Lineweight": 25,
+    "Description": "CAD001 windows"
+   },
+   "A-ANNO-DIMS": {
+    "Name": "A-ANNO-DIMS",
+    "LayerOn": ":VLAX-TRUE",
+    "Freeze": ":VLAX-FALSE",
+    "Lock": ":VLAX-FALSE",
+    "Color": 2,
+    "Lineweight": 18,
+    "Description": "CAD001 dimensions"
+   }
+  }
+ },
+ "S2_existing_objects": {
+  "log": "\nCommand: CAD001_ROOM\n[CAD001] CAD001_ROOM v1.0\n[CAD001] Base point = inside SW corner <0,0>: \n[CAD001] layer A-WALL: existing - reused, not modified\n[CAD001] layer A-DOOR: created\n[CAD001] layer A-GLAZ: created\n[CAD001] layer A-ANNO-DIMS: created\n[CAD001] done: 26 objects added (2 wall plines, 1 door leaf, 1 arc, 4 window lines, 2 texts, 16 dims).\n[CAD001] Run CAD001_CHECK to list them, U to undo the whole run.",
+  "preexisting_unchanged": true,
+  "awall_color_after": 1,
+  "new_entities": 26
+ },
+ "S3_locked_layer": {
+  "log": "\nCommand: CAD001_ROOM\n[CAD001] CAD001_ROOM v1.0\n[CAD001] STOP: existing layer(s) not usable, nothing drawn:\n           - A-DOOR is LOCKED",
+  "new_entities": 0,
+  "layers": [
+   "0",
+   "A-DOOR"
+  ]
+ },
+ "S4_ucs_not_world": {
+  "log": "\nCommand: CAD001_ROOM\n[CAD001] CAD001_ROOM v1.0\n[CAD001] STOP: current UCS is not World. Run UCS > W and retry.",
+  "new_entities": 0
+ },
+ "S5_error_rollback": {
+  "log": "\nCommand: CAD001_ROOM\n[CAD001] CAD001_ROOM v1.0\n[CAD001] Base point = inside SW corner <0,0>: \n[CAD001] layer A-WALL: created\n[CAD001] layer A-DOOR: created\n[CAD001] layer A-GLAZ: created\n[CAD001] layer A-ANNO-DIMS: created\n<error raised: injected failure (test)>\n[CAD001] ERROR: injected failure (test)\n[CAD001] rollback: 7 new object(s) removed.",
+  "new_entities_left": 0,
+  "preexisting_left": 3,
+  "undo_marks": [
+   "start",
+   "end"
+  ]
+ },
+ "S6_env_readonly": {
+  "log": "\nCommand: CAD001_ENV\n[CAD001] ===== CAD001_ENV (read-only) =====\n  ACADVER = <mock>\n  _VERNUM = <not available>\n  PRODUCT = <mock>\n  PLATFORM = <not available>\n  LISPSYS = 1\n  SECURELOAD = <not available>\n  TRUSTEDPATHS = <not available>\n  INSUNITS = 4\n  MEASUREMENT = <not available>\n  DWGNAME = <not available>\n  DWGPREFIX = <not available>\n  ActiveX (vla) available = YES",
+  "new_entities": 0,
+  "layers": [
+   "0"
+  ]
+ }
+}

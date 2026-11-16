@@ -1,0 +1,17 @@
+== 1. execute LSP in simulator (6 scenarios)
+PASS S1 blank dwg -> 26 objects, 1 undo group
+PASS S2 pre-existing objects unchanged, existing layer colour kept
+PASS S3 locked layer -> stop, 0 objects, no layer created
+PASS S4 non-world UCS -> stop, 0 objects
+PASS S5 injected error -> rollback, pre-existing kept
+PASS S6 CAD001_ENV read-only
+== 2. geometry checks + reference DXF/PNG
+PASS 13 geometry checks
+== 3. mutation tests (the simulator must REJECT broken code)
+PASS detected: missing closing paren ->LispError("unbalanced parentheses: missing ')'")
+PASS detected: misspelled ActiveX method ->ERROR: mock: ModelSpace method not modelled: vla-ADDLIN
+PASS detected: wrong wall thickness 120 -> wall net area = ring - door gap - window gap 
+PASS detected: door width 800 -> wall net area = ring - door gap - window gap 
+PASS detected: misspelled property ->ERROR: unknown property TEXTGAPP
+
+ALL OFFLINE TESTS PASSED
