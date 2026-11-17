@@ -147,12 +147,16 @@ def bgm(out_dir):
     # C–G–Am–F 和弦循環的柔和合成音，加慢速音量起伏
     chords = [(261.6, 329.6, 392.0), (196.0, 246.9, 392.0), (220.0, 261.6, 329.6), (174.6, 220.0, 349.2)]
     parts = []
+    # 每個和弦 2.5 秒，相鄰和弦交叉淡化 0.5 秒，換和弦時不會出現靜音空檔
     for i, (a, b, c) in enumerate(chords * 2):
-        parts.append(f"sine=f={a}:d=2[a{i}];sine=f={b}:d=2[b{i}];sine=f={c}:d=2[c{i}];"
-                     f"[a{i}][b{i}][c{i}]amix=3,afade=t=in:d=0.3,afade=t=out:st=1.6:d=0.4[ch{i}]")
+        parts.append(f"sine=f={a}:d=2.5[a{i}];sine=f={b}:d=2.5[b{i}];sine=f={c}:d=2.5[c{i}];"
+                     f"[a{i}][b{i}][c{i}]amix=3[ch{i}]")
     n = len(chords) * 2
-    graph = ";".join(parts) + ";" + "".join(f"[ch{i}]" for i in range(n)) + \
-        f"concat=n={n}:v=0:a=1,tremolo=f=0.5:d=0.3,volume=0.6[out]"
+    chain, prev = [], "ch0"
+    for i in range(1, n):
+        chain.append(f"[{prev}][ch{i}]acrossfade=d=0.5:c1=tri:c2=tri[x{i}]")
+        prev = f"x{i}"
+    graph = ";".join(parts + chain) + f";[{prev}]tremolo=f=0.5:d=0.2,volume=0.6[out]"
     subprocess.check_call(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
                            "-filter_complex", graph, "-map", "[out]", "-ar", "48000",
                            os.path.join(out_dir, "bgm_test.wav")])
